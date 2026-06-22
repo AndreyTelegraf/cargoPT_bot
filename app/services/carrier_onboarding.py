@@ -65,6 +65,32 @@ class CarrierOnboardingService:
 
         return invite
 
+    async def validate_invite_token(
+        self,
+        token: str,
+        now=None,
+    ):
+        invite = await self.repository.get_invite_token(token)
+
+        if invite is None:
+            raise ValueError("invite not found")
+
+        if invite.status != "active":
+            raise ValueError("invite inactive")
+
+        from datetime import UTC
+        from datetime import datetime
+
+        current = now or datetime.now(UTC)
+
+        if invite.expires_at <= current:
+            raise ValueError("invite expired")
+
+        if invite.used_at is not None:
+            raise ValueError("invite already used")
+
+        return invite
+
     async def get_invite_token(
         self,
         token: str,

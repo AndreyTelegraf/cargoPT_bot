@@ -65,6 +65,11 @@ async def exercise_service() -> None:
                 f"carrier status should be invited, got {carrier.status}"
             )
 
+        validated = await service.validate_invite_token(invite.token)
+
+        if validated.token != invite.token:
+            raise SystemExit("validated token mismatch")
+
         await session.commit()
 
         loaded_invite = await service.get_invite_token(invite.token)
