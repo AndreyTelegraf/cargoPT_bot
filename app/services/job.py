@@ -17,12 +17,16 @@ class JobService:
         self,
         *,
         client_telegram_user_id: int,
+        client_telegram_username: str | None = None,
         comment: str | None = None,
     ) -> Job:
         now = datetime.now(UTC)
 
         job = Job(
             client_telegram_user_id=client_telegram_user_id,
+            client_telegram_username=client_telegram_username,
+            client_phone=None,
+            client_whatsapp=None,
             status=JobStatus.DRAFT,
             requested_date=None,
             needs_assembly=False,
@@ -183,3 +187,28 @@ class JobService:
         )
 
         return await self.repository.add_media(media)
+
+
+    async def update_client_phone(
+        self,
+        *,
+        job_id: int,
+        client_phone: str | None,
+    ) -> Job:
+        return await self.repository.update_client_phone(
+            job_id=job_id,
+            client_phone=client_phone,
+            updated_at=datetime.now(UTC),
+        )
+
+    async def update_client_whatsapp(
+        self,
+        *,
+        job_id: int,
+        client_whatsapp: str | None,
+    ) -> Job:
+        return await self.repository.update_client_whatsapp(
+            job_id=job_id,
+            client_whatsapp=client_whatsapp,
+            updated_at=datetime.now(UTC),
+        )

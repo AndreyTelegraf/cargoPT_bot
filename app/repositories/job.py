@@ -238,3 +238,40 @@ class JobRepository:
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+
+    async def update_client_phone(
+        self,
+        job_id: int,
+        client_phone: str | None,
+        updated_at,
+    ) -> Job:
+        job = await self.get_job_by_id(job_id)
+
+        if job is None:
+            raise ValueError("job not found")
+
+        job.client_phone = client_phone
+        job.updated_at = updated_at
+
+        await self.session.flush()
+
+        return job
+
+    async def update_client_whatsapp(
+        self,
+        job_id: int,
+        client_whatsapp: str | None,
+        updated_at,
+    ) -> Job:
+        job = await self.get_job_by_id(job_id)
+
+        if job is None:
+            raise ValueError("job not found")
+
+        job.client_whatsapp = client_whatsapp
+        job.updated_at = updated_at
+
+        await self.session.flush()
+
+        return job

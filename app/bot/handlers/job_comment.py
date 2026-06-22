@@ -69,6 +69,9 @@ async def job_comment(
                 text=(
                     "Новая заявка на перевозку.\\n"
                     f"Заявка #{job.id}.\\n"
+                    f"Клиент: @{job.client_telegram_username or 'username_missing'}.\\n"
+                    f"Телефон: {job.client_phone or 'не указан'}.\\n"
+                    f"WhatsApp: {job.client_whatsapp or 'не указан'}.\\n"
                     "Нажмите кнопку, чтобы принять или отказаться."
                 ),
                 reply_markup=build_offer_keyboard(offer.id),

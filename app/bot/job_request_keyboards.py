@@ -47,3 +47,18 @@ def media_skip_keyboard() -> ReplyKeyboardMarkup:
 
 def comment_skip_keyboard() -> ReplyKeyboardMarkup:
     return _keyboard([["Без комментария"]])
+
+
+def username_ready_keyboard() -> ReplyKeyboardMarkup:
+    return _keyboard([["Готово, username создан"]])
+
+
+def phone_skip_keyboard() -> ReplyKeyboardMarkup:
+    return _keyboard([["Не указывать телефон"]])
+
+
+def whatsapp_keyboard() -> ReplyKeyboardMarkup:
+    return _keyboard([
+        ["WhatsApp совпадает"],
+        ["Не указывать WhatsApp"],
+    ])

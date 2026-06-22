@@ -27,6 +27,9 @@ class Job(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
     client_telegram_user_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    client_telegram_username: Mapped[str | None] = mapped_column(String)
+    client_phone: Mapped[str | None] = mapped_column(String)
+    client_whatsapp: Mapped[str | None] = mapped_column(String)
     status: Mapped[str] = mapped_column(String, nullable=False)
 
     requested_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
