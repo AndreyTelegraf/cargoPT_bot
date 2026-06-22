@@ -6,6 +6,7 @@ from app.bot.handlers.job_pickup import router as job_pickup_router
 from app.bot.handlers.job_dropoff import router as job_dropoff_router
 from app.bot.handlers.job_item import router as job_item_router
 from app.bot.handlers.job_payload import router as job_payload_router
+from app.bot.handlers.job_volume import router as job_volume_router
 from app.bot.handlers.invite import router as invite_router
 from app.bot.handlers.assembly import router as assembly_router
 from app.bot.handlers.packing import router as packing_router
@@ -52,4 +53,5 @@ def setup_routers(dp: Dispatcher) -> None:
     dp.include_router(job_dropoff_router)
     dp.include_router(job_item_router)
     dp.include_router(job_payload_router)
+    dp.include_router(job_volume_router)
     dp.include_router(start_router)

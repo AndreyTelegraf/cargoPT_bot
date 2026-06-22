@@ -91,3 +91,15 @@ class JobService:
             estimated_payload_kg=estimated_payload_kg,
             updated_at=datetime.now(UTC),
         )
+
+    async def update_estimated_volume(
+        self,
+        *,
+        job_id: int,
+        estimated_volume_m3: float | None,
+    ) -> Job:
+        return await self.repository.update_estimated_volume(
+            job_id=job_id,
+            estimated_volume_m3=estimated_volume_m3,
+            updated_at=datetime.now(UTC),
+        )

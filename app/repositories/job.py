@@ -110,3 +110,21 @@ class JobRepository:
         await self.session.flush()
 
         return job
+
+    async def update_estimated_volume(
+        self,
+        job_id: int,
+        estimated_volume_m3: float | None,
+        updated_at,
+    ) -> Job:
+        job = await self.get_job_by_id(job_id)
+
+        if job is None:
+            raise ValueError("job not found")
+
+        job.estimated_volume_m3 = estimated_volume_m3
+        job.updated_at = updated_at
+
+        await self.session.flush()
+
+        return job
