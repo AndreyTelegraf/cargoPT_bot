@@ -3,10 +3,12 @@ from aiogram import F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.states.carrier_onboarding import CarrierOnboardingStates
+
 router = Router()
 
 
-@router.message(F.text.in_(["Да", "Нет"]))
+@router.message(CarrierOnboardingStates.has_crane, F.text.in_(["Да", "Нет"]))
 async def crane(
     message: Message,
     state: FSMContext,

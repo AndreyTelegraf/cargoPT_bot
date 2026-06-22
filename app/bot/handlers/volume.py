@@ -2,10 +2,12 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.states.carrier_onboarding import CarrierOnboardingStates
+
 router = Router()
 
 
-@router.message()
+@router.message(CarrierOnboardingStates.volume_m3)
 async def volume_m3(
     message: Message,
     state: FSMContext,

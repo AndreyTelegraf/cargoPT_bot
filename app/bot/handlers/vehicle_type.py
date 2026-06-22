@@ -2,6 +2,8 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.states.carrier_onboarding import CarrierOnboardingStates
+
 router = Router()
 
 ALLOWED_TYPES = {
@@ -12,7 +14,7 @@ ALLOWED_TYPES = {
 }
 
 
-@router.message()
+@router.message(CarrierOnboardingStates.vehicle_type)
 async def vehicle_type(
     message: Message,
     state: FSMContext,

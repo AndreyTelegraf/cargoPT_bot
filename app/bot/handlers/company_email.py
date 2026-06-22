@@ -2,6 +2,8 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.states.carrier_onboarding import CarrierOnboardingStates
+
 from app.db.session import async_session_maker
 from app.repositories.carrier import CarrierRepository
 from app.services.carrier_vehicle import CarrierVehicleService
@@ -9,7 +11,7 @@ from app.services.carrier_vehicle import CarrierVehicleService
 router = Router()
 
 
-@router.message()
+@router.message(CarrierOnboardingStates.company_email)
 async def company_email(
     message: Message,
     state: FSMContext,

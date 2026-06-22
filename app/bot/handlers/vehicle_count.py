@@ -3,10 +3,12 @@ from aiogram import F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.states.carrier_onboarding import CarrierOnboardingStates
+
 router = Router()
 
 
-@router.message(F.text.regexp(r"^[1-9][0-9]*$"))
+@router.message(CarrierOnboardingStates.vehicle_count, F.text.regexp(r"^[1-9][0-9]*$"))
 async def vehicle_count(
     message: Message,
     state: FSMContext,
