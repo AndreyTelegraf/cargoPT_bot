@@ -8,6 +8,7 @@ from app.bot.handlers.regions import router as regions_router
 from app.bot.handlers.vehicle_count import router as vehicle_count_router
 from app.bot.handlers.vehicle_type import router as vehicle_type_router
 from app.bot.handlers.payload import router as payload_router
+from app.bot.handlers.volume import router as volume_router
 
 
 def setup_routers(dp: Dispatcher) -> None:
@@ -17,5 +18,6 @@ def setup_routers(dp: Dispatcher) -> None:
     dp.include_router(vehicle_count_router)
     dp.include_router(vehicle_type_router)
     dp.include_router(payload_router)
+    dp.include_router(volume_router)
     dp.include_router(assembly_router)
     dp.include_router(start_router)
