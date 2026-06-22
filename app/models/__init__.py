@@ -4,6 +4,7 @@ from app.models.carrier import CarrierVehicle
 from app.models.job import Job
 from app.models.job import JobAddress
 from app.models.job import JobItem
+from app.models.job import JobOffer
 
 __all__ = [
     "AdminInviteToken",
@@ -12,4 +13,5 @@ __all__ = [
     "Job",
     "JobAddress",
     "JobItem",
+    "JobOffer",
 ]

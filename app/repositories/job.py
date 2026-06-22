@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.job import Job
 from app.models.job import JobAddress
 from app.models.job import JobItem
+from app.models.job import JobOffer
 
 
 class JobRepository:
@@ -29,3 +30,20 @@ class JobRepository:
         self.session.add(item)
         await self.session.flush()
         return item
+
+    async def create_offer(self, offer: JobOffer) -> JobOffer:
+        self.session.add(offer)
+        await self.session.flush()
+        return offer
+
+    async def list_offers_by_job(
+        self,
+        job_id: int,
+    ) -> list[JobOffer]:
+        stmt = (
+            select(JobOffer)
+            .where(JobOffer.job_id == job_id)
+            .order_by(JobOffer.id)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

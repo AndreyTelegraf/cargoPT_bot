@@ -101,3 +101,32 @@ class JobItem(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     job = relationship("Job", back_populates="items")
+
+
+class JobOffer(Base):
+    __tablename__ = "job_offer"
+
+    __table_args__ = (
+        Index("ix_job_offer_job_id", "job_id"),
+        Index("ix_job_offer_carrier_id", "carrier_id"),
+        Index("ix_job_offer_vehicle_id", "vehicle_id"),
+        Index("ix_job_offer_status", "status"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    job_id: Mapped[int] = mapped_column(ForeignKey("job.id"), nullable=False)
+    carrier_id: Mapped[int] = mapped_column(ForeignKey("carrier_company.id"), nullable=False)
+    vehicle_id: Mapped[int] = mapped_column(ForeignKey("carrier_vehicle.id"), nullable=False)
+
+    status: Mapped[str] = mapped_column(String, nullable=False)
+
+    offered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    carrier_note: Mapped[str | None] = mapped_column(Text)
+    price_cents: Mapped[int | None] = mapped_column(Integer)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
