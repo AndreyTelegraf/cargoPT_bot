@@ -19,6 +19,7 @@ from app.bot.handlers.crane_reach import router as crane_reach_router
 from app.bot.handlers.employee_count import router as employee_count_router
 from app.bot.handlers.max_loaders import router as max_loaders_router
 from app.bot.handlers.company_phone import router as company_phone_router
+from app.bot.handlers.company_email import router as company_email_router
 
 
 def setup_routers(dp: Dispatcher) -> None:
@@ -39,5 +40,6 @@ def setup_routers(dp: Dispatcher) -> None:
     dp.include_router(employee_count_router)
     dp.include_router(max_loaders_router)
     dp.include_router(company_phone_router)
+    dp.include_router(company_email_router)
     dp.include_router(assembly_router)
     dp.include_router(start_router)
