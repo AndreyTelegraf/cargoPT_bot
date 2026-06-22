@@ -1,6 +1,9 @@
 from aiogram import Dispatcher
 
 from app.bot.handlers.start import router as start_router
+from app.bot.handlers.invite import router as invite_router
+
 
 def setup_routers(dp: Dispatcher) -> None:
+    dp.include_router(invite_router)
     dp.include_router(start_router)
