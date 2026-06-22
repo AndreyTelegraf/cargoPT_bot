@@ -103,3 +103,15 @@ class JobService:
             estimated_volume_m3=estimated_volume_m3,
             updated_at=datetime.now(UTC),
         )
+
+    async def update_required_loaders(
+        self,
+        *,
+        job_id: int,
+        required_loaders: int | None,
+    ) -> Job:
+        return await self.repository.update_required_loaders(
+            job_id=job_id,
+            required_loaders=required_loaders,
+            updated_at=datetime.now(UTC),
+        )
