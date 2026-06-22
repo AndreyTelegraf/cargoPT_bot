@@ -275,3 +275,22 @@ class JobRepository:
         await self.session.flush()
 
         return job
+
+
+    async def update_requested_date(
+        self,
+        job_id: int,
+        requested_date,
+        updated_at,
+    ) -> Job:
+        job = await self.get_job_by_id(job_id)
+
+        if job is None:
+            raise ValueError("job not found")
+
+        job.requested_date = requested_date
+        job.updated_at = updated_at
+
+        await self.session.flush()
+
+        return job

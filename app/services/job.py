@@ -212,3 +212,16 @@ class JobService:
             client_whatsapp=client_whatsapp,
             updated_at=datetime.now(UTC),
         )
+
+
+    async def update_requested_date(
+        self,
+        *,
+        job_id: int,
+        requested_date,
+    ) -> Job:
+        return await self.repository.update_requested_date(
+            job_id=job_id,
+            requested_date=requested_date,
+            updated_at=datetime.now(UTC),
+        )

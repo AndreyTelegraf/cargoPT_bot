@@ -36,10 +36,14 @@ async def job_dropoff_address(
 
         await session.commit()
 
-    await state.set_state(JobRequestStates.item_description)
+    from app.bot.job_request_keyboards import datetime_keyboard
+
+    await state.set_state(JobRequestStates.requested_datetime)
 
     await message.answer(
-        "Что нужно перевезти?\n\n"
-        "Опишите груз простыми словами: например, «диван 2 метра, 10 коробок, стиральная машина».\n"
-        "Если есть хрупкие, тяжёлые или нестандартные вещи — напишите это здесь."
+        "Когда нужна перевозка?\n\n"
+        "Выберите быстрый вариант или напишите дату и время вручную.\n"
+        "Примеры: 24.06 10:00, 24.06.2026 15:30.\n"
+        "Если точное время пока не важно — напишите только дату.",
+        reply_markup=datetime_keyboard(),
     )

@@ -62,3 +62,11 @@ def whatsapp_keyboard() -> ReplyKeyboardMarkup:
         ["WhatsApp совпадает"],
         ["Не указывать WhatsApp"],
     ])
+
+
+def datetime_keyboard() -> ReplyKeyboardMarkup:
+    return _keyboard([
+        ["Сегодня", "Завтра"],
+        ["В ближайшие дни"],
+        ["Укажу дату текстом"],
+    ])

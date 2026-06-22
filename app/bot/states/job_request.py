@@ -6,6 +6,7 @@ class JobRequestStates(StatesGroup):
     telegram_username_missing = State()
     pickup_address = State()
     dropoff_address = State()
+    requested_datetime = State()
     item_description = State()
     media = State()
     estimated_payload_kg = State()
