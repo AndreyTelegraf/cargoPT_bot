@@ -1,16 +1,19 @@
 from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
+from aiogram.fsm.context import FSMContext
 
 from app.db.session import async_session_maker
 from app.repositories.carrier import CarrierRepository
 from app.services.carrier_onboarding import CarrierOnboardingService
+from app.domain.carrier_profile_step import CarrierProfileStep
+from app.bot.states.carrier_onboarding import CarrierOnboardingStates
 
 router = Router()
 
 
 @router.message(CommandStart(deep_link=True))
-async def invite_start(message: Message) -> None:
+async def invite_start(message: Message, state: FSMContext) -> None:
     payload = (message.text or "").split(maxsplit=1)
 
     if len(payload) != 2:
@@ -39,6 +42,16 @@ async def invite_start(message: Message) -> None:
             )
             return
 
+    await service.advance_profile_step(
+        carrier_id=invite.carrier_id,
+        step=CarrierProfileStep.ASSEMBLY_REQUIRED,
+    )
+    await session.commit()
+
+    await state.set_state(
+        CarrierOnboardingStates.assembly_required
+    )
+
     await message.answer(
-        f"Компания #{invite.carrier_id} успешно привязана."
+        "Нужна ли вашей компании сборка/разборка мебели? (Да/Нет)"
     )
