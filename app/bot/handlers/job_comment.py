@@ -6,6 +6,11 @@ from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.job import JobRepository
 from app.services.job import JobService
+from app.repositories.carrier import CarrierRepository
+from app.services.carrier_search import CarrierSearchService
+from app.services.job_matching import JobMatchingService
+from app.services.job_offer import JobOfferService
+from app.services.offer_distribution import OfferDistributionService
 
 router = Router()
 
@@ -22,12 +27,27 @@ async def job_comment(
     job_id = data["job_id"]
 
     async with async_session_maker() as session:
-        repository = JobRepository(session)
-        service = JobService(repository)
+        job_repository = JobRepository(session)
+        carrier_repository = CarrierRepository(session)
+        job_service = JobService(job_repository)
 
-        await service.finalize_for_matching(
+        job = await job_service.finalize_for_matching(
             job_id=job_id,
             comment=comment,
+        )
+
+        distribution = OfferDistributionService(
+            matching_service=JobMatchingService(
+                CarrierSearchService(carrier_repository)
+            ),
+            offer_service=JobOfferService(job_repository),
+            job_repository=job_repository,
+        )
+
+        offers = await distribution.create_offers_for_job(
+            job,
+            limit=5,
+            expires_in_minutes=60,
         )
 
         await session.commit()
@@ -35,5 +55,5 @@ async def job_comment(
     await state.clear()
 
     await message.answer(
-        "Заявка сохранена. Сейчас подберём подходящих перевозчиков."
+        f"Заявка сохранена. Подходящих перевозчиков найдено: {len(offers)}."
     )
