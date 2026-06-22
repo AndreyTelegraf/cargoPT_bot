@@ -129,9 +129,35 @@ class CarrierRepository:
 
         await self.session.flush()
 
+        
         return carrier
 
-    async def create_vehicle(
+    async def update_assembly_required(
+        self,
+        carrier_id: int,
+        value: bool,
+    ) -> CarrierCompany:
+        carrier = await self.get_carrier_by_id(carrier_id)
+        if carrier is None:
+            raise ValueError("carrier not found")
+        carrier.assembly_required = value
+        await self.session.flush()
+        return carrier
+
+    async def update_packing_required(
+        self,
+        carrier_id: int,
+        value: bool,
+    ) -> CarrierCompany:
+        carrier = await self.get_carrier_by_id(carrier_id)
+        if carrier is None:
+            raise ValueError("carrier not found")
+        carrier.packing_required = value
+        await self.session.flush()
+        return carrier
+
+    async def create_vehicle
+(
         self,
         vehicle: CarrierVehicle,
     ) -> CarrierVehicle:

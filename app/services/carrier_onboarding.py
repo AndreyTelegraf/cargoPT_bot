@@ -138,3 +138,24 @@ class CarrierOnboardingService:
             carrier_id=carrier_id,
             step=step,
         )
+
+
+    async def save_assembly_required(
+        self,
+        carrier_id: int,
+        value: bool,
+    ):
+        return await self.repository.update_assembly_required(
+            carrier_id=carrier_id,
+            value=value,
+        )
+
+    async def save_packing_required(
+        self,
+        carrier_id: int,
+        value: bool,
+    ):
+        return await self.repository.update_packing_required(
+            carrier_id=carrier_id,
+            value=value,
+        )
