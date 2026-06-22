@@ -50,8 +50,19 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
             return
 
         if action == "accept":
-            await offer_service.accept_offer_and_assign_job(offer_id)
+            accepted_offer = await offer_service.accept_offer_and_assign_job(offer_id)
+            job = await job_repository.get_job_by_id(accepted_offer.job_id)
             message_text = "Вы приняли заказ. Мы закрепили заявку за вами."
+
+            if job is not None:
+                await callback.bot.send_message(
+                    chat_id=job.client_telegram_user_id,
+                    text=(
+                        "Перевозчик принял вашу заявку.\\n"
+                        f"Заявка #{job.id}.\\n"
+                        "Мы свяжем вас с перевозчиком на следующем шаге."
+                    ),
+                )
         else:
             await offer_service.decline_offer(offer_id)
             message_text = "Вы отказались от заказа."
