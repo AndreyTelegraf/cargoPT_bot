@@ -39,6 +39,24 @@ class CarrierCompany(Base):
 
     paid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+    assembly_required: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
+
+    packing_required: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
+
+    operating_regions: Mapped[str | None] = mapped_column(Text)
+
+    profile_completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+
     internal_note: Mapped[str | None] = mapped_column(Text)
 
     created_at: Mapped[datetime] = mapped_column(
