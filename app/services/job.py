@@ -79,3 +79,15 @@ class JobService:
         )
 
         return await self.repository.add_item(item)
+
+    async def update_estimated_payload(
+        self,
+        *,
+        job_id: int,
+        estimated_payload_kg: int | None,
+    ) -> Job:
+        return await self.repository.update_estimated_payload(
+            job_id=job_id,
+            estimated_payload_kg=estimated_payload_kg,
+            updated_at=datetime.now(UTC),
+        )
