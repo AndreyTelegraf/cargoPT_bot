@@ -2,6 +2,8 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.job_request_keyboards import volume_keyboard
+
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.job import JobRepository
@@ -17,11 +19,22 @@ async def job_estimated_payload(
 ) -> None:
     raw_value = (message.text or "").strip()
 
-    try:
-        value = int(raw_value)
-    except ValueError:
-        await message.answer("Укажите вес числом в кг. Если не знаете — 0.")
-        return
+    payload_map = {
+        "до 500 кг": 500,
+        "до 1000 кг": 1000,
+        "до 1600 кг": 1600,
+        "до 3500 кг": 3500,
+        "Не знаю": 0,
+    }
+
+    if raw_value in payload_map:
+        value = payload_map[raw_value]
+    else:
+        try:
+            value = int(raw_value)
+        except ValueError:
+            await message.answer("Выберите вариант кнопкой или укажите вес числом в кг.")
+            return
 
     if value < 0:
         await message.answer("Вес не может быть отрицательным.")
@@ -46,5 +59,12 @@ async def job_estimated_payload(
     await state.set_state(JobRequestStates.estimated_volume_m3)
 
     await message.answer(
-        "Примерный объём груза в м³? Если не знаете — напишите 0."
+        "Оцените примерный объём груза.\n\n"
+        "Ориентир по машине:\n"
+        "- до 3 м³ — несколько вещей или коробок;\n"
+        "- до 10 м³ — маленький фургон;\n"
+        "- до 18 м³ — большой фургон;\n"
+        "- до 35 м³ — грузовик.\n\n"
+        "Можно нажать кнопку или ввести число в м³.",
+        reply_markup=volume_keyboard(),
     )

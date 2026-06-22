@@ -39,5 +39,7 @@ async def job_pickup_address(
     await state.set_state(JobRequestStates.dropoff_address)
 
     await message.answer(
-        "Куда доставить груз? Укажите адрес или ссылку на геолокацию."
+        "Теперь место выгрузки.\n\n"
+        "Пришлите полный адрес или ссылку на точку в Google Maps.\n"
+        "Если это квартира, склад, торговый центр или закрытая территория — добавьте ориентир."
     )

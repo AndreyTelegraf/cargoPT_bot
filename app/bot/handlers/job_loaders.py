@@ -2,6 +2,8 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.job_request_keyboards import yes_no_keyboard
+
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.job import JobRepository
@@ -17,11 +19,19 @@ async def job_required_loaders(
 ) -> None:
     raw_value = (message.text or "").strip()
 
-    try:
-        value = int(raw_value)
-    except ValueError:
-        await message.answer("Укажите количество грузчиков числом. Если не знаете — 0.")
-        return
+    loader_map = {
+        "Не знаю": 0,
+        "4+": 4,
+    }
+
+    if raw_value in loader_map:
+        value = loader_map[raw_value]
+    else:
+        try:
+            value = int(raw_value)
+        except ValueError:
+            await message.answer("Выберите вариант кнопкой или укажите количество грузчиков числом.")
+            return
 
     if value < 0:
         await message.answer("Количество грузчиков не может быть отрицательным.")
@@ -46,5 +56,8 @@ async def job_required_loaders(
     await state.set_state(JobRequestStates.needs_tail_lift)
 
     await message.answer(
-        "Нужен ли гидроборт? (Да/Нет)"
+        "Нужен ли гидроборт?\n\n"
+        "Гидроборт помогает поднимать тяжёлые вещи в кузов без ручного подъёма: техника, палеты, тяжёлые коробки.\n"
+        "Если сомневаетесь — выберите «Да».",
+        reply_markup=yes_no_keyboard(),
     )

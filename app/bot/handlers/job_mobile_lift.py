@@ -3,6 +3,8 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.job_request_keyboards import comment_skip_keyboard
+
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.job import JobRepository
@@ -35,5 +37,8 @@ async def job_needs_mobile_lift(
     await state.set_state(JobRequestStates.comment)
 
     await message.answer(
-        "Добавьте комментарий к заказу или напишите '-' если комментария нет."
+        "Последний шаг: комментарий к заказу.\n\n"
+        "Напишите всё, что поможет перевозчику: этаж, лифт, парковка, хрупкие вещи, узкий подъезд, удобное время.\n"
+        "Если добавить нечего — нажмите «Без комментария».",
+        reply_markup=comment_skip_keyboard(),
     )

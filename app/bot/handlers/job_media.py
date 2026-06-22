@@ -3,6 +3,8 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.job_request_keyboards import payload_keyboard
+
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.job import JobRepository
@@ -29,12 +31,21 @@ async def job_media(
     elif message.video:
         media_type = "video"
         telegram_file_id = message.video.file_id
-    elif (message.text or "").strip() == "-":
+    elif (message.text or "").strip() in {"-", "Пропустить медиа"}:
         await state.set_state(JobRequestStates.estimated_payload_kg)
-        await message.answer("Примерный вес груза в кг? Если не знаете — напишите 0.")
+        await message.answer(
+            "Оцените примерный вес груза.\n\n"
+            "Ориентир:\n"
+            "- до 500 кг — несколько коробок или небольшой переезд;\n"
+            "- до 1000 кг — обычный квартирный переезд;\n"
+            "- до 1600 кг — крупная мебель и техника;\n"
+            "- до 3500 кг — большой объём или тяжёлый груз.\n\n"
+            "Можно нажать кнопку или ввести число в кг.",
+            reply_markup=payload_keyboard(),
+        )
         return
     else:
-        await message.answer("Пришлите фото/видео груза или напишите '-' если медиа нет.")
+        await message.answer("Пришлите фото/видео груза или нажмите «Пропустить медиа».")
         return
 
     async with async_session_maker() as session:
@@ -52,4 +63,7 @@ async def job_media(
 
     await state.set_state(JobRequestStates.estimated_payload_kg)
 
-    await message.answer("Медиа сохранено. Примерный вес груза в кг? Если не знаете — напишите 0.")
+    await message.answer(
+        "Медиа сохранено. Теперь оцените примерный вес груза.",
+        reply_markup=payload_keyboard(),
+    )

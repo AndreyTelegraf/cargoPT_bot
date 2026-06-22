@@ -38,6 +38,11 @@ async def job_item_description(
 
     await state.set_state(JobRequestStates.media)
 
+    from app.bot.job_request_keyboards import media_skip_keyboard
+
     await message.answer(
-        "Пришлите фото или видео груза. Если медиа нет — напишите '-'."
+        "Пришлите фото или видео груза.\n\n"
+        "Лучше снять так, чтобы перевозчик понял объём: общий вид, крупные предметы, коробки и проходы.\n"
+        "Можно отправить одно фото или одно видео. Если медиа нет — нажмите «Пропустить медиа».",
+        reply_markup=media_skip_keyboard(),
     )

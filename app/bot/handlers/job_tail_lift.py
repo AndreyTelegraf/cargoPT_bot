@@ -3,6 +3,8 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.job_request_keyboards import yes_no_keyboard
+
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.job import JobRepository
@@ -35,5 +37,8 @@ async def job_needs_tail_lift(
     await state.set_state(JobRequestStates.needs_crane)
 
     await message.answer(
-        "Нужен ли кран? (Да/Нет)"
+        "Нужен ли кран?\n\n"
+        "Кран нужен, если груз нельзя занести обычным способом: очень тяжёлый предмет, палета, оборудование, подача с улицы.\n"
+        "Для обычного квартирного переезда чаще всего кран не нужен.",
+        reply_markup=yes_no_keyboard(),
     )

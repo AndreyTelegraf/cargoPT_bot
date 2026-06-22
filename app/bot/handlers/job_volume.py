@@ -2,6 +2,8 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.job_request_keyboards import loaders_keyboard
+
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.job import JobRepository
@@ -17,11 +19,22 @@ async def job_estimated_volume(
 ) -> None:
     raw_value = (message.text or "").strip().replace(",", ".")
 
-    try:
-        value = float(raw_value)
-    except ValueError:
-        await message.answer("Укажите объём числом в м³. Если не знаете — 0.")
-        return
+    volume_map = {
+        "до 3 м³": 3.0,
+        "до 10 м³": 10.0,
+        "до 18 м³": 18.0,
+        "до 35 м³": 35.0,
+        "Не знаю": 0.0,
+    }
+
+    if raw_value in volume_map:
+        value = volume_map[raw_value]
+    else:
+        try:
+            value = float(raw_value)
+        except ValueError:
+            await message.answer("Выберите вариант кнопкой или укажите объём числом в м³.")
+            return
 
     if value < 0:
         await message.answer("Объём не может быть отрицательным.")
@@ -46,5 +59,9 @@ async def job_estimated_volume(
     await state.set_state(JobRequestStates.required_loaders)
 
     await message.answer(
-        "Сколько грузчиков нужно? Если не знаете — напишите 0."
+        "Сколько грузчиков нужно?\n\n"
+        "0 — если перевозка только машиной.\n"
+        "1–2 — обычная погрузка мебели и коробок.\n"
+        "3+ — тяжёлые предметы, этажи без лифта или большой объём.",
+        reply_markup=loaders_keyboard(),
     )

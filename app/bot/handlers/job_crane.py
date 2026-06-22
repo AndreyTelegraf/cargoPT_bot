@@ -3,6 +3,8 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.job_request_keyboards import yes_no_keyboard
+
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.job import JobRepository
@@ -35,5 +37,7 @@ async def job_needs_crane(
     await state.set_state(JobRequestStates.needs_mobile_lift)
 
     await message.answer(
-        "Нужен ли мобильный лифт / подъём через окно? (Да/Нет)"
+        "Нужен ли подъём через окно или балкон?\n\n"
+        "Это нужно, если груз не проходит в лифт, подъезд или по лестнице. Например: большой диван, шкаф, техника, стекло, тяжёлая мебель.",
+        reply_markup=yes_no_keyboard(),
     )

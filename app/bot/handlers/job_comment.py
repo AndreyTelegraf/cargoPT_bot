@@ -1,6 +1,7 @@
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
+from aiogram.types import ReplyKeyboardRemove
 from app.bot.offer_keyboard import build_offer_keyboard
 
 from app.bot.states.job_request import JobRequestStates
@@ -22,7 +23,7 @@ async def job_comment(
     state: FSMContext,
 ) -> None:
     raw_comment = (message.text or "").strip()
-    comment = None if raw_comment in {"", "-"} else raw_comment
+    comment = None if raw_comment in {"", "-", "Без комментария"} else raw_comment
 
     data = await state.get_data()
     job_id = data["job_id"]
@@ -96,5 +97,7 @@ async def job_comment(
     await state.clear()
 
     await message.answer(
-        f"Заявка сохранена. Офферы отправлены перевозчикам: {sent_count}."
+        f"Заявка готова. Мы отправили её подходящим перевозчикам: {sent_count}.\n"
+        "Когда кто-то примет заказ, вы получите уведомление здесь.",
+        reply_markup=ReplyKeyboardRemove(),
     )
