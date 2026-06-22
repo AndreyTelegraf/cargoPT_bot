@@ -15,6 +15,7 @@ from app.bot.handlers.mobile_lift import router as mobile_lift_router
 from app.bot.handlers.mobile_lift_floor import router as mobile_lift_floor_router
 from app.bot.handlers.mobile_lift_weight import router as mobile_lift_weight_router
 from app.bot.handlers.crane_weight import router as crane_weight_router
+from app.bot.handlers.crane_reach import router as crane_reach_router
 
 
 def setup_routers(dp: Dispatcher) -> None:
@@ -31,5 +32,6 @@ def setup_routers(dp: Dispatcher) -> None:
     dp.include_router(mobile_lift_floor_router)
     dp.include_router(mobile_lift_weight_router)
     dp.include_router(crane_weight_router)
+    dp.include_router(crane_reach_router)
     dp.include_router(assembly_router)
     dp.include_router(start_router)
