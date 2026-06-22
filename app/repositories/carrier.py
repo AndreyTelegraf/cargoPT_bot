@@ -156,8 +156,7 @@ class CarrierRepository:
         await self.session.flush()
         return carrier
 
-    async def create_vehicle
-(
+    async def create_vehicle(
         self,
         vehicle: CarrierVehicle,
     ) -> CarrierVehicle:
