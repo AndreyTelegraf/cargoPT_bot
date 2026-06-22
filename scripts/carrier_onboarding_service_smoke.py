@@ -78,6 +78,25 @@ async def exercise_service() -> None:
         if loaded_invite.carrier_id != carrier.id:
             raise SystemExit("loaded invite carrier mismatch")
 
+        claimed = await service.claim_invite_token(
+            token=invite.token,
+            telegram_user_id=555000111,
+        )
+
+        if claimed.status != "used":
+            raise SystemExit("invite should be used")
+
+        active_carrier = await repository.get_carrier_by_id(carrier.id)
+
+        if active_carrier is None:
+            raise SystemExit("carrier missing after claim")
+
+        if active_carrier.status != "active":
+            raise SystemExit("carrier should be active")
+
+        if active_carrier.telegram_user_id != 555000111:
+            raise SystemExit("telegram id mismatch")
+
 
     await engine.dispose()
 

@@ -63,6 +63,33 @@ class CarrierRepository:
 
         return carrier
 
+    async def claim_invite(
+        self,
+        token: str,
+        telegram_user_id: int,
+        used_at,
+    ) -> AdminInviteToken:
+        invite = await self.get_invite_token(token)
+
+        if invite is None:
+            raise ValueError("invite not found")
+
+        carrier = await self.get_carrier_by_id(invite.carrier_id)
+
+        if carrier is None:
+            raise ValueError("carrier not found")
+
+        invite.used_at = used_at
+        invite.used_by_telegram_id = telegram_user_id
+        invite.status = "used"
+
+        carrier.telegram_user_id = telegram_user_id
+        carrier.status = "active"
+
+        await self.session.flush()
+
+        return invite
+
     async def list_vehicles_by_carrier(
         self,
         carrier_id: int,

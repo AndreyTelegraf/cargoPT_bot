@@ -96,3 +96,18 @@ class CarrierOnboardingService:
         token: str,
     ) -> AdminInviteToken | None:
         return await self.repository.get_invite_token(token)
+
+    async def claim_invite_token(
+        self,
+        token: str,
+        telegram_user_id: int,
+    ) -> AdminInviteToken:
+        invite = await self.validate_invite_token(token)
+
+        now = datetime.now(UTC)
+
+        return await self.repository.claim_invite(
+            token=invite.token,
+            telegram_user_id=telegram_user_id,
+            used_at=now,
+        )
