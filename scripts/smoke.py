@@ -53,6 +53,8 @@ def import_base_modules() -> None:
         "app.main",
         "app.db.base",
         "app.db.session",
+        "app.models",
+        "app.models.carrier",
     ]
 
     for module_name in modules:
