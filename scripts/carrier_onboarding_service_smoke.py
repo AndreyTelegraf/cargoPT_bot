@@ -97,6 +97,22 @@ async def exercise_service() -> None:
         if active_carrier.telegram_user_id != 555000111:
             raise SystemExit("telegram id mismatch")
 
+        completed = await service.complete_profile(
+            carrier_id=carrier.id,
+            assembly_required=True,
+            packing_required=True,
+            operating_regions="Lisboa, Setubal",
+        )
+
+        if completed.status != "profile_completed":
+            raise SystemExit("profile not completed")
+
+        if completed.profile_completed_at is None:
+            raise SystemExit("profile_completed_at missing")
+
+        if completed.operating_regions != "Lisboa, Setubal":
+            raise SystemExit("operating_regions mismatch")
+
 
     await engine.dispose()
 

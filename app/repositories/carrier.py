@@ -90,6 +90,29 @@ class CarrierRepository:
 
         return invite
 
+    async def complete_profile(
+        self,
+        carrier_id: int,
+        assembly_required: bool,
+        packing_required: bool,
+        operating_regions: str,
+        completed_at,
+    ) -> CarrierCompany:
+        carrier = await self.get_carrier_by_id(carrier_id)
+
+        if carrier is None:
+            raise ValueError("carrier not found")
+
+        carrier.assembly_required = assembly_required
+        carrier.packing_required = packing_required
+        carrier.operating_regions = operating_regions
+        carrier.profile_completed_at = completed_at
+        carrier.status = "profile_completed"
+
+        await self.session.flush()
+
+        return carrier
+
     async def list_vehicles_by_carrier(
         self,
         carrier_id: int,

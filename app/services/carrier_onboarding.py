@@ -111,3 +111,18 @@ class CarrierOnboardingService:
             telegram_user_id=telegram_user_id,
             used_at=now,
         )
+
+    async def complete_profile(
+        self,
+        carrier_id: int,
+        assembly_required: bool,
+        packing_required: bool,
+        operating_regions: str,
+    ):
+        return await self.repository.complete_profile(
+            carrier_id=carrier_id,
+            assembly_required=assembly_required,
+            packing_required=packing_required,
+            operating_regions=operating_regions,
+            completed_at=datetime.now(UTC),
+        )
