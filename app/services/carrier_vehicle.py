@@ -3,6 +3,7 @@ from datetime import datetime
 
 from app.models.carrier import CarrierVehicle
 from app.repositories.carrier import CarrierRepository
+from app.domain.vehicle_type import VehicleType
 
 
 class CarrierVehicleService:

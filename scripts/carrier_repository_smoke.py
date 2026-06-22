@@ -19,6 +19,7 @@ from app.models.carrier import AdminInviteToken
 from app.models.carrier import CarrierCompany
 from app.models.carrier import CarrierVehicle
 from app.repositories.carrier import CarrierRepository
+from app.domain.vehicle_type import VehicleType
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -76,7 +77,7 @@ async def exercise_repository() -> None:
         await repo.create_vehicle(
             CarrierVehicle(
                 carrier_id=carrier.id,
-                vehicle_type="medium_van",
+                vehicle_type=VehicleType.MEDIUM_VAN,
                 payload_kg=1200,
                 volume_m3=12.5,
                 has_tail_lift=True,
