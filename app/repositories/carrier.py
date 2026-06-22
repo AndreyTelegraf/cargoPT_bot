@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.carrier import AdminInviteToken
 from app.models.carrier import CarrierCompany
 from app.models.carrier import CarrierVehicle
+from app.domain.carrier_status import CarrierStatus
 
 
 class CarrierRepository:
@@ -84,7 +85,7 @@ class CarrierRepository:
         invite.status = "used"
 
         carrier.telegram_user_id = telegram_user_id
-        carrier.status = "active"
+        carrier.status = CarrierStatus.ACTIVE
 
         await self.session.flush()
 
@@ -107,7 +108,7 @@ class CarrierRepository:
         carrier.packing_required = packing_required
         carrier.operating_regions = operating_regions
         carrier.profile_completed_at = completed_at
-        carrier.status = "profile_completed"
+        carrier.status = CarrierStatus.PROFILE_COMPLETED
 
         await self.session.flush()
 

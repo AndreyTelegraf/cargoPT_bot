@@ -6,6 +6,7 @@ from secrets import token_urlsafe
 from app.models.carrier import AdminInviteToken
 from app.models.carrier import CarrierCompany
 from app.repositories.carrier import CarrierRepository
+from app.domain.carrier_status import CarrierStatus
 
 
 class CarrierOnboardingService:
@@ -28,7 +29,7 @@ class CarrierOnboardingService:
             contact_name=contact_name,
             phone=phone,
             telegram_user_id=None,
-            status="draft",
+            status=CarrierStatus.DRAFT,
             paid_until=paid_until,
             internal_note=internal_note,
             created_at=now,
@@ -53,14 +54,14 @@ class CarrierOnboardingService:
             expires_at=now + timedelta(days=expires_in_days),
             used_at=None,
             used_by_telegram_id=None,
-            status="active",
+            status=CarrierStatus.ACTIVE,
             created_at=now,
         )
 
         await self.repository.create_invite_token(invite)
         await self.repository.update_carrier_status(
             carrier_id=carrier_id,
-            status="invited",
+            status=CarrierStatus.INVITED,
         )
 
         return invite
@@ -75,7 +76,7 @@ class CarrierOnboardingService:
         if invite is None:
             raise ValueError("invite not found")
 
-        if invite.status != "active":
+        if invite.status != CarrierStatus.ACTIVE:
             raise ValueError("invite inactive")
 
         from datetime import UTC
