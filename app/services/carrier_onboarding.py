@@ -57,7 +57,13 @@ class CarrierOnboardingService:
             created_at=now,
         )
 
-        return await self.repository.create_invite_token(invite)
+        await self.repository.create_invite_token(invite)
+        await self.repository.update_carrier_status(
+            carrier_id=carrier_id,
+            status="invited",
+        )
+
+        return invite
 
     async def get_invite_token(
         self,

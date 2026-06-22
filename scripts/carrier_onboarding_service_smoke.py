@@ -60,6 +60,11 @@ async def exercise_service() -> None:
         if invite.status != "active":
             raise SystemExit(f"unexpected invite status: {invite.status}")
 
+        if carrier.status != "invited":
+            raise SystemExit(
+                f"carrier status should be invited, got {carrier.status}"
+            )
+
         await session.commit()
 
         loaded_invite = await service.get_invite_token(invite.token)

@@ -48,6 +48,21 @@ class CarrierRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def update_carrier_status(
+        self,
+        carrier_id: int,
+        status: str,
+    ) -> CarrierCompany:
+        carrier = await self.get_carrier_by_id(carrier_id)
+
+        if carrier is None:
+            raise ValueError("carrier not found")
+
+        carrier.status = status
+        await self.session.flush()
+
+        return carrier
+
     async def list_vehicles_by_carrier(
         self,
         carrier_id: int,
