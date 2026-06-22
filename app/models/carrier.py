@@ -57,6 +57,8 @@ class CarrierCompany(Base):
         DateTime(timezone=True)
     )
 
+    current_profile_step: Mapped[str | None] = mapped_column(String)
+
     internal_note: Mapped[str | None] = mapped_column(Text)
 
     created_at: Mapped[datetime] = mapped_column(

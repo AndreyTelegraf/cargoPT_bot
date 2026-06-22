@@ -114,6 +114,23 @@ class CarrierRepository:
 
         return carrier
 
+
+    async def update_profile_step(
+        self,
+        carrier_id: int,
+        step: str,
+    ) -> CarrierCompany:
+        carrier = await self.get_carrier_by_id(carrier_id)
+
+        if carrier is None:
+            raise ValueError("carrier not found")
+
+        carrier.current_profile_step = step
+
+        await self.session.flush()
+
+        return carrier
+
     async def create_vehicle(
         self,
         vehicle: CarrierVehicle,

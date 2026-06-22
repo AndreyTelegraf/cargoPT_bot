@@ -127,3 +127,14 @@ class CarrierOnboardingService:
             operating_regions=operating_regions,
             completed_at=datetime.now(UTC),
         )
+
+
+    async def advance_profile_step(
+        self,
+        carrier_id: int,
+        step: str,
+    ):
+        return await self.repository.update_profile_step(
+            carrier_id=carrier_id,
+            step=step,
+        )
