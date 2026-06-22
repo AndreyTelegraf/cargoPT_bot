@@ -12,6 +12,7 @@ from app.bot.handlers.volume import router as volume_router
 from app.bot.handlers.tail_lift import router as tail_lift_router
 from app.bot.handlers.crane import router as crane_router
 from app.bot.handlers.mobile_lift import router as mobile_lift_router
+from app.bot.handlers.mobile_lift_floor import router as mobile_lift_floor_router
 
 
 def setup_routers(dp: Dispatcher) -> None:
@@ -25,5 +26,6 @@ def setup_routers(dp: Dispatcher) -> None:
     dp.include_router(tail_lift_router)
     dp.include_router(crane_router)
     dp.include_router(mobile_lift_router)
+    dp.include_router(mobile_lift_floor_router)
     dp.include_router(assembly_router)
     dp.include_router(start_router)
