@@ -58,3 +58,26 @@ class JobOfferService:
             status=JobOfferStatus.DECLINED,
             responded_at=now,
         )
+
+    async def accept_offer_and_assign_job(
+        self,
+        offer_id: int,
+    ) -> JobOffer:
+        now = datetime.now(UTC)
+
+        offer = await self.repository.get_offer_by_id(offer_id)
+
+        if offer is None:
+            raise ValueError("offer not found")
+
+        offer.status = JobOfferStatus.ACCEPTED
+        offer.responded_at = now
+        offer.updated_at = now
+
+        await self.repository.update_job_status(
+            job_id=offer.job_id,
+            status="assigned",
+            updated_at=now,
+        )
+
+        return offer
