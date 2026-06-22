@@ -51,6 +51,8 @@ async def job_comment(
             expires_in_minutes=60,
         )
 
+        media_items = await job_repository.list_media_by_job(job.id)
+
         sent_count = 0
 
         for offer in offers:
@@ -70,6 +72,22 @@ async def job_comment(
                 ),
                 reply_markup=build_offer_keyboard(offer.id),
             )
+
+            for media in media_items:
+                caption = media.caption or f"Медиа к заявке #{job.id}"
+
+                if media.media_type == "photo":
+                    await message.bot.send_photo(
+                        chat_id=carrier.telegram_user_id,
+                        photo=media.telegram_file_id,
+                        caption=caption,
+                    )
+                elif media.media_type == "video":
+                    await message.bot.send_video(
+                        chat_id=carrier.telegram_user_id,
+                        video=media.telegram_file_id,
+                        caption=caption,
+                    )
 
             sent_count += 1
 
