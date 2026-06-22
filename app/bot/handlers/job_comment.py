@@ -1,6 +1,7 @@
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
+from app.bot.offer_keyboard import build_offer_keyboard
 
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
@@ -50,10 +51,32 @@ async def job_comment(
             expires_in_minutes=60,
         )
 
+        sent_count = 0
+
+        for offer in offers:
+            carrier = await carrier_repository.get_carrier_by_vehicle_id(
+                offer.vehicle_id
+            )
+
+            if carrier is None or carrier.telegram_user_id is None:
+                continue
+
+            await message.bot.send_message(
+                chat_id=carrier.telegram_user_id,
+                text=(
+                    "Новая заявка на перевозку.\\n"
+                    f"Заявка #{job.id}.\\n"
+                    "Нажмите кнопку, чтобы принять или отказаться."
+                ),
+                reply_markup=build_offer_keyboard(offer.id),
+            )
+
+            sent_count += 1
+
         await session.commit()
 
     await state.clear()
 
     await message.answer(
-        f"Заявка сохранена. Подходящих перевозчиков найдено: {len(offers)}."
+        f"Заявка сохранена. Офферы отправлены перевозчикам: {sent_count}."
     )

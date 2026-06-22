@@ -215,3 +215,15 @@ class CarrierRepository:
 
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def get_carrier_by_vehicle_id(
+        self,
+        vehicle_id: int,
+    ) -> CarrierCompany | None:
+        stmt = (
+            select(CarrierCompany)
+            .join(CarrierVehicle)
+            .where(CarrierVehicle.id == vehicle_id)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
