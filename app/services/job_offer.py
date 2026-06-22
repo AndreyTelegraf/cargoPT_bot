@@ -36,3 +36,25 @@ class JobOfferService:
         )
 
         return await self.repository.create_offer(offer)
+
+    async def accept_offer(
+        self,
+        offer_id: int,
+    ) -> JobOffer:
+        now = datetime.now(UTC)
+        return await self.repository.update_offer_status(
+            offer_id=offer_id,
+            status=JobOfferStatus.ACCEPTED,
+            responded_at=now,
+        )
+
+    async def decline_offer(
+        self,
+        offer_id: int,
+    ) -> JobOffer:
+        now = datetime.now(UTC)
+        return await self.repository.update_offer_status(
+            offer_id=offer_id,
+            status=JobOfferStatus.DECLINED,
+            responded_at=now,
+        )

@@ -47,3 +47,30 @@ class JobRepository:
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def get_offer_by_id(
+        self,
+        offer_id: int,
+    ) -> JobOffer | None:
+        stmt = select(JobOffer).where(JobOffer.id == offer_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def update_offer_status(
+        self,
+        offer_id: int,
+        status: str,
+        responded_at,
+    ) -> JobOffer:
+        offer = await self.get_offer_by_id(offer_id)
+
+        if offer is None:
+            raise ValueError("offer not found")
+
+        offer.status = status
+        offer.responded_at = responded_at
+        offer.updated_at = responded_at
+
+        await self.session.flush()
+
+        return offer
