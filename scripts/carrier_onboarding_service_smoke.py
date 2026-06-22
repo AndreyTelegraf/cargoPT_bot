@@ -1,0 +1,91 @@
+import asyncio
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine
+
+from app.repositories.carrier import CarrierRepository
+from app.services.carrier_onboarding import CarrierOnboardingService
+
+
+DATA_DIR = PROJECT_ROOT / "data"
+DATABASE_URL = "sqlite+aiosqlite:///data/cargopt_dev.db"
+
+
+def run(cmd: list[str]) -> None:
+    subprocess.run(cmd, cwd=PROJECT_ROOT, check=True)
+
+
+def reset_db() -> None:
+    if DATA_DIR.exists():
+        shutil.rmtree(DATA_DIR)
+    DATA_DIR.mkdir(exist_ok=True)
+
+
+async def exercise_service() -> None:
+    engine = create_async_engine(DATABASE_URL)
+    session_maker = async_sessionmaker(engine, expire_on_commit=False)
+
+    async with session_maker() as session:
+        repository = CarrierRepository(session)
+        service = CarrierOnboardingService(repository)
+
+        carrier = await service.create_draft_carrier(
+            company_name="Service Smoke Carrier",
+            contact_name="Service Contact",
+            phone="+351900000002",
+            internal_note="service smoke",
+        )
+
+        if carrier.id is None:
+            raise SystemExit("carrier id was not assigned")
+        if carrier.status != "draft":
+            raise SystemExit(f"unexpected carrier status: {carrier.status}")
+
+        invite = await service.create_invite_token(
+            carrier_id=carrier.id,
+            created_by_admin_id=1001,
+            expires_in_days=7,
+        )
+
+        if not invite.token:
+            raise SystemExit("invite token is empty")
+        if invite.status != "active":
+            raise SystemExit(f"unexpected invite status: {invite.status}")
+
+        await session.commit()
+
+        loaded_invite = await service.get_invite_token(invite.token)
+        if loaded_invite is None:
+            raise SystemExit("loaded invite missing")
+        if loaded_invite.carrier_id != carrier.id:
+            raise SystemExit("loaded invite carrier mismatch")
+
+    await engine.dispose()
+
+
+def main() -> None:
+    os.environ["BOT_TOKEN"] = "carrier-onboarding-service-smoke-token"
+    os.environ["DATABASE_URL"] = DATABASE_URL
+    os.environ["ENVIRONMENT"] = "carrier-onboarding-service-smoke"
+    os.environ["LOG_LEVEL"] = "INFO"
+
+    reset_db()
+    run([".venv/bin/alembic", "upgrade", "head"])
+
+    asyncio.run(exercise_service())
+
+    shutil.rmtree(DATA_DIR)
+
+    print("CARRIER_ONBOARDING_SERVICE_SMOKE_OK")
+
+
+if __name__ == "__main__":
+    main()

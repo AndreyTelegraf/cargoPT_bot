@@ -1,0 +1,66 @@
+from datetime import UTC
+from datetime import datetime
+from datetime import timedelta
+from secrets import token_urlsafe
+
+from app.models.carrier import AdminInviteToken
+from app.models.carrier import CarrierCompany
+from app.repositories.carrier import CarrierRepository
+
+
+class CarrierOnboardingService:
+    def __init__(self, repository: CarrierRepository) -> None:
+        self.repository = repository
+
+    async def create_draft_carrier(
+        self,
+        *,
+        company_name: str,
+        contact_name: str | None = None,
+        phone: str | None = None,
+        paid_until: datetime | None = None,
+        internal_note: str | None = None,
+    ) -> CarrierCompany:
+        now = datetime.now(UTC)
+
+        carrier = CarrierCompany(
+            company_name=company_name,
+            contact_name=contact_name,
+            phone=phone,
+            telegram_user_id=None,
+            status="draft",
+            paid_until=paid_until,
+            internal_note=internal_note,
+            created_at=now,
+            updated_at=now,
+        )
+
+        return await self.repository.create_carrier(carrier)
+
+    async def create_invite_token(
+        self,
+        *,
+        carrier_id: int,
+        created_by_admin_id: int,
+        expires_in_days: int = 7,
+    ) -> AdminInviteToken:
+        now = datetime.now(UTC)
+
+        invite = AdminInviteToken(
+            token=token_urlsafe(32),
+            carrier_id=carrier_id,
+            created_by_admin_id=created_by_admin_id,
+            expires_at=now + timedelta(days=expires_in_days),
+            used_at=None,
+            used_by_telegram_id=None,
+            status="active",
+            created_at=now,
+        )
+
+        return await self.repository.create_invite_token(invite)
+
+    async def get_invite_token(
+        self,
+        token: str,
+    ) -> AdminInviteToken | None:
+        return await self.repository.get_invite_token(token)
