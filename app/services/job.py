@@ -115,3 +115,15 @@ class JobService:
             required_loaders=required_loaders,
             updated_at=datetime.now(UTC),
         )
+
+    async def update_needs_tail_lift(
+        self,
+        *,
+        job_id: int,
+        needs_tail_lift: bool,
+    ) -> Job:
+        return await self.repository.update_needs_tail_lift(
+            job_id=job_id,
+            needs_tail_lift=needs_tail_lift,
+            updated_at=datetime.now(UTC),
+        )
