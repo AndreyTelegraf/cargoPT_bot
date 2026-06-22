@@ -14,6 +14,9 @@ EXPECTED_TABLES = {
     "admin_invite_token",
     "carrier_company",
     "carrier_vehicle",
+    "job",
+    "job_address",
+    "job_item",
 }
 
 
