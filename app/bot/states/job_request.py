@@ -6,6 +6,7 @@ class JobRequestStates(StatesGroup):
     pickup_address = State()
     dropoff_address = State()
     item_description = State()
+    media = State()
     estimated_payload_kg = State()
     estimated_volume_m3 = State()
     required_loaders = State()

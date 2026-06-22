@@ -50,6 +50,7 @@ class Job(Base):
 
     addresses = relationship("JobAddress", back_populates="job")
     items = relationship("JobItem", back_populates="job")
+    media = relationship("JobMedia", back_populates="job")
 
 
 class JobAddress(Base):
@@ -80,6 +81,28 @@ class JobAddress(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     job = relationship("Job", back_populates="addresses")
+
+
+
+class JobMedia(Base):
+    __tablename__ = "job_media"
+
+    __table_args__ = (
+        Index("ix_job_media_job_id", "job_id"),
+        Index("ix_job_media_media_type", "media_type"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    job_id: Mapped[int] = mapped_column(ForeignKey("job.id"), nullable=False)
+
+    media_type: Mapped[str] = mapped_column(String, nullable=False)
+    telegram_file_id: Mapped[str] = mapped_column(String, nullable=False)
+    caption: Mapped[str | None] = mapped_column(Text)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    job = relationship("Job", back_populates="media")
 
 
 class JobItem(Base):

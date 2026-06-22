@@ -5,6 +5,7 @@ from app.domain.job_status import JobStatus
 from app.models.job import Job
 from app.models.job import JobAddress
 from app.models.job import JobItem
+from app.models.job import JobMedia
 from app.repositories.job import JobRepository
 
 
@@ -164,3 +165,21 @@ class JobService:
             status=JobStatus.READY_FOR_MATCHING,
             updated_at=datetime.now(UTC),
         )
+
+    async def add_media(
+        self,
+        *,
+        job_id: int,
+        media_type: str,
+        telegram_file_id: str,
+        caption: str | None = None,
+    ) -> JobMedia:
+        media = JobMedia(
+            job_id=job_id,
+            media_type=media_type,
+            telegram_file_id=telegram_file_id,
+            caption=caption,
+            created_at=datetime.now(UTC),
+        )
+
+        return await self.repository.add_media(media)

@@ -17,6 +17,7 @@ EXPECTED_TABLES = {
     "job",
     "job_address",
     "job_item",
+    "job_media",
     "job_offer",
 }
 

@@ -36,8 +36,8 @@ async def job_item_description(
 
         await session.commit()
 
-    await state.set_state(JobRequestStates.estimated_payload_kg)
+    await state.set_state(JobRequestStates.media)
 
     await message.answer(
-        "Примерный вес груза в кг? Если не знаете — напишите 0."
+        "Пришлите фото или видео груза. Если медиа нет — напишите '-'."
     )

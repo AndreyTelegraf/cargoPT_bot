@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.job import Job
 from app.models.job import JobAddress
 from app.models.job import JobItem
+from app.models.job import JobMedia
 from app.models.job import JobOffer
 
 
@@ -220,3 +221,20 @@ class JobRepository:
         await self.session.flush()
 
         return job
+
+    async def add_media(self, media: JobMedia) -> JobMedia:
+        self.session.add(media)
+        await self.session.flush()
+        return media
+
+    async def list_media_by_job(
+        self,
+        job_id: int,
+    ) -> list[JobMedia]:
+        stmt = (
+            select(JobMedia)
+            .where(JobMedia.job_id == job_id)
+            .order_by(JobMedia.id)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
