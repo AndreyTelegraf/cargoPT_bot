@@ -73,19 +73,19 @@ async def exercise_repository() -> None:
             )
         )
 
-        session.add(
+        await repo.create_vehicle(
             CarrierVehicle(
                 carrier_id=carrier.id,
                 vehicle_type="medium_van",
                 payload_kg=1200,
                 volume_m3=12.5,
                 has_tail_lift=True,
-                has_crane=False,
-                has_mobile_lift=False,
-                mobile_lift_max_floor=None,
-                mobile_lift_max_weight_kg=None,
-                crane_max_weight_kg=None,
-                crane_reach_meters=None,
+                has_crane=True,
+                has_mobile_lift=True,
+                mobile_lift_max_floor=8,
+                mobile_lift_max_weight_kg=400,
+                crane_max_weight_kg=1200,
+                crane_reach_meters=18.0,
                 is_active=True,
                 created_at=now,
                 updated_at=now,
@@ -120,6 +120,21 @@ async def exercise_repository() -> None:
             raise SystemExit(f"expected 1 vehicle, got {len(vehicles)}")
         if vehicles[0].vehicle_type != "medium_van":
             raise SystemExit("vehicle_type mismatch")
+
+        if not vehicles[0].has_tail_lift:
+            raise SystemExit("tail lift mismatch")
+
+        if not vehicles[0].has_crane:
+            raise SystemExit("crane mismatch")
+
+        if not vehicles[0].has_mobile_lift:
+            raise SystemExit("mobile lift mismatch")
+
+        if vehicles[0].mobile_lift_max_floor != 8:
+            raise SystemExit("mobile lift floor mismatch")
+
+        if vehicles[0].crane_max_weight_kg != 1200:
+            raise SystemExit("crane weight mismatch")
 
     await engine.dispose()
 

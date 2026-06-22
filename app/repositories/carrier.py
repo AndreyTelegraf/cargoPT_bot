@@ -113,6 +113,14 @@ class CarrierRepository:
 
         return carrier
 
+    async def create_vehicle(
+        self,
+        vehicle: CarrierVehicle,
+    ) -> CarrierVehicle:
+        self.session.add(vehicle)
+        await self.session.flush()
+        return vehicle
+
     async def list_vehicles_by_carrier(
         self,
         carrier_id: int,
