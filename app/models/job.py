@@ -1,0 +1,103 @@
+from datetime import datetime
+
+from sqlalchemy import Boolean
+from sqlalchemy import DateTime
+from sqlalchemy import Float
+from sqlalchemy import ForeignKey
+from sqlalchemy import Index
+from sqlalchemy import Integer
+from sqlalchemy import String
+from sqlalchemy import Text
+from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import relationship
+
+from app.db.base import Base
+
+
+class Job(Base):
+    __tablename__ = "job"
+
+    __table_args__ = (
+        Index("ix_job_status", "status"),
+        Index("ix_job_client_telegram_user_id", "client_telegram_user_id"),
+        Index("ix_job_requested_date", "requested_date"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    client_telegram_user_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String, nullable=False)
+
+    requested_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    needs_assembly: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    needs_packing: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    needs_tail_lift: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    needs_crane: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    needs_mobile_lift: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    required_loaders: Mapped[int | None] = mapped_column(Integer)
+
+    estimated_payload_kg: Mapped[int | None] = mapped_column(Integer)
+    estimated_volume_m3: Mapped[float | None] = mapped_column(Float)
+
+    comment: Mapped[str | None] = mapped_column(Text)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    addresses = relationship("JobAddress", back_populates="job")
+    items = relationship("JobItem", back_populates="job")
+
+
+class JobAddress(Base):
+    __tablename__ = "job_address"
+
+    __table_args__ = (
+        Index("ix_job_address_job_id", "job_id"),
+        Index("ix_job_address_kind", "kind"),
+        Index("ix_job_address_city", "city"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    job_id: Mapped[int] = mapped_column(ForeignKey("job.id"), nullable=False)
+    kind: Mapped[str] = mapped_column(String, nullable=False)
+
+    raw_text: Mapped[str] = mapped_column(Text, nullable=False)
+    city: Mapped[str | None] = mapped_column(String)
+    postal_code: Mapped[str | None] = mapped_column(String)
+
+    floor: Mapped[int | None] = mapped_column(Integer)
+    has_elevator: Mapped[bool | None] = mapped_column(Boolean)
+
+    latitude: Mapped[float | None] = mapped_column(Float)
+    longitude: Mapped[float | None] = mapped_column(Float)
+    map_url: Mapped[str | None] = mapped_column(Text)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    job = relationship("Job", back_populates="addresses")
+
+
+class JobItem(Base):
+    __tablename__ = "job_item"
+
+    __table_args__ = (
+        Index("ix_job_item_job_id", "job_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    job_id: Mapped[int] = mapped_column(ForeignKey("job.id"), nullable=False)
+
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    quantity: Mapped[int | None] = mapped_column(Integer)
+    estimated_weight_kg: Mapped[int | None] = mapped_column(Integer)
+    estimated_volume_m3: Mapped[float | None] = mapped_column(Float)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    job = relationship("Job", back_populates="items")
