@@ -127,3 +127,15 @@ class JobService:
             needs_tail_lift=needs_tail_lift,
             updated_at=datetime.now(UTC),
         )
+
+    async def update_needs_crane(
+        self,
+        *,
+        job_id: int,
+        needs_crane: bool,
+    ) -> Job:
+        return await self.repository.update_needs_crane(
+            job_id=job_id,
+            needs_crane=needs_crane,
+            updated_at=datetime.now(UTC),
+        )
