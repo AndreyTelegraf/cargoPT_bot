@@ -78,6 +78,7 @@ async def exercise_service() -> None:
         if loaded_invite.carrier_id != carrier.id:
             raise SystemExit("loaded invite carrier mismatch")
 
+
     await engine.dispose()
 
 
@@ -95,6 +96,7 @@ def main() -> None:
     shutil.rmtree(DATA_DIR)
 
     print("CARRIER_ONBOARDING_SERVICE_SMOKE_OK")
+
 
 
 if __name__ == "__main__":
