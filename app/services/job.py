@@ -151,3 +151,16 @@ class JobService:
             needs_mobile_lift=needs_mobile_lift,
             updated_at=datetime.now(UTC),
         )
+
+    async def finalize_for_matching(
+        self,
+        *,
+        job_id: int,
+        comment: str | None,
+    ) -> Job:
+        return await self.repository.update_comment_and_status(
+            job_id=job_id,
+            comment=comment,
+            status=JobStatus.READY_FOR_MATCHING,
+            updated_at=datetime.now(UTC),
+        )
