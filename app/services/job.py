@@ -7,6 +7,8 @@ from app.models.job import JobAddress
 from app.models.job import JobItem
 from app.models.job import JobMedia
 from app.repositories.job import JobRepository
+from app.services.location_normalization import build_google_maps_coordinate_url
+from app.services.location_normalization import normalize_text_location
 
 
 class JobService:
@@ -50,18 +52,26 @@ class JobService:
         job_id: int,
         kind: str,
         raw_text: str,
+        latitude: float | None = None,
+        longitude: float | None = None,
     ) -> JobAddress:
+        if latitude is not None and longitude is not None:
+            normalized_text = raw_text.strip() or f"{latitude}, {longitude}"
+            map_url = build_google_maps_coordinate_url(latitude, longitude)
+        else:
+            normalized_text, map_url = normalize_text_location(raw_text)
+
         address = JobAddress(
             job_id=job_id,
             kind=kind,
-            raw_text=raw_text,
+            raw_text=normalized_text,
             city=None,
             postal_code=None,
             floor=None,
             has_elevator=None,
-            latitude=None,
-            longitude=None,
-            map_url=None,
+            latitude=latitude,
+            longitude=longitude,
+            map_url=map_url,
             created_at=datetime.now(UTC),
         )
 

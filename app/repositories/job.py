@@ -27,6 +27,18 @@ class JobRepository:
         await self.session.flush()
         return address
 
+    async def list_addresses_by_job(
+        self,
+        job_id: int,
+    ) -> list[JobAddress]:
+        stmt = (
+            select(JobAddress)
+            .where(JobAddress.job_id == job_id)
+            .order_by(JobAddress.id)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
     async def add_item(self, item: JobItem) -> JobItem:
         self.session.add(item)
         await self.session.flush()

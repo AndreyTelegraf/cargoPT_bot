@@ -1,3 +1,4 @@
+from aiogram import F
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
@@ -10,15 +11,22 @@ from app.services.job import JobService
 router = Router()
 
 
-@router.message(JobRequestStates.dropoff_address)
+@router.message(JobRequestStates.dropoff_address, F.text | F.location)
 async def job_dropoff_address(
     message: Message,
     state: FSMContext,
 ) -> None:
     raw_text = (message.text or "").strip()
+    latitude = None
+    longitude = None
+
+    if message.location:
+        latitude = message.location.latitude
+        longitude = message.location.longitude
+        raw_text = f"Telegram location: {latitude}, {longitude}"
 
     if not raw_text:
-        await message.answer("Укажите адрес или ссылку на геолокацию.")
+        await message.answer("Укажите адрес, ссылку на Google Maps или отправьте геолокацию Telegram.")
         return
 
     data = await state.get_data()
@@ -32,6 +40,8 @@ async def job_dropoff_address(
             job_id=job_id,
             kind="dropoff",
             raw_text=raw_text,
+            latitude=latitude,
+            longitude=longitude,
         )
 
         await session.commit()

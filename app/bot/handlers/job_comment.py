@@ -17,6 +17,19 @@ from app.services.offer_distribution import OfferDistributionService
 router = Router()
 
 
+def _format_address(label: str, raw_text: str | None, map_url: str | None) -> str:
+    value = raw_text or "не указан"
+    if map_url:
+        return f"{label}: {value}\nКарта: {map_url}"
+    return f"{label}: {value}"
+
+
+def _format_requested_date(value) -> str:
+    if value is None:
+        return "Дата и время: не указаны"
+    return f"Дата и время: {value}"
+
+
 @router.message(JobRequestStates.comment)
 async def job_comment(
     message: Message,
@@ -53,6 +66,9 @@ async def job_comment(
         )
 
         media_items = await job_repository.list_media_by_job(job.id)
+        addresses = await job_repository.list_addresses_by_job(job.id)
+        pickup = next((item for item in addresses if item.kind == "pickup"), None)
+        dropoff = next((item for item in addresses if item.kind == "dropoff"), None)
 
         sent_count = 0
 
@@ -69,6 +85,9 @@ async def job_comment(
                 text=(
                     "Новая заявка на перевозку.\\n"
                     f"Заявка #{job.id}.\\n"
+                    f"{_format_requested_date(job.requested_date)}\\n"
+                    f"{_format_address('Откуда', pickup.raw_text if pickup else None, pickup.map_url if pickup else None)}\\n"
+                    f"{_format_address('Куда', dropoff.raw_text if dropoff else None, dropoff.map_url if dropoff else None)}\\n"
                     f"Клиент: @{job.client_telegram_username or 'username_missing'}.\\n"
                     f"Телефон: {job.client_phone or 'не указан'}.\\n"
                     f"WhatsApp: {job.client_whatsapp or 'не указан'}.\\n"
