@@ -175,3 +175,43 @@ class CarrierRepository:
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def search_available_vehicles(
+        self,
+        *,
+        min_payload_kg: int | None = None,
+        min_volume_m3: float | None = None,
+        needs_tail_lift: bool = False,
+        needs_crane: bool = False,
+        needs_mobile_lift: bool = False,
+    ) -> list[CarrierVehicle]:
+        stmt = (
+            select(CarrierVehicle)
+            .join(CarrierCompany)
+            .where(CarrierVehicle.is_active.is_(True))
+            .where(CarrierCompany.status == CarrierStatus.PROFILE_COMPLETED)
+        )
+
+        if min_payload_kg is not None:
+            stmt = stmt.where(CarrierVehicle.payload_kg >= min_payload_kg)
+
+        if min_volume_m3 is not None:
+            stmt = stmt.where(CarrierVehicle.volume_m3 >= min_volume_m3)
+
+        if needs_tail_lift:
+            stmt = stmt.where(CarrierVehicle.has_tail_lift.is_(True))
+
+        if needs_crane:
+            stmt = stmt.where(CarrierVehicle.has_crane.is_(True))
+
+        if needs_mobile_lift:
+            stmt = stmt.where(CarrierVehicle.has_mobile_lift.is_(True))
+
+        stmt = stmt.order_by(
+            CarrierVehicle.payload_kg,
+            CarrierVehicle.volume_m3,
+            CarrierVehicle.id,
+        )
+
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

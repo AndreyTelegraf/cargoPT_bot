@@ -1,0 +1,154 @@
+import asyncio
+import os
+import shutil
+import subprocess
+import sys
+from datetime import UTC
+from datetime import datetime
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine
+
+from app.domain.carrier_status import CarrierStatus
+from app.models.carrier import CarrierCompany
+from app.models.carrier import CarrierVehicle
+from app.repositories.carrier import CarrierRepository
+from app.services.carrier_search import CarrierSearchService
+
+DATA_DIR = PROJECT_ROOT / "data"
+DATABASE_URL = "sqlite+aiosqlite:///data/cargopt_dev.db"
+
+
+def run(cmd: list[str]) -> None:
+    subprocess.run(cmd, cwd=PROJECT_ROOT, check=True)
+
+
+def reset_db() -> None:
+    if DATA_DIR.exists():
+        shutil.rmtree(DATA_DIR)
+    DATA_DIR.mkdir(exist_ok=True)
+
+
+async def exercise_search() -> None:
+    engine = create_async_engine(DATABASE_URL)
+    session_maker = async_sessionmaker(engine, expire_on_commit=False)
+    now = datetime.now(UTC)
+
+    async with session_maker() as session:
+        repo = CarrierRepository(session)
+
+        active = await repo.create_carrier(
+            CarrierCompany(
+                company_name="Active Carrier",
+                contact_name=None,
+                phone=None,
+                telegram_user_id=1001,
+                status=CarrierStatus.PROFILE_COMPLETED,
+                paid_until=None,
+                assembly_required=False,
+                packing_required=False,
+                operating_regions="Lisboa, Porto",
+                profile_completed_at=now,
+                current_profile_step=None,
+                internal_note=None,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+
+        inactive = await repo.create_carrier(
+            CarrierCompany(
+                company_name="Draft Carrier",
+                contact_name=None,
+                phone=None,
+                telegram_user_id=1002,
+                status=CarrierStatus.DRAFT,
+                paid_until=None,
+                assembly_required=False,
+                packing_required=False,
+                operating_regions="Lisboa",
+                profile_completed_at=None,
+                current_profile_step=None,
+                internal_note=None,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+
+        await repo.create_vehicle(
+            CarrierVehicle(
+                carrier_id=active.id,
+                vehicle_type="large_van",
+                payload_kg=1200,
+                volume_m3=14.0,
+                has_tail_lift=True,
+                has_crane=False,
+                has_mobile_lift=False,
+                mobile_lift_max_floor=None,
+                mobile_lift_max_weight_kg=None,
+                crane_max_weight_kg=None,
+                crane_reach_meters=None,
+                is_active=True,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+
+        await repo.create_vehicle(
+            CarrierVehicle(
+                carrier_id=inactive.id,
+                vehicle_type="large_van",
+                payload_kg=3000,
+                volume_m3=30.0,
+                has_tail_lift=True,
+                has_crane=True,
+                has_mobile_lift=True,
+                mobile_lift_max_floor=6,
+                mobile_lift_max_weight_kg=300,
+                crane_max_weight_kg=1000,
+                crane_reach_meters=10,
+                is_active=True,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+
+        await session.commit()
+
+        search = CarrierSearchService(repo)
+
+        matches = await search.find_matching_vehicles(
+            min_payload_kg=1000,
+            min_volume_m3=10,
+            needs_tail_lift=True,
+        )
+
+        if len(matches) != 1:
+            raise SystemExit(f"expected 1 match, got {len(matches)}")
+
+        if matches[0].carrier_id != active.id:
+            raise SystemExit("matched wrong carrier")
+
+    await engine.dispose()
+
+
+def main() -> None:
+    os.environ["BOT_TOKEN"] = "123456:TESTTOKEN"
+    os.environ["DATABASE_URL"] = DATABASE_URL
+    os.environ["ENVIRONMENT"] = "carrier-search-smoke"
+    os.environ["LOG_LEVEL"] = "INFO"
+
+    reset_db()
+    run([".venv/bin/alembic", "upgrade", "head"])
+    asyncio.run(exercise_search())
+    shutil.rmtree(DATA_DIR)
+
+    print("CARRIER_SEARCH_SMOKE_OK")
+
+
+if __name__ == "__main__":
+    main()
