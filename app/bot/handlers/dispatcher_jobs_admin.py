@@ -27,6 +27,7 @@ STATUS_LABELS = {
     "matching": "поиск перевозчика",
     "offered": "отправлена перевозчикам",
     "unmatched": "перевозчик не найден",
+    "assigned_pending_confirmation": "ожидает подтверждения сделки",
     "assigned": "перевозчик назначен",
     "in_progress": "в работе",
     "completed": "завершена",

@@ -34,6 +34,7 @@ job = SimpleNamespace(
 line = _format_job_line(job)
 assert _format_status("offered") == "отправлена перевозчикам"
 assert _format_status("unmatched") == "перевозчик не найден"
+assert _format_status("assigned_pending_confirmation") == "ожидает подтверждения сделки"
 assert _format_status("assigned") == "перевозчик назначен"
 assert _format_status("unknown_status") == "unknown_status"
 assert "<b>#42</b> — перевозчик назначен — @client_user" in line
