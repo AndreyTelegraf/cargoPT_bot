@@ -151,12 +151,15 @@ def main() -> None:
     offer_response_source = Path("app/bot/handlers/job_offer_response.py").read_text(encoding="utf-8")
     assignment_source = Path("app/bot/handlers/job_assignment_confirmation.py").read_text(encoding="utf-8")
     comment_source = Path("app/bot/handlers/job_comment.py").read_text(encoding="utf-8")
+    notification_source = Path("app/services/offer_notification.py").read_text(encoding="utf-8")
 
     assert "_delete_message_safely" in offer_response_source
     assert "await message.delete()" in offer_response_source
     assert "_delete_message_by_id_safely" in assignment_source
     assert "bot.delete_message" in assignment_source
-    assert "update_offer_carrier_message" in comment_source
+    assert "send_job_offers_to_carriers" in comment_source
+    assert "update_offer_carrier_message" in notification_source
+    assert "build_offer_text" in notification_source
 
     print("JOB_OFFER_CLEANUP_SMOKE_OK")
 
