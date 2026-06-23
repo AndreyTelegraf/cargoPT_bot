@@ -13,6 +13,14 @@ ASSIGNMENT_CONFIRMATION_CONFIRMED = "confirmed"
 ASSIGNMENT_CONFIRMATION_FAILED = "failed"
 
 
+def build_assignment_status_from_action(action: str) -> str:
+    if action == "confirm":
+        return ASSIGNMENT_CONFIRMATION_CONFIRMED
+    if action == "fail":
+        return ASSIGNMENT_CONFIRMATION_FAILED
+    raise InvalidAssignmentConfirmationStatusError("invalid assignment action")
+
+
 class InvalidAssignmentConfirmationActorError(ValueError):
     pass
 

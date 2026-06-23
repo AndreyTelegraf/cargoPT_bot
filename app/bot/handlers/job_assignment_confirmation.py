@@ -7,11 +7,10 @@ from app.db.session import async_session_maker
 from app.domain.job_status import JobStatus
 from app.repositories.job import JobRepository
 from app.services.carrier_search import CarrierSearchService
-from app.services.assignment_confirmation import ASSIGNMENT_CONFIRMATION_CONFIRMED
-from app.services.assignment_confirmation import ASSIGNMENT_CONFIRMATION_FAILED
+from app.services.assignment_confirmation import build_assignment_result_text
+from app.services.assignment_confirmation import build_assignment_status_from_action
 from app.services.assignment_confirmation import record_assignment_confirmation
 from app.services.assignment_confirmation import resolve_assignment_actor
-from app.services.assignment_confirmation import build_assignment_result_text
 from app.services.job import InvalidJobStatusTransitionError
 from app.services.job import JobService
 from app.services.job_matching import JobMatchingService
@@ -83,11 +82,7 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
             await callback.answer("Статус заявки уже изменён.", show_alert=True)
             return
 
-        confirmation_status = (
-            ASSIGNMENT_CONFIRMATION_CONFIRMED
-            if action == "confirm"
-            else ASSIGNMENT_CONFIRMATION_FAILED
-        )
+        confirmation_status = build_assignment_status_from_action(action)
 
         try:
             updated_job = await record_assignment_confirmation(
