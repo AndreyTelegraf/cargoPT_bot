@@ -58,9 +58,18 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
                 await callback.bot.send_message(
                     chat_id=job.client_telegram_user_id,
                     text=(
-                        "Перевозчик принял вашу заявку.\\n"
-                        f"Заявка #{job.id}.\\n"
+                        "Перевозчик принял вашу заявку.\n"
+                        f"Заявка #{job.id}.\n"
                         "Мы свяжем вас с перевозчиком на следующем шаге."
+                    ),
+                )
+                await callback.bot.send_message(
+                    chat_id=telegram_user_id,
+                    text=(
+                        f"Заявка #{job.id} закреплена за вами.\n\n"
+                        f"Клиент: @{job.client_telegram_username or 'username_missing'}\n"
+                        f"Телефон: {job.client_phone or 'не указан'}\n"
+                        f"WhatsApp: {job.client_whatsapp or 'не указан'}"
                     ),
                 )
         else:
@@ -70,6 +79,10 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
         await session.commit()
 
     if callback.message:
-        await callback.message.edit_text(message_text)
+        try:
+            await callback.message.edit_reply_markup(reply_markup=None)
+        except Exception:
+            pass
+        await callback.message.answer(message_text)
 
     await callback.answer()
