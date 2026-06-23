@@ -118,3 +118,25 @@ async def record_assignment_confirmation(
     )
 
     return await evaluate_assignment_confirmation(service, job_id=job_id)
+
+
+def build_assignment_result_text(*, job_id: int, action: str, job_status: str) -> str:
+    if job_status == JobStatus.ASSIGNED:
+        return f"Сделка по заявке №{job_id} подтверждена обеими сторонами."
+
+    if job_status == JobStatus.READY_FOR_MATCHING:
+        return (
+            f"По заявке №{job_id} сделка не состоялась. "
+            "Заявка возвращена в активный поиск."
+        )
+
+    if action == "confirm":
+        return (
+            f"Ваше подтверждение по заявке №{job_id} принято. "
+            "Ждём ответ второй стороны."
+        )
+
+    return (
+        f"Ваш ответ по заявке №{job_id} принят. "
+        "Заявка будет возвращена в активный поиск."
+    )

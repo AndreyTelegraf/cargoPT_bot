@@ -11,6 +11,7 @@ from app.services.assignment_confirmation import ASSIGNMENT_CONFIRMATION_CONFIRM
 from app.services.assignment_confirmation import ASSIGNMENT_CONFIRMATION_FAILED
 from app.services.assignment_confirmation import record_assignment_confirmation
 from app.services.assignment_confirmation import resolve_assignment_actor
+from app.services.assignment_confirmation import build_assignment_result_text
 from app.services.job import InvalidJobStatusTransitionError
 from app.services.job import JobService
 from app.services.job_matching import JobMatchingService
@@ -43,28 +44,6 @@ def _parse_assignment_callback(data: str) -> tuple[str, int]:
         raise ValueError("invalid assignment action")
 
     return action, job_id
-
-
-def _build_result_text(*, job_id: int, action: str, job_status: str) -> str:
-    if job_status == JobStatus.ASSIGNED:
-        return f"Сделка по заявке №{job_id} подтверждена обеими сторонами."
-
-    if job_status == JobStatus.READY_FOR_MATCHING:
-        return (
-            f"По заявке №{job_id} сделка не состоялась. "
-            "Заявка возвращена в активный поиск."
-        )
-
-    if action == "confirm":
-        return (
-            f"Ваше подтверждение по заявке №{job_id} принято. "
-            "Ждём ответ второй стороны."
-        )
-
-    return (
-        f"Ваш ответ по заявке №{job_id} принят. "
-        "Заявка будет возвращена в активный поиск."
-    )
 
 
 @router.callback_query(F.data.startswith("assignment:"))
@@ -117,7 +96,7 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
                 actor=actor,
                 status=confirmation_status,
             )
-            result_text = _build_result_text(
+            result_text = build_assignment_result_text(
                 job_id=job_id,
                 action=action,
                 job_status=updated_job.status,
