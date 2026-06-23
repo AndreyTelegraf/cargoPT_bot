@@ -70,3 +70,9 @@ def datetime_keyboard() -> ReplyKeyboardMarkup:
         ["В ближайшие дни"],
         ["Укажу дату текстом"],
     ])
+
+
+def client_entry_keyboard() -> ReplyKeyboardMarkup:
+    return _keyboard([
+        ["Помощь", "Мои объявления"],
+    ])
