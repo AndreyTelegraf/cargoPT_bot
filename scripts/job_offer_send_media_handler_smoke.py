@@ -18,6 +18,8 @@ source = Path("app/bot/handlers/job_comment.py").read_text(encoding="utf-8")
 assert "list_media_by_job" in source
 assert "send_photo" in source
 assert "send_video" in source
-assert "Медиа к заявке" in source
+assert "send_media_group" in source
+assert "caption=offer_text" in source
+assert "Решение по заявке" in source
 
 print("JOB_OFFER_SEND_MEDIA_HANDLER_SMOKE_OK")
