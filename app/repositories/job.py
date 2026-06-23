@@ -22,6 +22,11 @@ class JobRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def list_recent_jobs(self, limit: int = 20) -> list[Job]:
+        stmt = select(Job).order_by(Job.id.desc()).limit(limit)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
     async def add_address(self, address: JobAddress) -> JobAddress:
         self.session.add(address)
         await self.session.flush()
