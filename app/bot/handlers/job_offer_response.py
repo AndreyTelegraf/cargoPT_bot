@@ -3,6 +3,7 @@ import html
 from aiogram import F
 from aiogram import Router
 from aiogram.types import CallbackQuery
+from aiogram.types import Message
 
 from app.db.session import async_session_maker
 from app.repositories.carrier import CarrierRepository
@@ -54,6 +55,18 @@ def _build_carrier_notification_text(job, carrier) -> str:
         f"WhatsApp: {_safe(job.client_whatsapp or 'не указан')}\n\n"
         "Свяжитесь с клиентом для уточнения деталей."
     )
+
+
+async def _finalize_offer_message(message: Message, text: str) -> None:
+    if message.text is not None:
+        await message.edit_text(text, parse_mode="HTML", reply_markup=None)
+        return
+
+    if message.caption is not None:
+        await message.edit_caption(caption=text, parse_mode="HTML", reply_markup=None)
+        return
+
+    await message.edit_reply_markup(reply_markup=None)
 
 
 def _parse_offer_callback(data: str) -> tuple[str, int]:
@@ -114,6 +127,6 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
         await session.commit()
 
     if callback.message:
-        await callback.message.edit_text(message_text, parse_mode="HTML")
+        await _finalize_offer_message(callback.message, message_text)
 
     await callback.answer()
