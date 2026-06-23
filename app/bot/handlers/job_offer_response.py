@@ -35,26 +35,24 @@ def _telegram_user_link(user_id: int | None, label: str) -> str:
 def _build_client_notification_text(job, carrier) -> str:
     carrier_name = carrier.contact_name or carrier.company_name or "перевозчик"
     return (
-        f"Перевозчик принял вашу заявку #{job.id}.\\n\\n"
-        "Я познакомил вас с перевозчиком. Напишите ему в Telegram или по телефону, "
-        "если нужно уточнить детали перевозки.\\n\\n"
-        f"Компания: {_safe(carrier.company_name or 'не указана')}\\n"
-        f"Контактное лицо: {_safe(carrier.contact_name or 'не указано')}\\n"
-        f"Телефон: {_safe(carrier.phone or 'не указан')}\\n"
-        f"Telegram: {_telegram_user_link(carrier.telegram_user_id, carrier_name)}"
+        f"Перевозчик найден и принял заказ №{job.id}.\n\n"
+        f"Компания: {_safe(carrier.company_name or 'не указана')}\n"
+        f"Контакт: {_safe(carrier.contact_name or 'не указано')}\n"
+        f"Telegram: {_telegram_user_link(carrier.telegram_user_id, carrier_name)}\n"
+        f"Телефон: {_safe(carrier.phone or 'не указан')}\n\n"
+        "Теперь вы можете связаться напрямую."
     )
 
 
 def _build_carrier_notification_text(job, carrier) -> str:
     client_label = job.client_telegram_username or "клиент"
     return (
-        f"Вы приняли заказ #{job.id}.\\n\\n"
-        "Я познакомил вас с клиентом. Напишите ему в Telegram или по телефону, "
-        "если нужно уточнить детали перевозки.\\n\\n"
-        f"Клиент: {_telegram_user_link(job.client_telegram_user_id, client_label)}\\n"
-        f"Username: {_format_telegram_username(job.client_telegram_username)}\\n"
-        f"Телефон: {_safe(job.client_phone or 'не указан')}\\n"
-        f"WhatsApp: {_safe(job.client_whatsapp or 'не указан')}"
+        f"Заказ №{job.id} закреплён за вами.\n\n"
+        f"Клиент: {_telegram_user_link(job.client_telegram_user_id, client_label)}\n"
+        f"Username: {_format_telegram_username(job.client_telegram_username)}\n"
+        f"Телефон: {_safe(job.client_phone or 'не указан')}\n"
+        f"WhatsApp: {_safe(job.client_whatsapp or 'не указан')}\n\n"
+        "Свяжитесь с клиентом для уточнения деталей."
     )
 
 
