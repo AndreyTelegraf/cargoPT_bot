@@ -52,24 +52,15 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
         if action == "accept":
             accepted_offer = await offer_service.accept_offer_and_assign_job(offer_id)
             job = await job_repository.get_job_by_id(accepted_offer.job_id)
-            message_text = "Заявка принята и закреплена за вами."
+            message_text = "Вы приняли заказ. Мы закрепили заявку за вами."
 
             if job is not None:
                 await callback.bot.send_message(
                     chat_id=job.client_telegram_user_id,
                     text=(
-                        "Перевозчик принял вашу заявку.\n"
-                        f"Заявка #{job.id}.\n"
+                        "Перевозчик принял вашу заявку.\\n"
+                        f"Заявка #{job.id}.\\n"
                         "Мы свяжем вас с перевозчиком на следующем шаге."
-                    ),
-                )
-                await callback.bot.send_message(
-                    chat_id=telegram_user_id,
-                    text=(
-                        f"Вы приняли заявку #{job.id}.\n"
-                        f"Клиент: @{job.client_telegram_username or 'username_missing'}\n"
-                        f"Телефон: {job.client_phone or 'не указан'}\n"
-                        f"WhatsApp: {job.client_whatsapp or 'не указан'}"
                     ),
                 )
         else:
@@ -79,11 +70,6 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
         await session.commit()
 
     if callback.message:
-        if callback.message.text:
-            await callback.message.edit_text(message_text)
-        elif callback.message.caption:
-            await callback.message.edit_caption(caption=message_text)
-        else:
-            await callback.bot.send_message(chat_id=telegram_user_id, text=message_text)
+        await callback.message.edit_text(message_text)
 
     await callback.answer()

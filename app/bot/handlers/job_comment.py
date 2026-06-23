@@ -1,5 +1,3 @@
-from html import escape
-
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import InputMediaPhoto
@@ -22,11 +20,10 @@ router = Router()
 
 
 def _format_address(label: str, raw_text: str | None, map_url: str | None) -> str:
-    value = escape(raw_text or "не указан")
-    safe_label = escape(label)
-    if map_url and map_url != raw_text:
-        return f"<b>{safe_label}</b>: {value}\nКарта: {escape(map_url)}"
-    return f"<b>{safe_label}</b>: {value}"
+    value = raw_text or "не указан"
+    if map_url and map_url != value:
+        return f"{label}: {value}\nКарта: {map_url}"
+    return f"{label}: {value}"
 
 
 def _format_requested_date(value) -> str:
@@ -46,28 +43,28 @@ def _format_value(value, suffix: str) -> str:
 
 
 def _format_items(items) -> str:
-    descriptions = [escape(item.description) for item in items if item.description]
+    descriptions = [item.description for item in items if item.description]
     return "; ".join(descriptions) if descriptions else "не указан"
 
 
 def _build_offer_text(job, items, pickup, dropoff) -> str:
     return (
-        f"<b>Новая заявка #{job.id}</b>\n\n"
+        f"Новая заявка #{job.id}\n\n"
         f"{_format_requested_date(job.requested_date)}\n\n"
         f"{_format_address('Откуда', pickup.raw_text if pickup else None, pickup.map_url if pickup else None)}\n\n"
         f"{_format_address('Куда', dropoff.raw_text if dropoff else None, dropoff.map_url if dropoff else None)}\n\n"
-        "<b>Груз</b>\n"
+        "Груз\n"
         f"{_format_items(items)}\n\n"
-        "<b>Параметры</b>\n"
+        "Параметры\n"
         f"Вес: {_format_value(job.estimated_payload_kg, ' кг')}\n"
         f"Объём: {_format_value(job.estimated_volume_m3, ' м³')}\n"
         f"Грузчики: {_format_value(job.required_loaders, '')}\n"
         f"Гидроборт: {_format_bool(job.needs_tail_lift)}\n"
         f"Кран: {_format_bool(job.needs_crane)}\n"
         f"Подъём через окно: {_format_bool(job.needs_mobile_lift)}\n\n"
-        "<b>Комментарий</b>\n"
-        f"{escape(job.comment or 'нет')}\n\n"
-        "<b>Контакты клиента</b>\n"
+        "Комментарий\n"
+        f"{job.comment or 'нет'}\n\n"
+        "Контакты клиента\n"
         f"Telegram: @{job.client_telegram_username or 'username_missing'}\n"
         f"Телефон: {job.client_phone or 'не указан'}\n"
         f"WhatsApp: {job.client_whatsapp or 'не указан'}\n\n"
@@ -134,7 +131,6 @@ async def job_comment(
                     chat_id=carrier.telegram_user_id,
                     text=offer_text,
                     reply_markup=keyboard,
-                    parse_mode="HTML",
                 )
             elif len(media_items) == 1:
                 media = media_items[0]
@@ -144,7 +140,6 @@ async def job_comment(
                         photo=media.telegram_file_id,
                         caption=offer_text,
                         reply_markup=keyboard,
-                        parse_mode="HTML",
                     )
                 elif media.media_type == "video":
                     await message.bot.send_video(
@@ -152,7 +147,6 @@ async def job_comment(
                         video=media.telegram_file_id,
                         caption=offer_text,
                         reply_markup=keyboard,
-                        parse_mode="HTML",
                     )
                 else:
                     await message.bot.send_message(
@@ -165,9 +159,9 @@ async def job_comment(
                 for index, media in enumerate(media_items[:10]):
                     caption = offer_text if index == 0 else None
                     if media.media_type == "photo":
-                        album.append(InputMediaPhoto(media=media.telegram_file_id, caption=caption, parse_mode="HTML"))
+                        album.append(InputMediaPhoto(media=media.telegram_file_id, caption=caption))
                     elif media.media_type == "video":
-                        album.append(InputMediaVideo(media=media.telegram_file_id, caption=caption, parse_mode="HTML"))
+                        album.append(InputMediaVideo(media=media.telegram_file_id, caption=caption))
 
                 if album:
                     await message.bot.send_media_group(
@@ -179,7 +173,6 @@ async def job_comment(
                     chat_id=carrier.telegram_user_id,
                     text=f"Решение по заявке #{job.id}",
                     reply_markup=keyboard,
-                    parse_mode="HTML",
                 )
 
             sent_count += 1

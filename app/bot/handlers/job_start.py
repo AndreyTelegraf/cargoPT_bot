@@ -3,7 +3,6 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from app.bot.job_request_keyboards import client_entry_keyboard
 from app.bot.job_request_keyboards import username_ready_keyboard
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
@@ -47,12 +46,12 @@ async def _create_job_and_ask_pickup(
         "Начнём с места погрузки.\n\n"
         "Пришлите адрес текстом или ссылку на точку в Google Maps.\n"
         "Лучше всего: улица, номер дома, город и почтовый индекс.\n"
-        "Если есть сложный подъезд, шлагбаум или платная парковка — укажите это сразу.",
-        reply_markup=client_entry_keyboard(),
+        "Если есть сложный подъезд, шлагбаум или платная парковка — укажите это сразу."
     )
 
 
-async def start_job_request_entry(
+@router.message(Command("new_job"))
+async def start_job_request(
     message: Message,
     state: FSMContext,
 ) -> None:
@@ -65,14 +64,6 @@ async def start_job_request_entry(
         return
 
     await _create_job_and_ask_pickup(message, state)
-
-
-@router.message(Command("new_job"))
-async def start_job_request(
-    message: Message,
-    state: FSMContext,
-) -> None:
-    await start_job_request_entry(message, state)
 
 
 @router.message(JobRequestStates.telegram_username_missing)
