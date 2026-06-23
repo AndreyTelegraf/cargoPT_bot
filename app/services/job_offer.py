@@ -3,9 +3,18 @@ from datetime import datetime
 from datetime import timedelta
 
 from app.domain.job_offer_status import JobOfferStatus
+from app.domain.job_status import JobStatus
 from app.models.carrier import CarrierVehicle
 from app.models.job import JobOffer
 from app.repositories.job import JobRepository
+
+
+class OfferAlreadyResolvedError(ValueError):
+    pass
+
+
+class JobAlreadyAssignedError(ValueError):
+    pass
 
 
 class JobOfferService:
@@ -70,13 +79,24 @@ class JobOfferService:
         if offer is None:
             raise ValueError("offer not found")
 
+        if offer.status != JobOfferStatus.PENDING:
+            raise OfferAlreadyResolvedError("offer already resolved")
+
+        job = await self.repository.get_job_by_id(offer.job_id)
+
+        if job is None:
+            raise ValueError("job not found")
+
+        if job.status == JobStatus.ASSIGNED:
+            raise JobAlreadyAssignedError("job already assigned")
+
         offer.status = JobOfferStatus.ACCEPTED
         offer.responded_at = now
         offer.updated_at = now
 
         await self.repository.update_job_status(
             job_id=offer.job_id,
-            status="assigned",
+            status=JobStatus.ASSIGNED,
             updated_at=now,
         )
 

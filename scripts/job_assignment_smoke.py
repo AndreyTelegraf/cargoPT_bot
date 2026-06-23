@@ -125,6 +125,14 @@ async def exercise_job_assignment() -> None:
         if loaded_job.status != JobStatus.ASSIGNED:
             raise SystemExit(f"unexpected job status: {loaded_job.status}")
 
+        try:
+            await service.accept_offer_and_assign_job(offer.id)
+        except Exception as exc:
+            if exc.__class__.__name__ != "OfferAlreadyResolvedError":
+                raise
+        else:
+            raise SystemExit("second accept unexpectedly succeeded")
+
     await engine.dispose()
 
 

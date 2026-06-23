@@ -8,7 +8,9 @@ from aiogram.types import Message
 from app.db.session import async_session_maker
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
+from app.services.job_offer import JobAlreadyAssignedError
 from app.services.job_offer import JobOfferService
+from app.services.job_offer import OfferAlreadyResolvedError
 
 router = Router()
 
@@ -109,7 +111,17 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
             return
 
         if action == "accept":
-            accepted_offer = await offer_service.accept_offer_and_assign_job(offer_id)
+            try:
+                accepted_offer = await offer_service.accept_offer_and_assign_job(offer_id)
+            except OfferAlreadyResolvedError:
+                await callback.answer("Этот оффер уже обработан.", show_alert=True)
+                await session.rollback()
+                return
+            except JobAlreadyAssignedError:
+                await callback.answer("Заказ уже закреплён за другим перевозчиком.", show_alert=True)
+                await session.rollback()
+                return
+
             job = await job_repository.get_job_by_id(accepted_offer.job_id)
             message_text = "Вы приняли заказ. Мы закрепили заявку за вами."
 
