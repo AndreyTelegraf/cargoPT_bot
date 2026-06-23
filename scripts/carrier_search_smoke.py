@@ -19,8 +19,8 @@ from app.models.carrier import CarrierVehicle
 from app.repositories.carrier import CarrierRepository
 from app.services.carrier_search import CarrierSearchService
 
-DATA_DIR = PROJECT_ROOT / "data"
-DATABASE_URL = "sqlite+aiosqlite:///data/cargopt_dev.db"
+DATA_DIR = PROJECT_ROOT / ".tmp_carrier_search_smoke"
+DATABASE_URL = "sqlite+aiosqlite:///.tmp_carrier_search_smoke/cargopt_dev.db"
 
 
 def run(cmd: list[str]) -> None:
@@ -28,6 +28,8 @@ def run(cmd: list[str]) -> None:
 
 
 def reset_db() -> None:
+    if DATA_DIR == PROJECT_ROOT / "data":
+        raise RuntimeError("smoke must not delete PROJECT_ROOT/data")
     if DATA_DIR.exists():
         shutil.rmtree(DATA_DIR)
     DATA_DIR.mkdir(exist_ok=True)

@@ -21,8 +21,8 @@ from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
 from app.services.job_offer import JobOfferService
 
-DATA_DIR = PROJECT_ROOT / "data"
-DATABASE_URL = "sqlite+aiosqlite:///data/cargopt_dev.db"
+DATA_DIR = PROJECT_ROOT / ".tmp_job_offer_smoke"
+DATABASE_URL = "sqlite+aiosqlite:///.tmp_job_offer_smoke/cargopt_dev.db"
 
 
 def run(cmd: list[str]) -> None:
@@ -30,6 +30,8 @@ def run(cmd: list[str]) -> None:
 
 
 def reset_db() -> None:
+    if DATA_DIR == PROJECT_ROOT / "data":
+        raise RuntimeError("smoke must not delete PROJECT_ROOT/data")
     if DATA_DIR.exists():
         shutil.rmtree(DATA_DIR)
     DATA_DIR.mkdir(exist_ok=True)
