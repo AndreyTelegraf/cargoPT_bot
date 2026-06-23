@@ -134,8 +134,19 @@ class JobRepository:
         if job is None:
             raise ValueError("job not found")
 
-        job.status = status
+        status_value = getattr(status, "value", status)
+
+        job.status = status_value
         job.updated_at = updated_at
+
+        if status_value == "assigned" and job.assigned_at is None:
+            job.assigned_at = updated_at
+        elif status_value == "in_progress" and job.started_at is None:
+            job.started_at = updated_at
+        elif status_value == "completed" and job.completed_at is None:
+            job.completed_at = updated_at
+        elif status_value == "cancelled" and job.cancelled_at is None:
+            job.cancelled_at = updated_at
 
         await self.session.flush()
 

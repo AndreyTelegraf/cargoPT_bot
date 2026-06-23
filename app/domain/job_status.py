@@ -7,5 +7,6 @@ class JobStatus(StrEnum):
     MATCHING = "matching"
     OFFERED = "offered"
     ASSIGNED = "assigned"
+    IN_PROGRESS = "in_progress"
     CANCELLED = "cancelled"
     COMPLETED = "completed"

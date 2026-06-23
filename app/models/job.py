@@ -34,6 +34,11 @@ class Job(Base):
 
     requested_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+    assigned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
     needs_assembly: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     needs_packing: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 

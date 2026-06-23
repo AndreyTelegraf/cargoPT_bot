@@ -176,6 +176,9 @@ async def exercise_job_assignment() -> None:
         if loaded_job.status != JobStatus.ASSIGNED:
             raise SystemExit(f"unexpected job status: {loaded_job.status}")
 
+        if loaded_job.assigned_at is None:
+            raise SystemExit("assigned_at missing")
+
         try:
             await service.accept_offer_and_assign_job(offer.id)
         except Exception as exc:
