@@ -24,10 +24,10 @@ from app.models.carrier import CarrierVehicle
 from app.models.job import Job
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
-from app.services.job import ASSIGNMENT_CONFIRMATION_CONFIRMED
-from app.services.job import ASSIGNMENT_CONFIRMATION_FAILED
+from app.services.assignment_confirmation import ASSIGNMENT_CONFIRMATION_CONFIRMED
+from app.services.assignment_confirmation import ASSIGNMENT_CONFIRMATION_FAILED
+from app.services.assignment_confirmation import record_assignment_confirmation
 from app.services.job import JobService
-from app.services.job import record_assignment_confirmation
 from app.services.job_offer import JobOfferService
 
 DATA_DIR = PROJECT_ROOT / ".tmp_job_assignment_confirmation_smoke"
