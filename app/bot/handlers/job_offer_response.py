@@ -26,24 +26,35 @@ def _format_telegram_username(username: str | None) -> str:
     return "@" + _safe(username.lstrip("@"))
 
 
+def _telegram_user_link(user_id: int | None, label: str) -> str:
+    if not user_id:
+        return "не указан"
+    return f'<a href="tg://user?id={int(user_id)}">{_safe(label)}</a>'
+
+
 def _build_client_notification_text(job, carrier) -> str:
+    carrier_name = carrier.contact_name or carrier.company_name or "перевозчик"
     return (
         f"Перевозчик принял вашу заявку #{job.id}.\\n\\n"
-        "Контакты перевозчика:\\n"
-        f"{_format_contact_line('Компания', carrier.company_name)}\\n"
-        f"{_format_contact_line('Контактное имя', carrier.contact_name)}\\n"
-        f"{_format_contact_line('Телефон', carrier.phone)}\\n"
-        f"Telegram: {_safe(carrier.telegram_user_id or 'не указан')}"
+        "Я познакомил вас с перевозчиком. Напишите ему в Telegram или по телефону, "
+        "если нужно уточнить детали перевозки.\\n\\n"
+        f"Компания: {_safe(carrier.company_name or 'не указана')}\\n"
+        f"Контактное лицо: {_safe(carrier.contact_name or 'не указано')}\\n"
+        f"Телефон: {_safe(carrier.phone or 'не указан')}\\n"
+        f"Telegram: {_telegram_user_link(carrier.telegram_user_id, carrier_name)}"
     )
 
 
-def _build_carrier_notification_text(job) -> str:
+def _build_carrier_notification_text(job, carrier) -> str:
+    client_label = job.client_telegram_username or "клиент"
     return (
         f"Вы приняли заказ #{job.id}.\\n\\n"
-        "Контакты клиента:\\n"
-        f"Telegram: {_format_telegram_username(job.client_telegram_username)}\\n"
-        f"{_format_contact_line('Телефон', job.client_phone)}\\n"
-        f"{_format_contact_line('WhatsApp', job.client_whatsapp)}"
+        "Я познакомил вас с клиентом. Напишите ему в Telegram или по телефону, "
+        "если нужно уточнить детали перевозки.\\n\\n"
+        f"Клиент: {_telegram_user_link(job.client_telegram_user_id, client_label)}\\n"
+        f"Username: {_format_telegram_username(job.client_telegram_username)}\\n"
+        f"Телефон: {_safe(job.client_phone or 'не указан')}\\n"
+        f"WhatsApp: {_safe(job.client_whatsapp or 'не указан')}"
     )
 
 
@@ -95,8 +106,9 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
                 await callback.bot.send_message(
                     chat_id=job.client_telegram_user_id,
                     text=_build_client_notification_text(job, carrier),
+                    parse_mode="HTML",
                 )
-                message_text = _build_carrier_notification_text(job)
+                message_text = _build_carrier_notification_text(job, carrier)
         else:
             await offer_service.decline_offer(offer_id)
             message_text = "Вы отказались от заказа."
@@ -104,6 +116,6 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
         await session.commit()
 
     if callback.message:
-        await callback.message.edit_text(message_text)
+        await callback.message.edit_text(message_text, parse_mode="HTML")
 
     await callback.answer()
