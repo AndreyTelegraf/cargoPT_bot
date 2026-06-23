@@ -13,6 +13,12 @@ def _keyboard(rows: list[list[str]]) -> ReplyKeyboardMarkup:
     )
 
 
+def client_start_keyboard() -> ReplyKeyboardMarkup:
+    return _keyboard([
+        ["Помощь", "Мои объявления"],
+    ])
+
+
 def yes_no_keyboard() -> ReplyKeyboardMarkup:
     return _keyboard([["Да", "Нет"]])
 
