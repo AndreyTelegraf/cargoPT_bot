@@ -7,6 +7,7 @@ from app.db.session import async_session_maker
 from app.domain.job_status import JobStatus
 from app.repositories.job import JobRepository
 from app.services.carrier_search import CarrierSearchService
+from app.services.assignment_confirmation import build_assignment_cleanup_target
 from app.services.assignment_confirmation import build_assignment_result_text
 from app.services.assignment_confirmation import build_assignment_status_from_action
 from app.services.assignment_confirmation import record_assignment_confirmation
@@ -101,12 +102,13 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
             await callback.answer("Статус заявки уже изменён.", show_alert=True)
             return
 
-        should_delete_carrier_offer = updated_job.status == JobStatus.READY_FOR_MATCHING
-        carrier_message_chat_id = (
-            accepted_offer.carrier_message_chat_id if accepted_offer is not None else None
-        )
-        carrier_message_id = (
-            accepted_offer.carrier_message_id if accepted_offer is not None else None
+        (
+            should_delete_carrier_offer,
+            carrier_message_chat_id,
+            carrier_message_id,
+        ) = build_assignment_cleanup_target(
+            job=updated_job,
+            accepted_offer=accepted_offer,
         )
 
         if should_delete_carrier_offer:

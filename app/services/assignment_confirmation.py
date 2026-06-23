@@ -21,6 +21,19 @@ def build_assignment_status_from_action(action: str) -> str:
     raise InvalidAssignmentConfirmationStatusError("invalid assignment action")
 
 
+def build_assignment_cleanup_target(*, job: Job, accepted_offer) -> tuple[bool, int | None, int | None]:
+    should_delete = job.status == JobStatus.READY_FOR_MATCHING
+
+    if accepted_offer is None:
+        return should_delete, None, None
+
+    return (
+        should_delete,
+        accepted_offer.carrier_message_chat_id,
+        accepted_offer.carrier_message_id,
+    )
+
+
 class InvalidAssignmentConfirmationActorError(ValueError):
     pass
 
