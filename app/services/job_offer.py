@@ -100,4 +100,10 @@ class JobOfferService:
             updated_at=now,
         )
 
+        await self.repository.decline_pending_offers_by_job_except(
+            job_id=offer.job_id,
+            accepted_offer_id=offer.id,
+            responded_at=now,
+        )
+
         return offer

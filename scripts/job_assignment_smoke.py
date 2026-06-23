@@ -107,9 +107,53 @@ async def exercise_job_assignment() -> None:
 
         service = JobOfferService(job_repo)
 
+        second_carrier = await carrier_repo.create_carrier(
+            CarrierCompany(
+                company_name="Second Assign Carrier",
+                contact_name=None,
+                phone=None,
+                telegram_user_id=6002,
+                status=CarrierStatus.PROFILE_COMPLETED,
+                paid_until=None,
+                assembly_required=False,
+                packing_required=False,
+                operating_regions="Lisboa",
+                profile_completed_at=now,
+                current_profile_step=None,
+                internal_note=None,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+
+        second_vehicle = await carrier_repo.create_vehicle(
+            CarrierVehicle(
+                carrier_id=second_carrier.id,
+                vehicle_type="large_van",
+                payload_kg=1600,
+                volume_m3=18.0,
+                has_tail_lift=True,
+                has_crane=False,
+                has_mobile_lift=False,
+                mobile_lift_max_floor=None,
+                mobile_lift_max_weight_kg=None,
+                crane_max_weight_kg=None,
+                crane_reach_meters=None,
+                is_active=True,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+
         offer = await service.create_offer(
             job_id=job.id,
             vehicle=vehicle,
+            expires_in_minutes=30,
+        )
+
+        second_offer = await service.create_offer(
+            job_id=job.id,
+            vehicle=second_vehicle,
             expires_in_minutes=30,
         )
 
@@ -118,9 +162,16 @@ async def exercise_job_assignment() -> None:
         await session.commit()
 
         loaded_job = await job_repo.get_job_by_id(job.id)
+        loaded_second_offer = await job_repo.get_offer_by_id(second_offer.id)
 
         if accepted.status != JobOfferStatus.ACCEPTED:
             raise SystemExit(f"unexpected offer status: {accepted.status}")
+
+        if loaded_second_offer.status != JobOfferStatus.DECLINED:
+            raise SystemExit(f"unexpected sibling offer status: {loaded_second_offer.status}")
+
+        if loaded_second_offer.responded_at is None:
+            raise SystemExit("sibling offer responded_at missing")
 
         if loaded_job.status != JobStatus.ASSIGNED:
             raise SystemExit(f"unexpected job status: {loaded_job.status}")

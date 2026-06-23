@@ -100,6 +100,29 @@ class JobRepository:
 
         return offer
 
+    async def decline_pending_offers_by_job_except(
+        self,
+        job_id: int,
+        accepted_offer_id: int,
+        responded_at,
+    ) -> list[JobOffer]:
+        offers = await self.list_offers_by_job(job_id)
+        declined: list[JobOffer] = []
+
+        for offer in offers:
+            if offer.id == accepted_offer_id:
+                continue
+            if offer.status != "pending":
+                continue
+
+            offer.status = "declined"
+            offer.responded_at = responded_at
+            offer.updated_at = responded_at
+            declined.append(offer)
+
+        await self.session.flush()
+        return declined
+
     async def update_job_status(
         self,
         job_id: int,
