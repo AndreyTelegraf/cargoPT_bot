@@ -10,6 +10,7 @@ os.environ["BOT_TOKEN"] = "123456:TESTTOKEN"
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///data/cargopt_dev.db"
 
 from app.bot.handlers.dispatcher_jobs_admin import _format_job_line
+from app.bot.handlers.dispatcher_jobs_admin import _format_status
 from app.bot.handlers.dispatcher_jobs_admin import dispatcher_jobs
 from app.bot.handlers.dispatcher_jobs_admin import router
 from app.repositories.job import JobRepository
@@ -31,7 +32,11 @@ job = SimpleNamespace(
 )
 
 line = _format_job_line(job)
-assert "<b>#42</b> — assigned — @client_user" in line
+assert _format_status("offered") == "отправлена перевозчикам"
+assert _format_status("unmatched") == "перевозчик не найден"
+assert _format_status("assigned") == "перевозчик назначен"
+assert _format_status("unknown_status") == "unknown_status"
+assert "<b>#42</b> — перевозчик назначен — @client_user" in line
 assert "Дата: —" in line
 assert "Назначена: —" in line
 

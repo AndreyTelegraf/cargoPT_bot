@@ -21,10 +21,27 @@ def _format_dt(value) -> str:
     return _safe(value.strftime("%d.%m.%Y %H:%M"))
 
 
+STATUS_LABELS = {
+    "draft": "черновик",
+    "ready_for_matching": "готова к поиску",
+    "matching": "поиск перевозчика",
+    "offered": "отправлена перевозчикам",
+    "unmatched": "перевозчик не найден",
+    "assigned": "перевозчик назначен",
+    "in_progress": "в работе",
+    "completed": "завершена",
+    "cancelled": "отменена",
+}
+
+
+def _format_status(value: str) -> str:
+    return STATUS_LABELS.get(value, value)
+
+
 def _format_job_line(job) -> str:
     client = job.client_telegram_username or str(job.client_telegram_user_id)
     return (
-        f"<b>#{job.id}</b> — {_safe(job.status)} — @{_safe(client)}\n"
+        f"<b>#{job.id}</b> — {_safe(_format_status(job.status))} — @{_safe(client)}\n"
         f"Дата: {_format_dt(job.requested_date)}\n"
         f"Назначена: {_format_dt(job.assigned_at)} | "
         f"Старт: {_format_dt(job.started_at)} | "
