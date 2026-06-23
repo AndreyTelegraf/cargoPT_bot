@@ -87,7 +87,10 @@ class JobOfferService:
         if job is None:
             raise ValueError("job not found")
 
-        if job.status == JobStatus.ASSIGNED:
+        if job.status in {
+            JobStatus.ASSIGNED_PENDING_CONFIRMATION,
+            JobStatus.ASSIGNED,
+        }:
             raise JobAlreadyAssignedError("job already assigned")
 
         offer.status = JobOfferStatus.ACCEPTED
@@ -96,7 +99,7 @@ class JobOfferService:
 
         await self.repository.update_job_status(
             job_id=offer.job_id,
-            status=JobStatus.ASSIGNED,
+            status=JobStatus.ASSIGNED_PENDING_CONFIRMATION,
             updated_at=now,
         )
 

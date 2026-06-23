@@ -173,7 +173,7 @@ async def exercise_job_assignment() -> None:
         if loaded_second_offer.responded_at is None:
             raise SystemExit("sibling offer responded_at missing")
 
-        if loaded_job.status != JobStatus.ASSIGNED:
+        if loaded_job.status != JobStatus.ASSIGNED_PENDING_CONFIRMATION:
             raise SystemExit(f"unexpected job status: {loaded_job.status}")
 
         if loaded_job.assigned_at is None:

@@ -144,7 +144,7 @@ class JobRepository:
         job.status = status_value
         job.updated_at = updated_at
 
-        if status_value == "assigned" and job.assigned_at is None:
+        if status_value in {"assigned_pending_confirmation", "assigned"} and job.assigned_at is None:
             job.assigned_at = updated_at
         elif status_value == "in_progress" and job.started_at is None:
             job.started_at = updated_at
