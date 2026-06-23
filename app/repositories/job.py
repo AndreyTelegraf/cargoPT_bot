@@ -99,6 +99,51 @@ class JobRepository:
         result = await self.session.execute(stmt)
         return result.scalars().first()
 
+    async def update_assignment_confirmation_status(
+        self,
+        *,
+        job_id: int,
+        actor: str,
+        status: str,
+        updated_at,
+    ) -> Job:
+        job = await self.get_job_by_id(job_id)
+
+        if job is None:
+            raise ValueError("job not found")
+
+        if actor == "client":
+            job.client_confirmation_status = status
+        elif actor == "carrier":
+            job.carrier_confirmation_status = status
+        else:
+            raise ValueError("invalid assignment confirmation actor")
+
+        job.updated_at = updated_at
+
+        await self.session.flush()
+
+        return job
+
+    async def clear_assignment_confirmation_statuses(
+        self,
+        *,
+        job_id: int,
+        updated_at,
+    ) -> Job:
+        job = await self.get_job_by_id(job_id)
+
+        if job is None:
+            raise ValueError("job not found")
+
+        job.client_confirmation_status = None
+        job.carrier_confirmation_status = None
+        job.updated_at = updated_at
+
+        await self.session.flush()
+
+        return job
+
     async def update_offer_status(
         self,
         offer_id: int,

@@ -39,6 +39,9 @@ class Job(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+    client_confirmation_status: Mapped[str | None] = mapped_column(String)
+    carrier_confirmation_status: Mapped[str | None] = mapped_column(String)
+
     needs_assembly: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     needs_packing: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 

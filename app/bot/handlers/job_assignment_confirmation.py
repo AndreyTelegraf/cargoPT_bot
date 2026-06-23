@@ -6,10 +6,11 @@ from app.db.session import async_session_maker
 from app.domain.job_status import JobStatus
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
+from app.services.job import ASSIGNMENT_CONFIRMATION_CONFIRMED
+from app.services.job import ASSIGNMENT_CONFIRMATION_FAILED
 from app.services.job import InvalidJobStatusTransitionError
 from app.services.job import JobService
-from app.services.job import confirm_assignment
-from app.services.job import reopen_assignment_search
+from app.services.job import record_assignment_confirmation
 
 router = Router()
 
@@ -28,21 +29,46 @@ def _parse_assignment_callback(data: str) -> tuple[str, int]:
     return action, job_id
 
 
-async def _is_authorized_actor(
+async def _resolve_assignment_actor(
     *,
     telegram_user_id: int,
     job,
     accepted_offer,
     carrier_repository: CarrierRepository,
-) -> bool:
+) -> str | None:
     if job.client_telegram_user_id == telegram_user_id:
-        return True
+        return "client"
 
     carrier = await carrier_repository.get_carrier_by_telegram_user_id(telegram_user_id)
     if carrier is None or accepted_offer is None:
-        return False
+        return None
 
-    return accepted_offer.carrier_id == carrier.id
+    if accepted_offer.carrier_id == carrier.id:
+        return "carrier"
+
+    return None
+
+
+def _build_result_text(*, job_id: int, action: str, job_status: str) -> str:
+    if job_status == JobStatus.ASSIGNED:
+        return f"Сделка по заявке №{job_id} подтверждена обеими сторонами."
+
+    if job_status == JobStatus.READY_FOR_MATCHING:
+        return (
+            f"По заявке №{job_id} сделка не состоялась. "
+            "Заявка возвращена в активный поиск."
+        )
+
+    if action == "confirm":
+        return (
+            f"Ваше подтверждение по заявке №{job_id} принято. "
+            "Ждём ответ второй стороны."
+        )
+
+    return (
+        f"Ваш ответ по заявке №{job_id} принят. "
+        "Заявка будет возвращена в активный поиск."
+    )
 
 
 @router.callback_query(F.data.startswith("assignment:"))
@@ -67,14 +93,14 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
             await callback.answer("Заявка не найдена.", show_alert=True)
             return
 
-        is_authorized = await _is_authorized_actor(
+        actor = await _resolve_assignment_actor(
             telegram_user_id=telegram_user_id,
             job=job,
             accepted_offer=accepted_offer,
             carrier_repository=carrier_repository,
         )
 
-        if not is_authorized:
+        if actor is None:
             await callback.answer("Эта кнопка не для вас.", show_alert=True)
             return
 
@@ -82,16 +108,24 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
             await callback.answer("Статус заявки уже изменён.", show_alert=True)
             return
 
+        confirmation_status = (
+            ASSIGNMENT_CONFIRMATION_CONFIRMED
+            if action == "confirm"
+            else ASSIGNMENT_CONFIRMATION_FAILED
+        )
+
         try:
-            if action == "confirm":
-                await confirm_assignment(job_service, job_id=job_id)
-                result_text = f"Сделка по заявке №{job_id} подтверждена."
-            else:
-                await reopen_assignment_search(job_service, job_id=job_id)
-                result_text = (
-                    f"По заявке №{job_id} сделка не состоялась. "
-                    "Заявка возвращена в активный поиск."
-                )
+            updated_job = await record_assignment_confirmation(
+                job_service,
+                job_id=job_id,
+                actor=actor,
+                status=confirmation_status,
+            )
+            result_text = _build_result_text(
+                job_id=job_id,
+                action=action,
+                job_status=updated_job.status,
+            )
         except InvalidJobStatusTransitionError:
             await session.rollback()
             await callback.answer("Статус заявки уже изменён.", show_alert=True)
