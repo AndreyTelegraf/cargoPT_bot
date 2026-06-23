@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.domain.carrier_status import CarrierStatus
+from app.domain.job_status import JobStatus
 from app.models.carrier import CarrierCompany
 from app.models.carrier import CarrierVehicle
 from app.models.job import Job
@@ -38,6 +39,29 @@ def reset_db() -> None:
     if DATA_DIR.exists():
         shutil.rmtree(DATA_DIR)
     DATA_DIR.mkdir(exist_ok=True)
+
+
+def build_job(now, *, payload: int, volume: float) -> Job:
+    return Job(
+        client_telegram_user_id=9001,
+        status=JobStatus.READY_FOR_MATCHING,
+        requested_date=None,
+        assigned_at=None,
+        started_at=None,
+        completed_at=None,
+        cancelled_at=None,
+        needs_assembly=False,
+        needs_packing=False,
+        needs_tail_lift=True,
+        needs_crane=False,
+        needs_mobile_lift=False,
+        required_loaders=None,
+        estimated_payload_kg=payload,
+        estimated_volume_m3=volume,
+        comment=None,
+        created_at=now,
+        updated_at=now,
+    )
 
 
 async def exercise_offer_distribution() -> None:
@@ -90,25 +114,6 @@ async def exercise_offer_distribution() -> None:
                 )
             )
 
-        job = await job_repo.create_job(
-            Job(
-                client_telegram_user_id=9001,
-                status="matching",
-                requested_date=None,
-                needs_assembly=False,
-                needs_packing=False,
-                needs_tail_lift=True,
-                needs_crane=False,
-                needs_mobile_lift=False,
-                required_loaders=None,
-                estimated_payload_kg=1000,
-                estimated_volume_m3=10.0,
-                comment=None,
-                created_at=now,
-                updated_at=now,
-            )
-        )
-
         distribution = OfferDistributionService(
             matching_service=JobMatchingService(
                 CarrierSearchService(carrier_repo)
@@ -117,21 +122,47 @@ async def exercise_offer_distribution() -> None:
             job_repository=job_repo,
         )
 
+        offered_job = await job_repo.create_job(
+            build_job(now, payload=1000, volume=10.0)
+        )
+
         offers = await distribution.create_offers_for_job(
-            job,
+            offered_job,
             limit=2,
             expires_in_minutes=30,
         )
 
-        await session.commit()
+        loaded_offered_job = await job_repo.get_job_by_id(offered_job.id)
+        stored = await job_repo.list_offers_by_job(offered_job.id)
 
         if len(offers) != 2:
             raise SystemExit(f"expected 2 offers, got {len(offers)}")
 
-        stored = await job_repo.list_offers_by_job(job.id)
-
         if len(stored) != 2:
             raise SystemExit(f"expected 2 stored offers, got {len(stored)}")
+
+        if loaded_offered_job.status != JobStatus.OFFERED:
+            raise SystemExit(f"expected offered status, got {loaded_offered_job.status}")
+
+        unmatched_job = await job_repo.create_job(
+            build_job(now, payload=999999, volume=999999.0)
+        )
+
+        unmatched_offers = await distribution.create_offers_for_job(
+            unmatched_job,
+            limit=2,
+            expires_in_minutes=30,
+        )
+
+        loaded_unmatched_job = await job_repo.get_job_by_id(unmatched_job.id)
+
+        if unmatched_offers:
+            raise SystemExit(f"expected no offers, got {len(unmatched_offers)}")
+
+        if loaded_unmatched_job.status != JobStatus.UNMATCHED:
+            raise SystemExit(f"expected unmatched status, got {loaded_unmatched_job.status}")
+
+        await session.commit()
 
     await engine.dispose()
 

@@ -1,3 +1,4 @@
+from app.domain.job_status import JobStatus
 from app.models.job import Job
 from app.models.job import JobOffer
 from app.repositories.job import JobRepository
@@ -24,6 +25,12 @@ class OfferDistributionService:
         limit: int = 5,
         expires_in_minutes: int = 60,
     ) -> list[JobOffer]:
+        await self.job_repository.update_job_status(
+            job_id=job.id,
+            status=JobStatus.MATCHING,
+            updated_at=job.updated_at,
+        )
+
         vehicles = await self.matching_service.find_matching_vehicles_for_job(job)
         selected = vehicles[:limit]
 
@@ -36,5 +43,13 @@ class OfferDistributionService:
                 expires_in_minutes=expires_in_minutes,
             )
             offers.append(offer)
+
+        target_status = JobStatus.OFFERED if offers else JobStatus.UNMATCHED
+
+        await self.job_repository.update_job_status(
+            job_id=job.id,
+            status=target_status,
+            updated_at=job.updated_at,
+        )
 
         return offers
