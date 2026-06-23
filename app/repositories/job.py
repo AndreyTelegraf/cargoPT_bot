@@ -44,6 +44,18 @@ class JobRepository:
         await self.session.flush()
         return item
 
+    async def list_items_by_job(
+        self,
+        job_id: int,
+    ) -> list[JobItem]:
+        stmt = (
+            select(JobItem)
+            .where(JobItem.job_id == job_id)
+            .order_by(JobItem.id)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
     async def create_offer(self, offer: JobOffer) -> JobOffer:
         self.session.add(offer)
         await self.session.flush()

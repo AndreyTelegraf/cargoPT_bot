@@ -30,6 +30,38 @@ def _format_requested_date(value) -> str:
     return f"Дата и время: {value}"
 
 
+def _format_bool(value: bool) -> str:
+    return "да" if value else "нет"
+
+
+def _format_value(value, suffix: str) -> str:
+    if value is None:
+        return "не указано"
+    return f"{value}{suffix}"
+
+
+def _format_items(items) -> str:
+    if not items:
+        return "Груз: не указан"
+    descriptions = [item.description for item in items if item.description]
+    if not descriptions:
+        return "Груз: не указан"
+    return "Груз: " + "; ".join(descriptions)
+
+
+def _format_job_details(job, items) -> str:
+    return (
+        f"{_format_items(items)}\\n"
+        f"Вес: {_format_value(job.estimated_payload_kg, ' кг')}\\n"
+        f"Объём: {_format_value(job.estimated_volume_m3, ' м³')}\\n"
+        f"Грузчики: {_format_value(job.required_loaders, '')}\\n"
+        f"Гидроборт: {_format_bool(job.needs_tail_lift)}\\n"
+        f"Кран: {_format_bool(job.needs_crane)}\\n"
+        f"Мобильный лифт / подъём через окно: {_format_bool(job.needs_mobile_lift)}\\n"
+        f"Комментарий: {job.comment or 'нет'}"
+    )
+
+
 @router.message(JobRequestStates.comment)
 async def job_comment(
     message: Message,
@@ -66,6 +98,7 @@ async def job_comment(
         )
 
         media_items = await job_repository.list_media_by_job(job.id)
+        items = await job_repository.list_items_by_job(job.id)
         addresses = await job_repository.list_addresses_by_job(job.id)
         pickup = next((item for item in addresses if item.kind == "pickup"), None)
         dropoff = next((item for item in addresses if item.kind == "dropoff"), None)
@@ -88,6 +121,7 @@ async def job_comment(
                     f"{_format_requested_date(job.requested_date)}\\n"
                     f"{_format_address('Откуда', pickup.raw_text if pickup else None, pickup.map_url if pickup else None)}\\n"
                     f"{_format_address('Куда', dropoff.raw_text if dropoff else None, dropoff.map_url if dropoff else None)}\\n"
+                    f"{_format_job_details(job, items)}\\n"
                     f"Клиент: @{job.client_telegram_username or 'username_missing'}.\\n"
                     f"Телефон: {job.client_phone or 'не указан'}.\\n"
                     f"WhatsApp: {job.client_whatsapp or 'не указан'}.\\n"
