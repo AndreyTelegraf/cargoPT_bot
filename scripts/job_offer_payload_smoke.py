@@ -33,15 +33,15 @@ dropoff = SimpleNamespace(raw_text="Cascais", map_url="https://maps.app.goo.gl/d
 payload = _build_offer_text(job, [item], pickup, dropoff)
 
 assert "\\n" not in payload
-assert "Новая заявка #9" in payload
-assert "Груз\nдиван, коробки, стиральная машина" in payload
+assert "<b>Новая заявка #9</b>" in payload
+assert "<b>Груз</b>\nдиван, коробки, стиральная машина" in payload
 assert "Вес: 1000 кг" in payload
 assert "Объём: 3.0 м³" in payload
 assert "Грузчики: 2" in payload
 assert "Гидроборт: да" in payload
 assert "Кран: нет" in payload
 assert "Подъём через окно: нет" in payload
-assert "Комментарий\ntest comment" in payload
+assert "<b>Комментарий</b>\ntest comment" in payload
 assert "Telegram: @client_user" in payload
 
 print("JOB_OFFER_PAYLOAD_SMOKE_OK")

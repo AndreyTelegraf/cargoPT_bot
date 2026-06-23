@@ -20,6 +20,7 @@ assert "send_photo" in source
 assert "send_video" in source
 assert "send_media_group" in source
 assert "caption=offer_text" in source
+assert 'parse_mode="HTML"' in source
 assert "Решение по заявке" in source
 
 print("JOB_OFFER_SEND_MEDIA_HANDLER_SMOKE_OK")

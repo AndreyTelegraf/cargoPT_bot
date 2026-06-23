@@ -138,6 +138,7 @@ async def job_comment(
                     chat_id=carrier.telegram_user_id,
                     text=offer_text,
                     reply_markup=keyboard,
+                    parse_mode="HTML",
                 )
             elif len(media_items) == 1:
                 media = media_items[0]
@@ -147,6 +148,7 @@ async def job_comment(
                         photo=media.telegram_file_id,
                         caption=offer_text,
                         reply_markup=keyboard,
+                        parse_mode="HTML",
                     )
                 elif media.media_type == "video":
                     await message.bot.send_video(
@@ -154,12 +156,14 @@ async def job_comment(
                         video=media.telegram_file_id,
                         caption=offer_text,
                         reply_markup=keyboard,
+                        parse_mode="HTML",
                     )
                 else:
                     await message.bot.send_message(
                         chat_id=carrier.telegram_user_id,
                         text=offer_text,
                         reply_markup=keyboard,
+                        parse_mode="HTML",
                     )
             else:
                 album = []
