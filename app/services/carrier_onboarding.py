@@ -83,8 +83,15 @@ class CarrierOnboardingService:
         from datetime import datetime
 
         current = now or datetime.now(UTC)
+        expires_at = invite.expires_at
 
-        if invite.expires_at <= current:
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=UTC)
+
+        if current.tzinfo is None:
+            current = current.replace(tzinfo=UTC)
+
+        if expires_at <= current:
             raise ValueError("invite expired")
 
         if invite.used_at is not None:
