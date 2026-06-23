@@ -7,11 +7,11 @@ def build_offer_keyboard(offer_id: int) -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="Принять",
+                    text="✅ Принять",
                     callback_data=f"offer:accept:{offer_id}",
                 ),
                 InlineKeyboardButton(
-                    text="Отказаться",
+                    text="❌ Отклонить",
                     callback_data=f"offer:decline:{offer_id}",
                 ),
             ]

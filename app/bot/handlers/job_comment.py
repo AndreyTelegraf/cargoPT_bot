@@ -1,5 +1,7 @@
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
+from aiogram.types import InputMediaPhoto
+from aiogram.types import InputMediaVideo
 from aiogram.types import Message
 from aiogram.types import ReplyKeyboardRemove
 from app.bot.offer_keyboard import build_offer_keyboard
@@ -19,7 +21,7 @@ router = Router()
 
 def _format_address(label: str, raw_text: str | None, map_url: str | None) -> str:
     value = raw_text or "не указан"
-    if map_url:
+    if map_url and map_url != value:
         return f"{label}: {value}\nКарта: {map_url}"
     return f"{label}: {value}"
 
@@ -27,7 +29,7 @@ def _format_address(label: str, raw_text: str | None, map_url: str | None) -> st
 def _format_requested_date(value) -> str:
     if value is None:
         return "Дата и время: не указаны"
-    return f"Дата и время: {value}"
+    return "Дата и время: " + value.strftime("%d.%m.%Y %H:%M")
 
 
 def _format_bool(value: bool) -> str:
@@ -41,24 +43,32 @@ def _format_value(value, suffix: str) -> str:
 
 
 def _format_items(items) -> str:
-    if not items:
-        return "Груз: не указан"
     descriptions = [item.description for item in items if item.description]
-    if not descriptions:
-        return "Груз: не указан"
-    return "Груз: " + "; ".join(descriptions)
+    return "; ".join(descriptions) if descriptions else "не указан"
 
 
-def _format_job_details(job, items) -> str:
+def _build_offer_text(job, items, pickup, dropoff) -> str:
     return (
-        f"{_format_items(items)}\\n"
-        f"Вес: {_format_value(job.estimated_payload_kg, ' кг')}\\n"
-        f"Объём: {_format_value(job.estimated_volume_m3, ' м³')}\\n"
-        f"Грузчики: {_format_value(job.required_loaders, '')}\\n"
-        f"Гидроборт: {_format_bool(job.needs_tail_lift)}\\n"
-        f"Кран: {_format_bool(job.needs_crane)}\\n"
-        f"Мобильный лифт / подъём через окно: {_format_bool(job.needs_mobile_lift)}\\n"
-        f"Комментарий: {job.comment or 'нет'}"
+        f"Новая заявка #{job.id}\n\n"
+        f"{_format_requested_date(job.requested_date)}\n\n"
+        f"{_format_address('Откуда', pickup.raw_text if pickup else None, pickup.map_url if pickup else None)}\n\n"
+        f"{_format_address('Куда', dropoff.raw_text if dropoff else None, dropoff.map_url if dropoff else None)}\n\n"
+        "Груз\n"
+        f"{_format_items(items)}\n\n"
+        "Параметры\n"
+        f"Вес: {_format_value(job.estimated_payload_kg, ' кг')}\n"
+        f"Объём: {_format_value(job.estimated_volume_m3, ' м³')}\n"
+        f"Грузчики: {_format_value(job.required_loaders, '')}\n"
+        f"Гидроборт: {_format_bool(job.needs_tail_lift)}\n"
+        f"Кран: {_format_bool(job.needs_crane)}\n"
+        f"Подъём через окно: {_format_bool(job.needs_mobile_lift)}\n\n"
+        "Комментарий\n"
+        f"{job.comment or 'нет'}\n\n"
+        "Контакты клиента\n"
+        f"Telegram: @{job.client_telegram_username or 'username_missing'}\n"
+        f"Телефон: {job.client_phone or 'не указан'}\n"
+        f"WhatsApp: {job.client_whatsapp or 'не указан'}\n\n"
+        "Примите или отклоните заявку."
     )
 
 
@@ -113,38 +123,57 @@ async def job_comment(
             if carrier is None or carrier.telegram_user_id is None:
                 continue
 
-            await message.bot.send_message(
-                chat_id=carrier.telegram_user_id,
-                text=(
-                    "Новая заявка на перевозку.\\n"
-                    f"Заявка #{job.id}.\\n"
-                    f"{_format_requested_date(job.requested_date)}\\n"
-                    f"{_format_address('Откуда', pickup.raw_text if pickup else None, pickup.map_url if pickup else None)}\\n"
-                    f"{_format_address('Куда', dropoff.raw_text if dropoff else None, dropoff.map_url if dropoff else None)}\\n"
-                    f"{_format_job_details(job, items)}\\n"
-                    f"Клиент: @{job.client_telegram_username or 'username_missing'}.\\n"
-                    f"Телефон: {job.client_phone or 'не указан'}.\\n"
-                    f"WhatsApp: {job.client_whatsapp or 'не указан'}.\\n"
-                    "Нажмите кнопку, чтобы принять или отказаться."
-                ),
-                reply_markup=build_offer_keyboard(offer.id),
-            )
+            offer_text = _build_offer_text(job, items, pickup, dropoff)
+            keyboard = build_offer_keyboard(offer.id)
 
-            for media in media_items:
-                caption = media.caption or f"Медиа к заявке #{job.id}"
-
+            if not media_items:
+                await message.bot.send_message(
+                    chat_id=carrier.telegram_user_id,
+                    text=offer_text,
+                    reply_markup=keyboard,
+                )
+            elif len(media_items) == 1:
+                media = media_items[0]
                 if media.media_type == "photo":
                     await message.bot.send_photo(
                         chat_id=carrier.telegram_user_id,
                         photo=media.telegram_file_id,
-                        caption=caption,
+                        caption=offer_text,
+                        reply_markup=keyboard,
                     )
                 elif media.media_type == "video":
                     await message.bot.send_video(
                         chat_id=carrier.telegram_user_id,
                         video=media.telegram_file_id,
-                        caption=caption,
+                        caption=offer_text,
+                        reply_markup=keyboard,
                     )
+                else:
+                    await message.bot.send_message(
+                        chat_id=carrier.telegram_user_id,
+                        text=offer_text,
+                        reply_markup=keyboard,
+                    )
+            else:
+                album = []
+                for index, media in enumerate(media_items[:10]):
+                    caption = offer_text if index == 0 else None
+                    if media.media_type == "photo":
+                        album.append(InputMediaPhoto(media=media.telegram_file_id, caption=caption))
+                    elif media.media_type == "video":
+                        album.append(InputMediaVideo(media=media.telegram_file_id, caption=caption))
+
+                if album:
+                    await message.bot.send_media_group(
+                        chat_id=carrier.telegram_user_id,
+                        media=album,
+                    )
+
+                await message.bot.send_message(
+                    chat_id=carrier.telegram_user_id,
+                    text=f"Решение по заявке #{job.id}",
+                    reply_markup=keyboard,
+                )
 
             sent_count += 1
 
