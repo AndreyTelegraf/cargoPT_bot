@@ -3,8 +3,6 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from aiogram import F
-from app.bot.job_request_keyboards import first_question_keyboard
 from app.bot.job_request_keyboards import username_ready_keyboard
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
@@ -46,10 +44,9 @@ async def _create_job_and_ask_pickup(
 
     await message.answer(
         "Начнём с места погрузки.\n\n"
-        "Пришлите адрес текстом, ссылку на точку в Google Maps или геолокацию Telegram.\n"
+        "Пришлите адрес текстом или ссылку на точку в Google Maps.\n"
         "Лучше всего: улица, номер дома, город и почтовый индекс.\n"
-        "Если есть сложный подъезд, шлагбаум или платная парковка — укажите это сразу.",
-        reply_markup=first_question_keyboard(),
+        "Если есть сложный подъезд, шлагбаум или платная парковка — укажите это сразу."
     )
 
 
@@ -82,18 +79,3 @@ async def continue_after_username_created(
         return
 
     await _create_job_and_ask_pickup(message, state)
-
-
-@router.message(JobRequestStates.pickup_address, F.text == "Помощь")
-async def job_start_help_button(message: Message) -> None:
-    await message.answer(
-        "Чтобы создать заявку, пришлите место погрузки.\n\n"
-        "Подойдёт полный адрес, ссылка Google Maps или геолокация Telegram."
-    )
-
-
-@router.message(JobRequestStates.pickup_address, F.text == "Мои объявления")
-async def job_start_my_ads_button(message: Message) -> None:
-    await message.answer(
-        "Раздел «Мои объявления» будет добавлен позже. Сейчас начните с адреса погрузки."
-    )
