@@ -5,12 +5,12 @@ from aiogram.types import CallbackQuery
 
 from app.db.session import async_session_maker
 from app.domain.job_status import JobStatus
-from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
 from app.services.carrier_search import CarrierSearchService
 from app.services.assignment_confirmation import ASSIGNMENT_CONFIRMATION_CONFIRMED
 from app.services.assignment_confirmation import ASSIGNMENT_CONFIRMATION_FAILED
 from app.services.assignment_confirmation import record_assignment_confirmation
+from app.services.assignment_confirmation import resolve_assignment_actor
 from app.services.job import InvalidJobStatusTransitionError
 from app.services.job import JobService
 from app.services.job_matching import JobMatchingService
@@ -43,26 +43,6 @@ def _parse_assignment_callback(data: str) -> tuple[str, int]:
         raise ValueError("invalid assignment action")
 
     return action, job_id
-
-
-async def _resolve_assignment_actor(
-    *,
-    telegram_user_id: int,
-    job,
-    accepted_offer,
-    carrier_repository: CarrierRepository,
-) -> str | None:
-    if job.client_telegram_user_id == telegram_user_id:
-        return "client"
-
-    carrier = await carrier_repository.get_carrier_by_telegram_user_id(telegram_user_id)
-    if carrier is None or accepted_offer is None:
-        return None
-
-    if accepted_offer.carrier_id == carrier.id:
-        return "carrier"
-
-    return None
 
 
 def _build_result_text(*, job_id: int, action: str, job_status: str) -> str:
@@ -109,7 +89,7 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
             await callback.answer("Заявка не найдена.", show_alert=True)
             return
 
-        actor = await _resolve_assignment_actor(
+        actor = await resolve_assignment_actor(
             telegram_user_id=telegram_user_id,
             job=job,
             accepted_offer=accepted_offer,

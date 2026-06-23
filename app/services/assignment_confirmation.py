@@ -3,6 +3,7 @@ from datetime import datetime
 
 from app.domain.job_status import JobStatus
 from app.models.job import Job
+from app.repositories.carrier import CarrierRepository
 from app.services.job import InvalidJobStatusTransitionError
 from app.services.job import JobService
 from app.services.job import _transition_job_status
@@ -18,6 +19,26 @@ class InvalidAssignmentConfirmationActorError(ValueError):
 
 class InvalidAssignmentConfirmationStatusError(ValueError):
     pass
+
+
+async def resolve_assignment_actor(
+    *,
+    telegram_user_id: int,
+    job,
+    accepted_offer,
+    carrier_repository: CarrierRepository,
+) -> str | None:
+    if job.client_telegram_user_id == telegram_user_id:
+        return "client"
+
+    carrier = await carrier_repository.get_carrier_by_telegram_user_id(telegram_user_id)
+    if carrier is None or accepted_offer is None:
+        return None
+
+    if accepted_offer.carrier_id == carrier.id:
+        return "carrier"
+
+    return None
 
 
 async def evaluate_assignment_confirmation(service: JobService, *, job_id: int) -> Job:
