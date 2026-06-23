@@ -1,3 +1,5 @@
+import html
+
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import InputMediaPhoto
@@ -19,17 +21,22 @@ from app.services.offer_distribution import OfferDistributionService
 router = Router()
 
 
+def _safe(value) -> str:
+    return html.escape(str(value), quote=False)
+
+
 def _format_address(label: str, raw_text: str | None, map_url: str | None) -> str:
-    value = raw_text or "не указан"
-    if map_url and map_url != value:
-        return f"{label}: {value}\nКарта: {map_url}"
-    return f"{label}: {value}"
+    value = _safe(raw_text or "не указан")
+    safe_label = _safe(label)
+    if map_url and map_url != raw_text:
+        return f"<b>{safe_label}</b>\n{value}\nКарта: {_safe(map_url)}"
+    return f"<b>{safe_label}</b>\n{value}"
 
 
 def _format_requested_date(value) -> str:
     if value is None:
-        return "Дата и время: не указаны"
-    return "Дата и время: " + value.strftime("%d.%m.%Y %H:%M")
+        return "<b>Дата и время</b>\nне указаны"
+    return "<b>Дата и время</b>\n" + _safe(value.strftime("%d.%m.%Y %H:%M"))
 
 
 def _format_bool(value: bool) -> str:
@@ -39,35 +46,35 @@ def _format_bool(value: bool) -> str:
 def _format_value(value, suffix: str) -> str:
     if value is None:
         return "не указано"
-    return f"{value}{suffix}"
+    return _safe(f"{value}{suffix}")
 
 
 def _format_items(items) -> str:
-    descriptions = [item.description for item in items if item.description]
+    descriptions = [_safe(item.description) for item in items if item.description]
     return "; ".join(descriptions) if descriptions else "не указан"
 
 
 def _build_offer_text(job, items, pickup, dropoff) -> str:
     return (
-        f"Новая заявка #{job.id}\n\n"
+        f"<b>Новая заявка #{job.id}</b>\n\n"
         f"{_format_requested_date(job.requested_date)}\n\n"
         f"{_format_address('Откуда', pickup.raw_text if pickup else None, pickup.map_url if pickup else None)}\n\n"
         f"{_format_address('Куда', dropoff.raw_text if dropoff else None, dropoff.map_url if dropoff else None)}\n\n"
-        "Груз\n"
+        "<b>Груз</b>\n"
         f"{_format_items(items)}\n\n"
-        "Параметры\n"
+        "<b>Параметры</b>\n"
         f"Вес: {_format_value(job.estimated_payload_kg, ' кг')}\n"
         f"Объём: {_format_value(job.estimated_volume_m3, ' м³')}\n"
         f"Грузчики: {_format_value(job.required_loaders, '')}\n"
         f"Гидроборт: {_format_bool(job.needs_tail_lift)}\n"
         f"Кран: {_format_bool(job.needs_crane)}\n"
         f"Подъём через окно: {_format_bool(job.needs_mobile_lift)}\n\n"
-        "Комментарий\n"
-        f"{job.comment or 'нет'}\n\n"
-        "Контакты клиента\n"
-        f"Telegram: @{job.client_telegram_username or 'username_missing'}\n"
-        f"Телефон: {job.client_phone or 'не указан'}\n"
-        f"WhatsApp: {job.client_whatsapp or 'не указан'}\n\n"
+        "<b>Комментарий</b>\n"
+        f"{_safe(job.comment or 'нет')}\n\n"
+        "<b>Контакты клиента</b>\n"
+        f"Telegram: @{_safe(job.client_telegram_username or 'username_missing')}\n"
+        f"Телефон: {_safe(job.client_phone or 'не указан')}\n"
+        f"WhatsApp: {_safe(job.client_whatsapp or 'не указан')}\n\n"
         "Примите или отклоните заявку."
     )
 
@@ -159,9 +166,9 @@ async def job_comment(
                 for index, media in enumerate(media_items[:10]):
                     caption = offer_text if index == 0 else None
                     if media.media_type == "photo":
-                        album.append(InputMediaPhoto(media=media.telegram_file_id, caption=caption))
+                        album.append(InputMediaPhoto(media=media.telegram_file_id, caption=caption, parse_mode="HTML"))
                     elif media.media_type == "video":
-                        album.append(InputMediaVideo(media=media.telegram_file_id, caption=caption))
+                        album.append(InputMediaVideo(media=media.telegram_file_id, caption=caption, parse_mode="HTML"))
 
                 if album:
                     await message.bot.send_media_group(

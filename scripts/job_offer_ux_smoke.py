@@ -32,10 +32,10 @@ dropoff = SimpleNamespace(raw_text="Cascais", map_url="https://maps.app.goo.gl/d
 
 text = _build_offer_text(job, [item], pickup, dropoff)
 assert "\\n" not in text
-assert "Новая заявка #7" in text
-assert "Откуда: Rua Augusta 1, Lisboa" in text
+assert "<b>Новая заявка #7</b>" in text
+assert "<b>Откуда</b>\nRua Augusta 1, Lisboa" in text
 assert "Карта: https://maps.app.goo.gl/pickup" in text
-assert "Груз\nДиван и 10 коробок" in text
+assert "<b>Груз</b>\nДиван и 10 коробок" in text
 assert "Telegram: @AndreyTelegraf" in text
 
 keyboard = build_offer_keyboard(123)
