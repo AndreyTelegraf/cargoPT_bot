@@ -59,7 +59,7 @@ def assert_tables() -> None:
 
 def main() -> None:
     os.environ["BOT_TOKEN"] = "db-smoke-token"
-    os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///data/cargopt_dev.db"
+    os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///.tmp_db_smoke/cargopt_dev.db"
     os.environ["ENVIRONMENT"] = "db-smoke"
     os.environ["LOG_LEVEL"] = "INFO"
 
