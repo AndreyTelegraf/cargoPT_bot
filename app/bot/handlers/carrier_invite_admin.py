@@ -1,0 +1,63 @@
+from aiogram import Router
+from aiogram.filters import Command
+from aiogram.types import Message
+
+from app.db.session import async_session_maker
+from app.repositories.carrier import CarrierRepository
+from app.services.carrier_onboarding import CarrierOnboardingService
+
+router = Router()
+
+
+@router.message(Command("carrier_invite"))
+async def carrier_invite(message: Message) -> None:
+    raw_text = (message.text or "").strip()
+    parts = raw_text.split(maxsplit=1)
+
+    if len(parts) != 2 or not parts[1].strip():
+        await message.answer(
+            "Команда создаёт ссылку для анкеты перевозчика.\n\n"
+            "Формат:\n"
+            "/carrier_invite Название компании"
+        )
+        return
+
+    company_name = parts[1].strip()
+
+    async with async_session_maker() as session:
+        repository = CarrierRepository(session)
+        service = CarrierOnboardingService(repository)
+
+        carrier = await service.create_draft_carrier(
+            company_name=company_name,
+            contact_name=None,
+            phone=None,
+            internal_note=f"Invite created by Telegram user {message.from_user.id}",
+        )
+
+        invite = await service.create_invite_token(
+            carrier_id=carrier.id,
+            created_by_admin_id=message.from_user.id,
+            expires_in_days=30,
+        )
+
+        await session.commit()
+
+    bot_info = await message.bot.get_me()
+    bot_username = bot_info.username
+
+    if not bot_username:
+        await message.answer(
+            "Приглашение создано, но бот не вернул username. "
+            "Проверьте BotFather username перед отправкой ссылки."
+        )
+        return
+
+    invite_link = f"https://t.me/{bot_username}?start={invite.token}"
+
+    await message.answer(
+        "Ссылка для анкеты перевозчика создана.\n\n"
+        f"Компания: {company_name}\n"
+        f"Срок действия: 30 дней\n\n"
+        f"{invite_link}"
+    )

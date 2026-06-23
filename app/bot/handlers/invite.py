@@ -33,6 +33,12 @@ async def invite_start(message: Message, state: FSMContext) -> None:
                 token=token,
                 telegram_user_id=message.from_user.id,
             )
+
+            await service.advance_profile_step(
+                carrier_id=invite.carrier_id,
+                step=CarrierProfileStep.ASSEMBLY_REQUIRED,
+            )
+
             await session.commit()
 
         except Exception:
@@ -41,12 +47,6 @@ async def invite_start(message: Message, state: FSMContext) -> None:
                 "Приглашение недействительно или уже использовано."
             )
             return
-
-    await service.advance_profile_step(
-        carrier_id=invite.carrier_id,
-        step=CarrierProfileStep.ASSEMBLY_REQUIRED,
-    )
-    await session.commit()
 
     await state.set_state(
         CarrierOnboardingStates.assembly_required
