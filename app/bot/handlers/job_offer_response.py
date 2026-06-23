@@ -1,3 +1,5 @@
+import html
+
 from aiogram import F
 from aiogram import Router
 from aiogram.types import CallbackQuery
@@ -8,6 +10,41 @@ from app.repositories.job import JobRepository
 from app.services.job_offer import JobOfferService
 
 router = Router()
+
+
+def _safe(value) -> str:
+    return html.escape(str(value), quote=False)
+
+
+def _format_contact_line(label: str, value) -> str:
+    return f"{label}: {_safe(value or 'не указан')}"
+
+
+def _format_telegram_username(username: str | None) -> str:
+    if not username:
+        return "не указан"
+    return "@" + _safe(username.lstrip("@"))
+
+
+def _build_client_notification_text(job, carrier) -> str:
+    return (
+        f"Перевозчик принял вашу заявку #{job.id}.\\n\\n"
+        "Контакты перевозчика:\\n"
+        f"{_format_contact_line('Компания', carrier.company_name)}\\n"
+        f"{_format_contact_line('Контактное имя', carrier.contact_name)}\\n"
+        f"{_format_contact_line('Телефон', carrier.phone)}\\n"
+        f"Telegram: {_safe(carrier.telegram_user_id or 'не указан')}"
+    )
+
+
+def _build_carrier_notification_text(job) -> str:
+    return (
+        f"Вы приняли заказ #{job.id}.\\n\\n"
+        "Контакты клиента:\\n"
+        f"Telegram: {_format_telegram_username(job.client_telegram_username)}\\n"
+        f"{_format_contact_line('Телефон', job.client_phone)}\\n"
+        f"{_format_contact_line('WhatsApp', job.client_whatsapp)}"
+    )
 
 
 def _parse_offer_callback(data: str) -> tuple[str, int]:
@@ -57,12 +94,9 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
             if job is not None:
                 await callback.bot.send_message(
                     chat_id=job.client_telegram_user_id,
-                    text=(
-                        "Перевозчик принял вашу заявку.\\n"
-                        f"Заявка #{job.id}.\\n"
-                        "Мы свяжем вас с перевозчиком на следующем шаге."
-                    ),
+                    text=_build_client_notification_text(job, carrier),
                 )
+                message_text = _build_carrier_notification_text(job)
         else:
             await offer_service.decline_offer(offer_id)
             message_text = "Вы отказались от заказа."
