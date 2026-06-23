@@ -2,6 +2,7 @@ from pathlib import Path
 
 distribution_source = Path("app/services/offer_distribution.py").read_text(encoding="utf-8")
 handler_source = Path("app/bot/handlers/job_assignment_confirmation.py").read_text(encoding="utf-8")
+resolution_source = Path("app/services/assignment_resolution.py").read_text(encoding="utf-8")
 repo_source = Path("app/repositories/job.py").read_text(encoding="utf-8")
 
 assert "list_offer_carrier_ids_by_job" in repo_source

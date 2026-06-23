@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.bot.assignment_confirmation_keyboard import build_assignment_confirmation_keyboard
-from app.bot.handlers.job_assignment_confirmation import _build_result_text
+from app.services.assignment_resolution import _build_result_text
 from app.bot.handlers.job_assignment_confirmation import _parse_assignment_callback
 from app.domain.carrier_status import CarrierStatus
 from app.domain.job_offer_status import JobOfferStatus
