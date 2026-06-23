@@ -41,6 +41,7 @@ from app.bot.handlers.company_email import router as company_email_router
 
 def setup_routers(dp: Dispatcher) -> None:
     dp.include_router(invite_router)
+    dp.include_router(start_router)
     dp.include_router(carrier_invite_admin_router)
     dp.include_router(packing_router)
     dp.include_router(regions_router)
@@ -76,4 +77,3 @@ def setup_routers(dp: Dispatcher) -> None:
     dp.include_router(job_contact_whatsapp_router)
     dp.include_router(job_comment_router)
     dp.include_router(job_offer_response_router)
-    dp.include_router(start_router)
