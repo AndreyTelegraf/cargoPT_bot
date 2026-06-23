@@ -40,6 +40,8 @@ class JobOfferService:
             expires_at=now + timedelta(minutes=expires_in_minutes),
             carrier_note=None,
             price_cents=None,
+            carrier_message_chat_id=None,
+            carrier_message_id=None,
             created_at=now,
             updated_at=now,
         )

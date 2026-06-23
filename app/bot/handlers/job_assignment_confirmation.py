@@ -1,5 +1,6 @@
 from aiogram import F
 from aiogram import Router
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery
 
 from app.db.session import async_session_maker
@@ -13,6 +14,16 @@ from app.services.job import JobService
 from app.services.job import record_assignment_confirmation
 
 router = Router()
+
+
+async def _delete_message_by_id_safely(bot, *, chat_id: int | None, message_id: int | None) -> None:
+    if chat_id is None or message_id is None:
+        return
+
+    try:
+        await bot.delete_message(chat_id=chat_id, message_id=message_id)
+    except TelegramBadRequest:
+        return
 
 
 def _parse_assignment_callback(data: str) -> tuple[str, int]:
@@ -131,7 +142,22 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
             await callback.answer("Статус заявки уже изменён.", show_alert=True)
             return
 
+        should_delete_carrier_offer = updated_job.status == JobStatus.READY_FOR_MATCHING
+        carrier_message_chat_id = (
+            accepted_offer.carrier_message_chat_id if accepted_offer is not None else None
+        )
+        carrier_message_id = (
+            accepted_offer.carrier_message_id if accepted_offer is not None else None
+        )
+
         await session.commit()
+
+    if should_delete_carrier_offer:
+        await _delete_message_by_id_safely(
+            callback.bot,
+            chat_id=carrier_message_chat_id,
+            message_id=carrier_message_id,
+        )
 
     if callback.message:
         await callback.message.edit_reply_markup(reply_markup=None)

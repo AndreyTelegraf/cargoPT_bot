@@ -144,6 +144,27 @@ class JobRepository:
 
         return job
 
+    async def update_offer_carrier_message(
+        self,
+        *,
+        offer_id: int,
+        chat_id: int,
+        message_id: int,
+        updated_at,
+    ) -> JobOffer:
+        offer = await self.get_offer_by_id(offer_id)
+
+        if offer is None:
+            raise ValueError("offer not found")
+
+        offer.carrier_message_chat_id = chat_id
+        offer.carrier_message_id = message_id
+        offer.updated_at = updated_at
+
+        await self.session.flush()
+
+        return offer
+
     async def update_offer_status(
         self,
         offer_id: int,

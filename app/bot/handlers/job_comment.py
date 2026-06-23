@@ -1,4 +1,6 @@
 import html
+from datetime import UTC
+from datetime import datetime
 
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
@@ -133,8 +135,10 @@ async def job_comment(
             offer_text = _build_offer_text(job, items, pickup, dropoff)
             keyboard = build_offer_keyboard(offer.id)
 
+            sent_offer_message = None
+
             if not media_items:
-                await message.bot.send_message(
+                sent_offer_message = await message.bot.send_message(
                     chat_id=carrier.telegram_user_id,
                     text=offer_text,
                     reply_markup=keyboard,
@@ -143,7 +147,7 @@ async def job_comment(
             elif len(media_items) == 1:
                 media = media_items[0]
                 if media.media_type == "photo":
-                    await message.bot.send_photo(
+                    sent_offer_message = await message.bot.send_photo(
                         chat_id=carrier.telegram_user_id,
                         photo=media.telegram_file_id,
                         caption=offer_text,
@@ -151,7 +155,7 @@ async def job_comment(
                         parse_mode="HTML",
                     )
                 elif media.media_type == "video":
-                    await message.bot.send_video(
+                    sent_offer_message = await message.bot.send_video(
                         chat_id=carrier.telegram_user_id,
                         video=media.telegram_file_id,
                         caption=offer_text,
@@ -159,7 +163,7 @@ async def job_comment(
                         parse_mode="HTML",
                     )
                 else:
-                    await message.bot.send_message(
+                    sent_offer_message = await message.bot.send_message(
                         chat_id=carrier.telegram_user_id,
                         text=offer_text,
                         reply_markup=keyboard,
@@ -180,10 +184,18 @@ async def job_comment(
                         media=album,
                     )
 
-                await message.bot.send_message(
+                sent_offer_message = await message.bot.send_message(
                     chat_id=carrier.telegram_user_id,
                     text=f"Решение по заявке #{job.id}",
                     reply_markup=keyboard,
+                )
+
+            if sent_offer_message is not None:
+                await job_repository.update_offer_carrier_message(
+                    offer_id=offer.id,
+                    chat_id=sent_offer_message.chat.id,
+                    message_id=sent_offer_message.message_id,
+                    updated_at=datetime.now(UTC),
                 )
 
             sent_count += 1

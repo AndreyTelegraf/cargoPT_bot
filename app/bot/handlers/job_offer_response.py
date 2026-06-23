@@ -2,6 +2,7 @@ import html
 
 from aiogram import F
 from aiogram import Router
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery
 from aiogram.types import Message
 
@@ -58,6 +59,13 @@ def _build_carrier_notification_text(job, carrier) -> str:
         f"WhatsApp: {_safe(job.client_whatsapp or 'не указан')}\n\n"
         "Свяжитесь с клиентом для уточнения деталей."
     )
+
+
+async def _delete_message_safely(message: Message) -> None:
+    try:
+        await message.delete()
+    except TelegramBadRequest:
+        await message.edit_reply_markup(reply_markup=None)
 
 
 async def _finalize_offer_message(message: Message, text: str, reply_markup=None) -> None:
@@ -149,6 +157,6 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
                 reply_markup=build_assignment_confirmation_keyboard(job.id),
             )
         else:
-            await _finalize_offer_message(callback.message, message_text)
+            await _delete_message_safely(callback.message)
 
     await callback.answer()

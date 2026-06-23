@@ -162,5 +162,8 @@ class JobOffer(Base):
     carrier_note: Mapped[str | None] = mapped_column(Text)
     price_cents: Mapped[int | None] = mapped_column(Integer)
 
+    carrier_message_chat_id: Mapped[int | None] = mapped_column(Integer)
+    carrier_message_id: Mapped[int | None] = mapped_column(Integer)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
