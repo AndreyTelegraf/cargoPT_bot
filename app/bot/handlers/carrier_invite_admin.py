@@ -8,9 +8,15 @@ from app.services.carrier_onboarding import CarrierOnboardingService
 
 router = Router()
 
+ADMIN_TELEGRAM_USER_IDS = {336224597}
+
 
 @router.message(Command("carrier_invite"))
 async def carrier_invite(message: Message) -> None:
+    if message.from_user.id not in ADMIN_TELEGRAM_USER_IDS:
+        await message.answer("Команда доступна только администратору CargoPT.")
+        return
+
     raw_text = (message.text or "").strip()
     parts = raw_text.split(maxsplit=1)
 
