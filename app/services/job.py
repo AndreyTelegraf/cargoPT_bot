@@ -289,6 +289,24 @@ async def complete_job(service: JobService, *, job_id: int) -> Job:
     )
 
 
+async def confirm_assignment(service: JobService, *, job_id: int) -> Job:
+    return await _transition_job_status(
+        service,
+        job_id=job_id,
+        allowed_from={JobStatus.ASSIGNED_PENDING_CONFIRMATION},
+        target_status=JobStatus.ASSIGNED,
+    )
+
+
+async def reopen_assignment_search(service: JobService, *, job_id: int) -> Job:
+    return await _transition_job_status(
+        service,
+        job_id=job_id,
+        allowed_from={JobStatus.ASSIGNED_PENDING_CONFIRMATION},
+        target_status=JobStatus.READY_FOR_MATCHING,
+    )
+
+
 async def cancel_job(service: JobService, *, job_id: int) -> Job:
     return await _transition_job_status(
         service,
@@ -297,6 +315,7 @@ async def cancel_job(service: JobService, *, job_id: int) -> Job:
             JobStatus.READY_FOR_MATCHING,
             JobStatus.MATCHING,
             JobStatus.OFFERED,
+            JobStatus.ASSIGNED_PENDING_CONFIRMATION,
             JobStatus.ASSIGNED,
             JobStatus.IN_PROGRESS,
         },

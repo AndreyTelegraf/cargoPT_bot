@@ -5,6 +5,7 @@ from aiogram import Router
 from aiogram.types import CallbackQuery
 from aiogram.types import Message
 
+from app.bot.assignment_confirmation_keyboard import build_assignment_confirmation_keyboard
 from app.db.session import async_session_maker
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
@@ -59,16 +60,16 @@ def _build_carrier_notification_text(job, carrier) -> str:
     )
 
 
-async def _finalize_offer_message(message: Message, text: str) -> None:
+async def _finalize_offer_message(message: Message, text: str, reply_markup=None) -> None:
     if message.text is not None:
-        await message.edit_text(text, parse_mode="HTML", reply_markup=None)
+        await message.edit_text(text, parse_mode="HTML", reply_markup=reply_markup)
         return
 
     if message.caption is not None:
-        await message.edit_caption(caption=text, parse_mode="HTML", reply_markup=None)
+        await message.edit_caption(caption=text, parse_mode="HTML", reply_markup=reply_markup)
         return
 
-    await message.edit_reply_markup(reply_markup=None)
+    await message.edit_reply_markup(reply_markup=reply_markup)
 
 
 def _parse_offer_callback(data: str) -> tuple[str, int]:
@@ -126,10 +127,12 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
             message_text = "Вы приняли заказ. Мы закрепили заявку за вами."
 
             if job is not None:
+                confirmation_keyboard = build_assignment_confirmation_keyboard(job.id)
                 await callback.bot.send_message(
                     chat_id=job.client_telegram_user_id,
                     text=_build_client_notification_text(job, carrier),
                     parse_mode="HTML",
+                    reply_markup=confirmation_keyboard,
                 )
                 message_text = _build_carrier_notification_text(job, carrier)
         else:
@@ -139,6 +142,13 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
         await session.commit()
 
     if callback.message:
-        await _finalize_offer_message(callback.message, message_text)
+        if action == "accept" and job is not None:
+            await _finalize_offer_message(
+                callback.message,
+                message_text,
+                reply_markup=build_assignment_confirmation_keyboard(job.id),
+            )
+        else:
+            await _finalize_offer_message(callback.message, message_text)
 
     await callback.answer()

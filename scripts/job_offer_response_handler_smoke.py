@@ -20,8 +20,9 @@ assert keyboard.inline_keyboard[0][0].callback_data == "offer:accept:123"
 assert keyboard.inline_keyboard[0][1].callback_data == "offer:decline:123"
 
 source = Path("app/bot/handlers/job_offer_response.py").read_text(encoding="utf-8")
-assert "edit_text(text, parse_mode=\"HTML\", reply_markup=None)" in source
-assert "edit_caption(caption=text, parse_mode=\"HTML\", reply_markup=None)" in source
-assert "edit_reply_markup(reply_markup=None)" in source
+assert "edit_text(text, parse_mode=\"HTML\", reply_markup=reply_markup)" in source
+assert "edit_caption(caption=text, parse_mode=\"HTML\", reply_markup=reply_markup)" in source
+assert "edit_reply_markup(reply_markup=reply_markup)" in source
+assert "build_assignment_confirmation_keyboard(job.id)" in source
 
 print("JOB_OFFER_RESPONSE_HANDLER_SMOKE_OK")

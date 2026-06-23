@@ -86,6 +86,19 @@ class JobRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def get_accepted_offer_by_job_id(
+        self,
+        job_id: int,
+    ) -> JobOffer | None:
+        stmt = (
+            select(JobOffer)
+            .where(JobOffer.job_id == job_id)
+            .where(JobOffer.status == "accepted")
+            .order_by(JobOffer.id.desc())
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().first()
+
     async def update_offer_status(
         self,
         offer_id: int,
