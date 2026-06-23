@@ -31,8 +31,12 @@ class OfferDistributionService:
             updated_at=job.updated_at,
         )
 
+        existing_carrier_ids = await self.job_repository.list_offer_carrier_ids_by_job(job.id)
         vehicles = await self.matching_service.find_matching_vehicles_for_job(job)
-        selected = vehicles[:limit]
+        selected = [
+            vehicle for vehicle in vehicles
+            if vehicle.carrier_id not in existing_carrier_ids
+        ][:limit]
 
         offers = []
 

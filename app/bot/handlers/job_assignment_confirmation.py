@@ -7,11 +7,16 @@ from app.db.session import async_session_maker
 from app.domain.job_status import JobStatus
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
+from app.services.carrier_search import CarrierSearchService
 from app.services.assignment_confirmation import ASSIGNMENT_CONFIRMATION_CONFIRMED
 from app.services.assignment_confirmation import ASSIGNMENT_CONFIRMATION_FAILED
 from app.services.assignment_confirmation import record_assignment_confirmation
 from app.services.job import InvalidJobStatusTransitionError
 from app.services.job import JobService
+from app.services.job_matching import JobMatchingService
+from app.services.job_offer import JobOfferService
+from app.services.offer_distribution import OfferDistributionService
+from app.services.offer_notification import send_job_offers_to_carriers
 
 router = Router()
 
@@ -149,6 +154,27 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
         carrier_message_id = (
             accepted_offer.carrier_message_id if accepted_offer is not None else None
         )
+
+        if should_delete_carrier_offer:
+            distribution = OfferDistributionService(
+                matching_service=JobMatchingService(
+                    CarrierSearchService(carrier_repository)
+                ),
+                offer_service=JobOfferService(job_repository),
+                job_repository=job_repository,
+            )
+            new_offers = await distribution.create_offers_for_job(
+                updated_job,
+                limit=5,
+                expires_in_minutes=60,
+            )
+            await send_job_offers_to_carriers(
+                bot=callback.bot,
+                job=updated_job,
+                offers=new_offers,
+                job_repository=job_repository,
+                carrier_repository=carrier_repository,
+            )
 
         await session.commit()
 

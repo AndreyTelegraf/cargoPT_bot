@@ -99,6 +99,11 @@ class JobRepository:
         result = await self.session.execute(stmt)
         return result.scalars().first()
 
+    async def list_offer_carrier_ids_by_job(self, job_id: int) -> set[int]:
+        stmt = select(JobOffer.carrier_id).where(JobOffer.job_id == job_id)
+        result = await self.session.execute(stmt)
+        return set(result.scalars().all())
+
     async def update_assignment_confirmation_status(
         self,
         *,
