@@ -4,6 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import KeyboardButton
 from aiogram.types import Message
 from aiogram.types import ReplyKeyboardMarkup
+from aiogram.types import ReplyKeyboardRemove
 
 from app.bot.states.carrier_onboarding import CarrierOnboardingStates
 from app.db.session import async_session_maker
@@ -130,5 +131,6 @@ async def operating_regions(
     await state.set_state(CarrierOnboardingStates.vehicle_count)
 
     await message.answer(
-        "Сколько автомобилей у вашей компании?"
+        "Сколько автомобилей у вашей компании?",
+        reply_markup=ReplyKeyboardRemove(),
     )

@@ -4,6 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import KeyboardButton
 from aiogram.types import Message
 from aiogram.types import ReplyKeyboardMarkup
+from aiogram.types import ReplyKeyboardRemove
 
 from app.bot.states.carrier_onboarding import CarrierOnboardingStates
 
@@ -47,5 +48,6 @@ async def vehicle_type(
     await state.set_state(CarrierOnboardingStates.payload_kg)
 
     await message.answer(
-        "Грузоподъёмность автомобиля в кг?"
+        "Грузоподъёмность автомобиля в кг?",
+        reply_markup=ReplyKeyboardRemove(),
     )
