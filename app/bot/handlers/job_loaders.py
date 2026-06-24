@@ -53,11 +53,10 @@ async def job_required_loaders(
 
         await session.commit()
 
-    await state.set_state(JobRequestStates.needs_tail_lift)
+    await state.set_state(JobRequestStates.needs_assembly)
 
     await message.answer(
-        "Нужен ли гидроборт?\n\n"
-        "Гидроборт помогает поднимать тяжёлые вещи в кузов без ручного подъёма: техника, палеты, тяжёлые коробки.\n"
-        "Если сомневаетесь — выберите «Да».",
+        "Нужна ли сборка или разборка мебели?\n\n"
+        "Например: разобрать шкаф, кровать или стол перед перевозкой и собрать после доставки.",
         reply_markup=yes_no_keyboard(),
     )

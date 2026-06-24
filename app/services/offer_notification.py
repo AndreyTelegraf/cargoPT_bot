@@ -55,6 +55,8 @@ def build_offer_text(job, items, pickup, dropoff) -> str:
         f"Вес: {_format_value(job.estimated_payload_kg, ' кг')}\n"
         f"Объём: {_format_value(job.estimated_volume_m3, ' м³')}\n"
         f"Грузчики: {_format_value(job.required_loaders, '')}\n"
+        f"Сборка/разборка мебели: {_format_bool(job.needs_assembly)}\n"
+        f"Упаковка/распаковка груза: {_format_bool(job.needs_packing)}\n"
         f"Гидроборт: {_format_bool(job.needs_tail_lift)}\n"
         f"Кран: {_format_bool(job.needs_crane)}\n"
         f"Подъём через окно: {_format_bool(job.needs_mobile_lift)}\n\n"

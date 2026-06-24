@@ -13,6 +13,8 @@ from app.bot.handlers.job_loaders import router as job_loaders_router
 from app.bot.handlers.job_tail_lift import router as job_tail_lift_router
 from app.bot.handlers.job_crane import router as job_crane_router
 from app.bot.handlers.job_mobile_lift import router as job_mobile_lift_router
+from app.bot.handlers.job_needs_assembly import router as job_needs_assembly_router
+from app.bot.handlers.job_needs_packing import router as job_needs_packing_router
 from app.bot.handlers.job_contact_phone import router as job_contact_phone_router
 from app.bot.handlers.job_contact_whatsapp import router as job_contact_whatsapp_router
 from app.bot.handlers.job_comment import router as job_comment_router
@@ -76,6 +78,8 @@ def setup_routers(dp: Dispatcher) -> None:
     dp.include_router(job_tail_lift_router)
     dp.include_router(job_crane_router)
     dp.include_router(job_mobile_lift_router)
+    dp.include_router(job_needs_assembly_router)
+    dp.include_router(job_needs_packing_router)
     dp.include_router(job_contact_phone_router)
     dp.include_router(job_contact_whatsapp_router)
     dp.include_router(job_comment_router)

@@ -15,6 +15,8 @@ class JobRequestStates(StatesGroup):
     needs_tail_lift = State()
     needs_crane = State()
     needs_mobile_lift = State()
+    needs_assembly = State()
+    needs_packing = State()
     contact_phone = State()
     contact_whatsapp = State()
     comment = State()
