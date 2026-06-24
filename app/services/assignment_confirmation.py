@@ -21,6 +21,20 @@ def build_assignment_status_from_action(action: str) -> str:
     raise InvalidAssignmentConfirmationStatusError("invalid assignment action")
 
 
+def parse_assignment_callback(data: str) -> tuple[str, int]:
+    parts = data.split(":")
+    if len(parts) != 3 or parts[0] != "assignment":
+        raise ValueError("invalid callback data")
+
+    action = parts[1]
+    job_id = int(parts[2])
+
+    if action not in {"confirm", "fail"}:
+        raise ValueError("invalid assignment action")
+
+    return action, job_id
+
+
 def build_assignment_cleanup_target(*, job: Job, accepted_offer) -> tuple[bool, int | None, int | None]:
     should_delete = job.status == JobStatus.READY_FOR_MATCHING
 

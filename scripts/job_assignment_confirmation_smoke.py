@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.bot.assignment_confirmation_keyboard import build_assignment_confirmation_keyboard
 from app.services.assignment_confirmation import build_assignment_result_text
-from app.bot.handlers.job_assignment_confirmation import _parse_assignment_callback
+from app.services.assignment_confirmation import parse_assignment_callback
 from app.domain.carrier_status import CarrierStatus
 from app.domain.job_offer_status import JobOfferStatus
 from app.domain.job_status import JobStatus
@@ -200,8 +200,8 @@ def main() -> None:
     keyboard = build_assignment_confirmation_keyboard(123)
     assert keyboard.inline_keyboard[0][0].callback_data == "assignment:confirm:123"
     assert keyboard.inline_keyboard[0][1].callback_data == "assignment:fail:123"
-    assert _parse_assignment_callback("assignment:confirm:123") == ("confirm", 123)
-    assert _parse_assignment_callback("assignment:fail:123") == ("fail", 123)
+    assert parse_assignment_callback("assignment:confirm:123") == ("confirm", 123)
+    assert parse_assignment_callback("assignment:fail:123") == ("fail", 123)
     assert "ожидаем" not in build_assignment_result_text(
         job_id=123,
         action="confirm",

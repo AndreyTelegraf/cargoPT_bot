@@ -10,6 +10,7 @@ from app.services.carrier_search import CarrierSearchService
 from app.services.assignment_confirmation import build_assignment_cleanup_target
 from app.services.assignment_confirmation import build_assignment_result_text
 from app.services.assignment_confirmation import build_assignment_status_from_action
+from app.services.assignment_confirmation import parse_assignment_callback
 from app.services.assignment_confirmation import record_assignment_confirmation
 from app.services.assignment_confirmation import resolve_assignment_actor
 from app.services.job import InvalidJobStatusTransitionError
@@ -32,24 +33,10 @@ async def _delete_message_by_id_safely(bot, *, chat_id: int | None, message_id: 
         return
 
 
-def _parse_assignment_callback(data: str) -> tuple[str, int]:
-    parts = data.split(":")
-    if len(parts) != 3 or parts[0] != "assignment":
-        raise ValueError("invalid callback data")
-
-    action = parts[1]
-    job_id = int(parts[2])
-
-    if action not in {"confirm", "fail"}:
-        raise ValueError("invalid assignment action")
-
-    return action, job_id
-
-
 @router.callback_query(F.data.startswith("assignment:"))
 async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
     try:
-        action, job_id = _parse_assignment_callback(callback.data or "")
+        action, job_id = parse_assignment_callback(callback.data or "")
     except ValueError:
         await callback.answer("Некорректная кнопка", show_alert=True)
         return
