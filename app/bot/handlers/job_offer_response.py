@@ -13,6 +13,7 @@ from app.repositories.job import JobRepository
 from app.services.job_offer import JobAlreadyAssignedError
 from app.services.job_offer import JobOfferService
 from app.services.job_offer import OfferAlreadyResolvedError
+from app.services.job_offer import parse_offer_callback
 
 router = Router()
 
@@ -79,25 +80,10 @@ async def _finalize_offer_message(message: Message, text: str, reply_markup=None
 
     await message.edit_reply_markup(reply_markup=reply_markup)
 
-
-def _parse_offer_callback(data: str) -> tuple[str, int]:
-    parts = data.split(":")
-    if len(parts) != 3 or parts[0] != "offer":
-        raise ValueError("invalid callback data")
-
-    action = parts[1]
-    offer_id = int(parts[2])
-
-    if action not in {"accept", "decline"}:
-        raise ValueError("invalid offer action")
-
-    return action, offer_id
-
-
 @router.callback_query(F.data.startswith("offer:"))
 async def handle_offer_response(callback: CallbackQuery) -> None:
     try:
-        action, offer_id = _parse_offer_callback(callback.data or "")
+        action, offer_id = parse_offer_callback(callback.data or "")
     except ValueError:
         await callback.answer("Некорректная кнопка", show_alert=True)
         return

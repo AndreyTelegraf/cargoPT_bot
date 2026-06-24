@@ -13,6 +13,21 @@ class OfferAlreadyResolvedError(ValueError):
     pass
 
 
+def parse_offer_callback(data: str) -> tuple[str, int]:
+    parts = data.split(":")
+    if len(parts) != 3 or parts[0] != "offer":
+        raise ValueError("invalid callback data")
+
+    action = parts[1]
+    offer_id = int(parts[2])
+
+    if action not in {"accept", "decline"}:
+        raise ValueError("invalid offer action")
+
+    return action, offer_id
+
+
+
 class JobAlreadyAssignedError(ValueError):
     pass
 
