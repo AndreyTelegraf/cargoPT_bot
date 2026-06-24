@@ -63,6 +63,52 @@ def build_assignment_offer_distribution(*, job_repository, carrier_repository):
     )
 
 
+async def process_assignment_failure_redispatch(
+    *,
+    bot,
+    job,
+    accepted_offer,
+    job_repository,
+    carrier_repository,
+):
+    (
+        should_delete_carrier_offer,
+        carrier_message_chat_id,
+        carrier_message_id,
+    ) = build_assignment_cleanup_target(
+        job=job,
+        accepted_offer=accepted_offer,
+    )
+
+    if should_delete_carrier_offer:
+        distribution = build_assignment_offer_distribution(
+            job_repository=job_repository,
+            carrier_repository=carrier_repository,
+        )
+
+        new_offers = await distribution.create_offers_for_job(
+            job,
+            limit=5,
+            expires_in_minutes=60,
+        )
+
+        from app.services.offer_notification import send_job_offers_to_carriers
+
+        await send_job_offers_to_carriers(
+            bot=bot,
+            job=job,
+            offers=new_offers,
+            job_repository=job_repository,
+            carrier_repository=carrier_repository,
+        )
+
+    return (
+        should_delete_carrier_offer,
+        carrier_message_chat_id,
+        carrier_message_id,
+    )
+
+
 class InvalidAssignmentConfirmationActorError(ValueError):
     pass
 

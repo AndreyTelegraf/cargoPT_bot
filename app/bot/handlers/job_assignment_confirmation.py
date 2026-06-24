@@ -7,15 +7,14 @@ from app.db.session import async_session_maker
 from app.domain.job_status import JobStatus
 from app.repositories.job import JobRepository
 from app.services.assignment_confirmation import build_assignment_cleanup_target
-from app.services.assignment_confirmation import build_assignment_offer_distribution
 from app.services.assignment_confirmation import build_assignment_result_text
 from app.services.assignment_confirmation import build_assignment_status_from_action
 from app.services.assignment_confirmation import parse_assignment_callback
+from app.services.assignment_confirmation import process_assignment_failure_redispatch
 from app.services.assignment_confirmation import record_assignment_confirmation
 from app.services.assignment_confirmation import resolve_assignment_actor
 from app.services.job import InvalidJobStatusTransitionError
 from app.services.job import JobService
-from app.services.offer_notification import send_job_offers_to_carriers
 
 router = Router()
 
@@ -90,28 +89,13 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
             should_delete_carrier_offer,
             carrier_message_chat_id,
             carrier_message_id,
-        ) = build_assignment_cleanup_target(
+        ) = await process_assignment_failure_redispatch(
+            bot=callback.bot,
             job=updated_job,
             accepted_offer=accepted_offer,
+            job_repository=job_repository,
+            carrier_repository=carrier_repository,
         )
-
-        if should_delete_carrier_offer:
-            distribution = build_assignment_offer_distribution(
-                job_repository=job_repository,
-                carrier_repository=carrier_repository,
-            )
-            new_offers = await distribution.create_offers_for_job(
-                updated_job,
-                limit=5,
-                expires_in_minutes=60,
-            )
-            await send_job_offers_to_carriers(
-                bot=callback.bot,
-                job=updated_job,
-                offers=new_offers,
-                job_repository=job_repository,
-                carrier_repository=carrier_repository,
-            )
 
         await session.commit()
 
