@@ -4,6 +4,7 @@ from app.bot.handlers.start import router as start_router
 from app.bot.handlers.job_start import router as job_start_router
 from app.bot.handlers.job_pickup import router as job_pickup_router
 from app.bot.handlers.job_dropoff import router as job_dropoff_router
+from app.bot.handlers.job_address_details import router as job_address_details_router
 from app.bot.handlers.job_requested_datetime import router as job_requested_datetime_router
 from app.bot.handlers.job_item import router as job_item_router
 from app.bot.handlers.job_media import router as job_media_router
@@ -69,6 +70,7 @@ def setup_routers(dp: Dispatcher) -> None:
     dp.include_router(job_start_router)
     dp.include_router(job_pickup_router)
     dp.include_router(job_dropoff_router)
+    dp.include_router(job_address_details_router)
     dp.include_router(job_requested_datetime_router)
     dp.include_router(job_item_router)
     dp.include_router(job_media_router)

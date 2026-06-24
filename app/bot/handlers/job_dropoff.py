@@ -36,7 +36,7 @@ async def job_dropoff_address(
         repository = JobRepository(session)
         service = JobService(repository)
 
-        await service.add_address(
+        address = await service.add_address(
             job_id=job_id,
             kind="dropoff",
             raw_text=raw_text,
@@ -46,14 +46,11 @@ async def job_dropoff_address(
 
         await session.commit()
 
-    from app.bot.job_request_keyboards import datetime_keyboard
-
-    await state.set_state(JobRequestStates.requested_datetime)
+    await state.update_data(dropoff_address_id=address.id)
+    await state.set_state(JobRequestStates.dropoff_details)
 
     await message.answer(
-        "Когда нужна перевозка?\n\n"
-        "Выберите быстрый вариант или напишите дату и время вручную.\n"
-        "Примеры: 24.06 10:00, 24.06.2026 15:30.\n"
-        "Если точное время пока не важно — напишите только дату.",
-        reply_markup=datetime_keyboard(),
+        "Этаж выгрузки и лифт.\n\n"
+        "Напишите в формате: этаж, лифт да/нет.\n"
+        "Примеры: 5, да; 0, нет; -1, да"
     )

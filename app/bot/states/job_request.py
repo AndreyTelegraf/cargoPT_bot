@@ -5,7 +5,9 @@ from aiogram.fsm.state import StatesGroup
 class JobRequestStates(StatesGroup):
     telegram_username_missing = State()
     pickup_address = State()
+    pickup_details = State()
     dropoff_address = State()
+    dropoff_details = State()
     requested_datetime = State()
     item_description = State()
     media = State()

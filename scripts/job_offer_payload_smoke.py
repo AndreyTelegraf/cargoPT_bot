@@ -9,7 +9,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 os.environ["BOT_TOKEN"] = "123456:TESTTOKEN"
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///data/cargopt_dev.db"
 
-from app.bot.handlers.job_comment import _build_offer_text
+from app.services.offer_notification import build_offer_text
 
 job = SimpleNamespace(
     id=9,
@@ -20,6 +20,8 @@ job = SimpleNamespace(
     needs_tail_lift=True,
     needs_crane=False,
     needs_mobile_lift=False,
+    needs_assembly=True,
+    needs_packing=True,
     comment="test comment",
     client_telegram_username="client_user",
     client_phone="+351910000000",
@@ -27,10 +29,10 @@ job = SimpleNamespace(
 )
 
 item = SimpleNamespace(description="диван, коробки, стиральная машина")
-pickup = SimpleNamespace(raw_text="Lisboa", map_url="https://maps.app.goo.gl/pickup")
-dropoff = SimpleNamespace(raw_text="Cascais", map_url="https://maps.app.goo.gl/dropoff")
+pickup = SimpleNamespace(raw_text="Lisboa", map_url="https://maps.app.goo.gl/pickup", floor=2, has_elevator=True)
+dropoff = SimpleNamespace(raw_text="Cascais", map_url="https://maps.app.goo.gl/dropoff", floor=0, has_elevator=False)
 
-payload = _build_offer_text(job, [item], pickup, dropoff)
+payload = build_offer_text(job, [item], pickup, dropoff)
 
 assert "\\n" not in payload
 assert "<b>Новая заявка #9</b>" in payload

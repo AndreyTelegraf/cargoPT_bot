@@ -44,6 +44,28 @@ class JobRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
+
+    async def update_address_details(
+        self,
+        *,
+        address_id: int,
+        floor: int | None,
+        has_elevator: bool | None,
+    ) -> JobAddress:
+        stmt = select(JobAddress).where(JobAddress.id == address_id)
+        result = await self.session.execute(stmt)
+        address = result.scalar_one_or_none()
+
+        if address is None:
+            raise ValueError("address not found")
+
+        address.floor = floor
+        address.has_elevator = has_elevator
+
+        await self.session.flush()
+
+        return address
+
     async def add_item(self, item: JobItem) -> JobItem:
         self.session.add(item)
         await self.session.flush()

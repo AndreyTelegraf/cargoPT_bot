@@ -9,7 +9,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 os.environ["BOT_TOKEN"] = "123456:TESTTOKEN"
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///data/cargopt_dev.db"
 
-from app.bot.handlers.job_comment import _build_offer_text
+from app.services.offer_notification import build_offer_text
 from app.bot.offer_keyboard import build_offer_keyboard
 
 job = SimpleNamespace(
@@ -21,16 +21,18 @@ job = SimpleNamespace(
     needs_tail_lift=False,
     needs_crane=False,
     needs_mobile_lift=False,
+    needs_assembly=True,
+    needs_packing=True,
     comment=None,
     client_telegram_username="AndreyTelegraf",
     client_phone=None,
     client_whatsapp=None,
 )
 item = SimpleNamespace(description="Диван и 10 коробок")
-pickup = SimpleNamespace(raw_text="Rua Augusta 1, Lisboa", map_url="https://maps.app.goo.gl/pickup")
-dropoff = SimpleNamespace(raw_text="Cascais", map_url="https://maps.app.goo.gl/dropoff")
+pickup = SimpleNamespace(raw_text="Rua Augusta 1, Lisboa", map_url="https://maps.app.goo.gl/pickup", floor=2, has_elevator=True)
+dropoff = SimpleNamespace(raw_text="Cascais", map_url="https://maps.app.goo.gl/dropoff", floor=0, has_elevator=False)
 
-text = _build_offer_text(job, [item], pickup, dropoff)
+text = build_offer_text(job, [item], pickup, dropoff)
 assert "\\n" not in text
 assert "<b>Новая заявка #7</b>" in text
 assert "<b>Откуда</b>\nRua Augusta 1, Lisboa" in text

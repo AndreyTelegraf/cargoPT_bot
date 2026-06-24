@@ -90,6 +90,20 @@ class JobService:
 
         return await self.repository.add_address(address)
 
+
+    async def update_address_details(
+        self,
+        *,
+        address_id: int,
+        floor: int | None,
+        has_elevator: bool | None,
+    ) -> JobAddress:
+        return await self.repository.update_address_details(
+            address_id=address_id,
+            floor=floor,
+            has_elevator=has_elevator,
+        )
+
     async def add_item(
         self,
         *,

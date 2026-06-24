@@ -14,12 +14,25 @@ def _safe(value) -> str:
     return html.escape(str(value), quote=False)
 
 
-def _format_address(label: str, raw_text: str | None, map_url: str | None) -> str:
+def _format_elevator(value) -> str:
+    if value is None:
+        return "не указано"
+    return "да" if value else "нет"
+
+
+def _format_address(label: str, address) -> str:
+    raw_text = address.raw_text if address else None
+    map_url = address.map_url if address else None
+    floor = address.floor if address else None
+    has_elevator = address.has_elevator if address else None
+
     value = _safe(raw_text or "не указан")
     safe_label = _safe(label)
+    details = f"\nЭтаж: {_safe(floor if floor is not None else 'не указан')}\nЛифт: {_format_elevator(has_elevator)}"
+
     if map_url and map_url != raw_text:
-        return f"<b>{safe_label}</b>\n{value}\nКарта: {_safe(map_url)}"
-    return f"<b>{safe_label}</b>\n{value}"
+        return f"<b>{safe_label}</b>\n{value}\nКарта: {_safe(map_url)}{details}"
+    return f"<b>{safe_label}</b>\n{value}{details}"
 
 
 def _format_requested_date(value) -> str:
@@ -47,8 +60,8 @@ def build_offer_text(job, items, pickup, dropoff) -> str:
     return (
         f"<b>Новая заявка #{job.id}</b>\n\n"
         f"{_format_requested_date(job.requested_date)}\n\n"
-        f"{_format_address('Откуда', pickup.raw_text if pickup else None, pickup.map_url if pickup else None)}\n\n"
-        f"{_format_address('Куда', dropoff.raw_text if dropoff else None, dropoff.map_url if dropoff else None)}\n\n"
+        f"{_format_address('Откуда', pickup)}\n\n"
+        f"{_format_address('Куда', dropoff)}\n\n"
         "<b>Груз</b>\n"
         f"{_format_items(items)}\n\n"
         "<b>Параметры</b>\n"

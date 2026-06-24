@@ -36,7 +36,7 @@ async def job_pickup_address(
         repository = JobRepository(session)
         service = JobService(repository)
 
-        await service.add_address(
+        address = await service.add_address(
             job_id=job_id,
             kind="pickup",
             raw_text=raw_text,
@@ -46,9 +46,11 @@ async def job_pickup_address(
 
         await session.commit()
 
-    await state.set_state(JobRequestStates.dropoff_address)
+    await state.update_data(pickup_address_id=address.id)
+    await state.set_state(JobRequestStates.pickup_details)
 
     await message.answer(
-        "Теперь место выгрузки.\n\n"
-        "Вставьте ссылку на точку из Google Maps или введите полный адрес, например Rua Escura, 1, Porto, 4050-242"
+        "Этаж загрузки и лифт.\n\n"
+        "Напишите в формате: этаж, лифт да/нет.\n"
+        "Примеры: 2, да; 0, нет; -1, да"
     )

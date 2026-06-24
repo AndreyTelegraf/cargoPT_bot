@@ -11,7 +11,9 @@ os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///data/cargopt_dev.db"
 from app.bot.states.job_request import JobRequestStates
 
 assert JobRequestStates.pickup_address
+assert JobRequestStates.pickup_details
 assert JobRequestStates.dropoff_address
+assert JobRequestStates.dropoff_details
 assert JobRequestStates.item_description
 assert JobRequestStates.estimated_payload_kg
 assert JobRequestStates.estimated_volume_m3
