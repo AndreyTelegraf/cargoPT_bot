@@ -4,6 +4,7 @@ from aiogram import F
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import InlineKeyboardButton
+from aiogram.types import CallbackQuery
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.types import Message
 from aiogram.types import ReplyKeyboardRemove
@@ -11,7 +12,9 @@ from aiogram.types import ReplyKeyboardRemove
 from app.bot.handlers.carrier_invite_admin import ADMIN_TELEGRAM_USER_IDS
 from app.bot.states.carrier_onboarding import CarrierOnboardingStates
 from app.db.session import async_session_maker
+from app.domain.carrier_status import CarrierStatus
 from app.repositories.carrier import CarrierRepository
+from app.services.carrier_onboarding import CarrierOnboardingService
 
 router = Router()
 
@@ -128,4 +131,116 @@ async def submit_carrier_to_moderation(
         "Анкета отправлена на модерацию.\n\n"
         f"После проверки вы получите уведомление. По вопросам: @{DEFAULT_ADMIN_USERNAME}",
         reply_markup=ReplyKeyboardRemove(),
+    )
+
+
+def build_carrier_decision_notification(*, approved: bool) -> str:
+    if approved:
+        return (
+            "Ваша анкета CargoPT одобрена.\n\n"
+            "Теперь вы участвуете в распределении заказов.\n\n"
+            f"По вопросам: @{DEFAULT_ADMIN_USERNAME}"
+        )
+
+    return (
+        "Ваша анкета CargoPT не была одобрена.\n\n"
+        "Для уточнения деталей свяжитесь с администратором:\n"
+        f"@{DEFAULT_ADMIN_USERNAME}"
+    )
+
+
+def build_admin_decision_suffix(*, action: str, moderator_username: str | None) -> str:
+    moderator = f"@{moderator_username}" if moderator_username else f"@{DEFAULT_ADMIN_USERNAME}"
+
+    if action == "approve":
+        return f"\n\n<b>Статус</b>\n✅ Одобрено\n<b>Модератор</b>\n{_safe(moderator)}"
+
+    return f"\n\n<b>Статус</b>\n❌ Отклонено\n<b>Модератор</b>\n{_safe(moderator)}"
+
+
+@router.callback_query(F.data.startswith("carrier_moderation:"))
+async def carrier_moderation_action(callback: CallbackQuery) -> None:
+    if callback.from_user.id not in ADMIN_TELEGRAM_USER_IDS:
+        await callback.answer(
+            "Недостаточно прав.",
+            show_alert=True,
+        )
+        return
+
+    parts = (callback.data or "").split(":")
+    if len(parts) != 3:
+        await callback.answer(
+            "Некорректное действие.",
+            show_alert=True,
+        )
+        return
+
+    _, action, raw_carrier_id = parts
+
+    if action not in {"approve", "reject"}:
+        await callback.answer(
+            "Некорректное действие.",
+            show_alert=True,
+        )
+        return
+
+    try:
+        carrier_id = int(raw_carrier_id)
+    except ValueError:
+        await callback.answer(
+            "Некорректный ID анкеты.",
+            show_alert=True,
+        )
+        return
+
+    async with async_session_maker() as session:
+        repository = CarrierRepository(session)
+        service = CarrierOnboardingService(repository)
+
+        carrier = await repository.get_carrier_by_id(carrier_id)
+
+        if carrier is None:
+            await callback.answer(
+                "Анкета не найдена.",
+                show_alert=True,
+            )
+            return
+
+        if carrier.status != CarrierStatus.PENDING_MODERATION:
+            await callback.answer(
+                "Эта анкета уже обработана.",
+                show_alert=True,
+            )
+            return
+
+        if action == "approve":
+            carrier = await service.approve_carrier(carrier_id)
+            approved = True
+        else:
+            carrier = await service.reject_carrier(carrier_id)
+            approved = False
+
+        await session.commit()
+
+    if carrier.telegram_user_id is not None:
+        await callback.bot.send_message(
+            chat_id=carrier.telegram_user_id,
+            text=build_carrier_decision_notification(approved=approved),
+        )
+
+    original_text = callback.message.html_text if callback.message else ""
+    suffix = build_admin_decision_suffix(
+        action=action,
+        moderator_username=callback.from_user.username,
+    )
+
+    if callback.message:
+        await callback.message.edit_text(
+            text=original_text + suffix,
+            reply_markup=None,
+            parse_mode="HTML",
+        )
+
+    await callback.answer(
+        "Анкета одобрена." if approved else "Анкета отклонена."
     )
