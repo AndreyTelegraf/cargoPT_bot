@@ -4,6 +4,7 @@ from aiogram.types import KeyboardButton
 from aiogram.types import Message
 from aiogram.types import ReplyKeyboardMarkup
 
+from app.bot.handlers.invite import carrier_yes_no_keyboard
 from app.bot.states.carrier_onboarding import CarrierOnboardingStates
 
 from app.db.session import async_session_maker
@@ -141,5 +142,7 @@ async def restart_carrier_onboarding(
     await message.answer(
         f"Компания:\n{company_name}\n\n"
         "Заполним анкету заново.\n\n"
-        "Нужна ли вашей компании сборка/разборка мебели? (Да/Нет)"
+        "Шаг 1 из 6.\n\n"
+        "Предоставляете ли вы услуги сборки и разборки мебели?",
+        reply_markup=carrier_yes_no_keyboard(),
     )
