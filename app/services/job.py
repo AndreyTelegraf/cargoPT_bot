@@ -60,22 +60,31 @@ class JobService:
         longitude: float | None = None,
     ) -> JobAddress:
         if latitude is not None and longitude is not None:
-            normalized_text = raw_text.strip() or f"{latitude}, {longitude}"
-            map_url = build_google_maps_coordinate_url(latitude, longitude)
+            normalized_location = {
+                "raw_text": raw_text.strip() or f"{latitude}, {longitude}",
+                "original_google_maps_url": None,
+                "normalized_address": raw_text.strip() or f"{latitude}, {longitude}",
+                "postal_code": None,
+                "latitude": latitude,
+                "longitude": longitude,
+                "map_url": build_google_maps_coordinate_url(latitude, longitude),
+            }
         else:
-            normalized_text, map_url = normalize_text_location(raw_text)
+            normalized_location = normalize_text_location(raw_text)
 
         address = JobAddress(
             job_id=job_id,
             kind=kind,
-            raw_text=normalized_text,
+            raw_text=normalized_location["raw_text"],
+            original_google_maps_url=normalized_location["original_google_maps_url"],
+            normalized_address=normalized_location["normalized_address"],
             city=None,
-            postal_code=None,
+            postal_code=normalized_location["postal_code"],
             floor=None,
             has_elevator=None,
-            latitude=latitude,
-            longitude=longitude,
-            map_url=map_url,
+            latitude=normalized_location["latitude"],
+            longitude=normalized_location["longitude"],
+            map_url=normalized_location["map_url"],
             created_at=datetime.now(UTC),
         )
 
