@@ -85,7 +85,7 @@ class CarrierRepository:
         invite.status = "used"
 
         carrier.telegram_user_id = telegram_user_id
-        carrier.status = CarrierStatus.ACTIVE
+        carrier.status = CarrierStatus.INVITED
 
         await self.session.flush()
 
@@ -108,7 +108,8 @@ class CarrierRepository:
         carrier.packing_required = packing_required
         carrier.operating_regions = operating_regions
         carrier.profile_completed_at = completed_at
-        carrier.status = CarrierStatus.PROFILE_COMPLETED
+        carrier.status = CarrierStatus.PENDING_MODERATION
+        carrier.current_profile_step = "completed"
 
         await self.session.flush()
 
@@ -156,6 +157,36 @@ class CarrierRepository:
         await self.session.flush()
         return carrier
 
+    async def approve_carrier(
+        self,
+        carrier_id: int,
+    ) -> CarrierCompany:
+        carrier = await self.get_carrier_by_id(carrier_id)
+
+        if carrier is None:
+            raise ValueError("carrier not found")
+
+        carrier.status = CarrierStatus.ACTIVE
+
+        await self.session.flush()
+
+        return carrier
+
+    async def reject_carrier(
+        self,
+        carrier_id: int,
+    ) -> CarrierCompany:
+        carrier = await self.get_carrier_by_id(carrier_id)
+
+        if carrier is None:
+            raise ValueError("carrier not found")
+
+        carrier.status = CarrierStatus.REJECTED
+
+        await self.session.flush()
+
+        return carrier
+
     async def create_vehicle(
         self,
         vehicle: CarrierVehicle,
@@ -189,7 +220,7 @@ class CarrierRepository:
             select(CarrierVehicle)
             .join(CarrierCompany)
             .where(CarrierVehicle.is_active.is_(True))
-            .where(CarrierCompany.status == CarrierStatus.PROFILE_COMPLETED)
+            .where(CarrierCompany.status == CarrierStatus.ACTIVE)
         )
 
         if min_payload_kg is not None:

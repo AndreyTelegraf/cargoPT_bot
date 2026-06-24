@@ -136,6 +136,22 @@ class CarrierOnboardingService:
         )
 
 
+    async def approve_carrier(
+        self,
+        carrier_id: int,
+    ):
+        return await self.repository.approve_carrier(
+            carrier_id=carrier_id,
+        )
+
+    async def reject_carrier(
+        self,
+        carrier_id: int,
+    ):
+        return await self.repository.reject_carrier(
+            carrier_id=carrier_id,
+        )
+
     async def advance_profile_step(
         self,
         carrier_id: int,
