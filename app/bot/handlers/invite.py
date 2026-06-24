@@ -1,6 +1,8 @@
 from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
+from aiogram.types import KeyboardButton
+from aiogram.types import ReplyKeyboardMarkup
 from aiogram.fsm.context import FSMContext
 
 from app.db.session import async_session_maker
@@ -10,6 +12,22 @@ from app.domain.carrier_profile_step import CarrierProfileStep
 from app.bot.states.carrier_onboarding import CarrierOnboardingStates
 
 router = Router()
+
+
+def carrier_welcome_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text="Начать")]],
+        resize_keyboard=True,
+        one_time_keyboard=True,
+    )
+
+
+def carrier_yes_no_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text="Да"), KeyboardButton(text="Нет")]],
+        resize_keyboard=True,
+        one_time_keyboard=True,
+    )
 
 
 @router.message(CommandStart(deep_link=True))
@@ -39,11 +57,6 @@ async def invite_start(message: Message, state: FSMContext) -> None:
             if carrier is None:
                 raise ValueError("carrier not found")
 
-            await service.advance_profile_step(
-                carrier_id=invite.carrier_id,
-                step=CarrierProfileStep.ASSEMBLY_REQUIRED,
-            )
-
             await session.commit()
 
         except Exception:
@@ -60,11 +73,45 @@ async def invite_start(message: Message, state: FSMContext) -> None:
     )
 
     await state.set_state(
-        CarrierOnboardingStates.assembly_required
+        CarrierOnboardingStates.welcome
     )
 
     await message.answer(
+        "Добро пожаловать в CargoPT.\n\n"
+        "Вы были приглашены как перевозчик.\n\n"
         f"Компания:\n{carrier.company_name}\n\n"
-        "Продолжим заполнение анкеты.\n\n"
-        "Нужна ли вашей компании сборка/разборка мебели? (Да/Нет)"
+        "Сейчас нужно заполнить анкету перевозчика.\n\n"
+        "Что потребуется:\n"
+        "- регионы работы\n"
+        "- автомобили и их характеристики\n"
+        "- количество сотрудников\n"
+        "- контактные данные\n\n"
+        "Анкета состоит из 7 шагов и обычно занимает 2–3 минуты.\n\n"
+        "Нажмите «Начать».",
+        reply_markup=carrier_welcome_keyboard(),
+    )
+
+
+@router.message(CarrierOnboardingStates.welcome, lambda message: message.text == "Начать")
+async def carrier_welcome_start(message: Message, state: FSMContext) -> None:
+    data = await state.get_data()
+    carrier_id = data["carrier_id"]
+
+    async with async_session_maker() as session:
+        repository = CarrierRepository(session)
+        service = CarrierOnboardingService(repository)
+
+        await service.advance_profile_step(
+            carrier_id=carrier_id,
+            step=CarrierProfileStep.ASSEMBLY_REQUIRED,
+        )
+
+        await session.commit()
+
+    await state.set_state(CarrierOnboardingStates.assembly_required)
+
+    await message.answer(
+        "Шаг 1 из 7.\n\n"
+        "Предоставляете ли вы услуги сборки и разборки мебели?",
+        reply_markup=carrier_yes_no_keyboard(),
     )

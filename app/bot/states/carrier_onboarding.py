@@ -3,6 +3,7 @@ from aiogram.fsm.state import StatesGroup
 
 
 class CarrierOnboardingStates(StatesGroup):
+    welcome = State()
     assembly_required = State()
     packing_required = State()
     operating_regions = State()

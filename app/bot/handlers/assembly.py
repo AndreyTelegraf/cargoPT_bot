@@ -3,6 +3,7 @@ from aiogram import F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.handlers.invite import carrier_yes_no_keyboard
 from app.bot.states.carrier_onboarding import CarrierOnboardingStates
 from app.db.session import async_session_maker
 from app.repositories.carrier import CarrierRepository
@@ -51,5 +52,7 @@ async def assembly_required(
     )
 
     await message.answer(
-        "Предоставляете ли вы услуги упаковки груза? (Да/Нет)"
+        "Шаг 2 из 7.\n\n"
+        "Предоставляете ли вы услуги упаковки и распаковки груза?",
+        reply_markup=carrier_yes_no_keyboard(),
     )
