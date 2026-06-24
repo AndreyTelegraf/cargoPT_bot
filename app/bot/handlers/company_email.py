@@ -17,6 +17,7 @@ def submit_moderation_keyboard() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="Отправить на модерацию")],
+            [KeyboardButton(text="Заполнить заново")],
         ],
         resize_keyboard=True,
         one_time_keyboard=True,
@@ -79,7 +80,19 @@ async def company_email(
 
         existing_vehicles = await repository.list_vehicles_by_carrier(carrier_id)
 
-        if not existing_vehicles:
+        if existing_vehicles:
+            vehicle = existing_vehicles[0]
+            vehicle.vehicle_type = data["vehicle_type"]
+            vehicle.payload_kg = data["payload_kg"]
+            vehicle.volume_m3 = data["volume_m3"]
+            vehicle.has_tail_lift = data["has_tail_lift"]
+            vehicle.has_crane = data["has_crane"]
+            vehicle.has_mobile_lift = data["has_mobile_lift"]
+            vehicle.mobile_lift_max_floor = data.get("mobile_lift_max_floor")
+            vehicle.mobile_lift_max_weight_kg = data.get("mobile_lift_max_weight_kg")
+            vehicle.crane_max_weight_kg = data.get("crane_max_weight_kg")
+            vehicle.crane_reach_meters = data.get("crane_max_reach_m")
+        else:
             await service.create_vehicle(
                 carrier_id=carrier_id,
                 vehicle_type=data["vehicle_type"],
@@ -101,4 +114,33 @@ async def company_email(
     await message.answer(
         build_carrier_preview_text(data),
         reply_markup=submit_moderation_keyboard(),
+    )
+
+
+@router.message(
+    CarrierOnboardingStates.moderation_review,
+    lambda message: message.text == "Заполнить заново",
+)
+async def restart_carrier_onboarding(
+    message: Message,
+    state: FSMContext,
+) -> None:
+    data = await state.get_data()
+
+    carrier_id = data["carrier_id"]
+    company_name = data.get("company_name", "не указано")
+    contact_name = data.get("contact_name")
+
+    await state.set_data({
+        "carrier_id": carrier_id,
+        "company_name": company_name,
+        "contact_name": contact_name,
+    })
+
+    await state.set_state(CarrierOnboardingStates.assembly_required)
+
+    await message.answer(
+        f"Компания:\n{company_name}\n\n"
+        "Заполним анкету заново.\n\n"
+        "Нужна ли вашей компании сборка/разборка мебели? (Да/Нет)"
     )
