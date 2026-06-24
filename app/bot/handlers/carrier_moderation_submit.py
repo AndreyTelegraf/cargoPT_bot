@@ -76,7 +76,6 @@ def build_admin_moderation_text(*, carrier, vehicles, data: dict, telegram_user)
         f"<b>Регионы</b>\n{_safe(carrier.operating_regions or data.get('operating_regions') or 'не указаны')}\n\n"
         f"<b>Сборка мебели</b>\n{_format_bool(carrier.assembly_required)}\n\n"
         f"<b>Упаковка</b>\n{_format_bool(carrier.packing_required)}\n\n"
-        f"<b>Сотрудников</b>\n{_safe(data.get('employee_count', 'не указано'))}\n\n"
         f"<b>Макс. грузчиков</b>\n{_safe(data.get('max_loaders', 'не указано'))}\n\n"
         f"<b>Автомобили</b>\n{vehicles_text}\n\n"
         f"<b>Telegram</b>\n{telegram_line}\n"

@@ -47,7 +47,6 @@ def build_carrier_preview_text(data: dict) -> str:
         f"Макс. вес мобильного лифта: {data.get('mobile_lift_max_weight_kg', 'не указано')} кг\n"
         f"Макс. вес крана: {data.get('crane_max_weight_kg', 'не указано')} кг\n"
         f"Вылет стрелы крана: {data.get('crane_max_reach_m', 'не указано')} м\n\n"
-        f"Сотрудников: {data.get('employee_count', 'не указано')}\n"
         f"Макс. грузчиков на заказ: {data.get('max_loaders', 'не указано')}\n"
         f"Телефон: {data.get('company_phone', 'не указано')}\n"
         f"Email: {data.get('company_email', 'не указано')}\n\n"

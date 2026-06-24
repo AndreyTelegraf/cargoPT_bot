@@ -28,6 +28,6 @@ async def max_loaders(
     await state.set_state(CarrierOnboardingStates.company_phone)
 
     await message.answer(
-        "Шаг 5 из 7. Контакты.\n\n"
+        "Шаг 5 из 6. Контакты.\n\n"
         "Какой номер телефона для связи с вашей компанией?"
     )

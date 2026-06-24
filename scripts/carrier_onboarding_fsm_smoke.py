@@ -24,7 +24,6 @@ assert CarrierOnboardingStates.mobile_lift_max_floor
 assert CarrierOnboardingStates.mobile_lift_max_weight_kg
 assert CarrierOnboardingStates.crane_max_weight_kg
 assert CarrierOnboardingStates.crane_reach_meters
-assert CarrierOnboardingStates.employee_count
 assert CarrierOnboardingStates.max_loaders
 assert CarrierOnboardingStates.company_phone
 assert CarrierOnboardingStates.company_email

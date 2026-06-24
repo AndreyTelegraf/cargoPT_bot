@@ -18,7 +18,6 @@ class CarrierOnboardingStates(StatesGroup):
     mobile_lift_max_weight_kg = State()
     crane_max_weight_kg = State()
     crane_reach_meters = State()
-    employee_count = State()
     max_loaders = State()
     company_phone = State()
     company_email = State()
