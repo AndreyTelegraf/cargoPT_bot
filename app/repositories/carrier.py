@@ -212,9 +212,12 @@ class CarrierRepository:
         *,
         min_payload_kg: int | None = None,
         min_volume_m3: float | None = None,
+        min_loaders: int | None = None,
         needs_tail_lift: bool = False,
         needs_crane: bool = False,
         needs_mobile_lift: bool = False,
+        needs_assembly: bool = False,
+        needs_packing: bool = False,
     ) -> list[CarrierVehicle]:
         stmt = (
             select(CarrierVehicle)
@@ -228,6 +231,15 @@ class CarrierRepository:
 
         if min_volume_m3 is not None:
             stmt = stmt.where(CarrierVehicle.volume_m3 >= min_volume_m3)
+
+        if min_loaders is not None:
+            stmt = stmt.where(CarrierVehicle.max_loaders >= min_loaders)
+
+        if needs_assembly:
+            stmt = stmt.where(CarrierCompany.assembly_required.is_(True))
+
+        if needs_packing:
+            stmt = stmt.where(CarrierCompany.packing_required.is_(True))
 
         if needs_tail_lift:
             stmt = stmt.where(CarrierVehicle.has_tail_lift.is_(True))

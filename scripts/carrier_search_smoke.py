@@ -49,10 +49,10 @@ async def exercise_search() -> None:
                 contact_name=None,
                 phone=None,
                 telegram_user_id=1001,
-                status=CarrierStatus.PROFILE_COMPLETED,
+                status=CarrierStatus.ACTIVE,
                 paid_until=None,
-                assembly_required=False,
-                packing_required=False,
+                assembly_required=True,
+                packing_required=True,
                 operating_regions="Lisboa, Porto",
                 profile_completed_at=now,
                 current_profile_step=None,
@@ -94,6 +94,7 @@ async def exercise_search() -> None:
                 mobile_lift_max_weight_kg=None,
                 crane_max_weight_kg=None,
                 crane_reach_meters=None,
+                max_loaders=3,
                 is_active=True,
                 created_at=now,
                 updated_at=now,
@@ -126,7 +127,10 @@ async def exercise_search() -> None:
         matches = await search.find_matching_vehicles(
             min_payload_kg=1000,
             min_volume_m3=10,
+            min_loaders=2,
             needs_tail_lift=True,
+            needs_assembly=True,
+            needs_packing=True,
         )
 
         if len(matches) != 1:
