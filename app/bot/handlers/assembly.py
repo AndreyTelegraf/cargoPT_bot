@@ -52,7 +52,6 @@ async def assembly_required(
     )
 
     await message.answer(
-        "Шаг 2 из 7.\n\n"
         "Предоставляете ли вы услуги упаковки и распаковки груза?",
         reply_markup=carrier_yes_no_keyboard(),
     )

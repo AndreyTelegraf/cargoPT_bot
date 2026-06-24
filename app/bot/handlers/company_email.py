@@ -4,7 +4,7 @@ from aiogram.types import KeyboardButton
 from aiogram.types import Message
 from aiogram.types import ReplyKeyboardMarkup
 
-from app.bot.handlers.invite import carrier_yes_no_keyboard
+from app.bot.handlers.regions import regions_keyboard
 from app.bot.states.carrier_onboarding import CarrierOnboardingStates
 
 from app.db.session import async_session_maker
@@ -137,12 +137,15 @@ async def restart_carrier_onboarding(
         "contact_name": contact_name,
     })
 
-    await state.set_state(CarrierOnboardingStates.assembly_required)
+    await state.update_data(selected_regions=[])
+
+    await state.set_state(CarrierOnboardingStates.operating_regions)
 
     await message.answer(
         f"Компания:\n{company_name}\n\n"
         "Заполним анкету заново.\n\n"
-        "Шаг 1 из 6.\n\n"
-        "Предоставляете ли вы услуги сборки и разборки мебели?",
-        reply_markup=carrier_yes_no_keyboard(),
+        "Шаг 1 из 6. Регионы работы.\n\n"
+        "В каких регионах Португалии вы работаете?\n\n"
+        "Можно выбрать несколько регионов. Когда закончите, нажмите «Готово».",
+        reply_markup=regions_keyboard(),
     )

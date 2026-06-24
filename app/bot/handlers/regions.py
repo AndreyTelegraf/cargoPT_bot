@@ -110,13 +110,6 @@ async def operating_regions(
         repository = CarrierRepository(session)
         service = CarrierOnboardingService(repository)
 
-        await service.complete_profile(
-            carrier_id=carrier_id,
-            assembly_required=data["assembly_required"],
-            packing_required=data["packing_required"],
-            operating_regions=regions,
-        )
-
         await service.advance_profile_step(
             carrier_id=carrier_id,
             step=CarrierProfileStep.VEHICLES,
@@ -131,6 +124,7 @@ async def operating_regions(
     await state.set_state(CarrierOnboardingStates.vehicle_count)
 
     await message.answer(
+        "Шаг 2 из 6. Автомобили.\n\n"
         "Сколько автомобилей у вашей компании?",
         reply_markup=ReplyKeyboardRemove(),
     )

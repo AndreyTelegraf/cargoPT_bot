@@ -5,6 +5,7 @@ from aiogram.types import KeyboardButton
 from aiogram.types import ReplyKeyboardMarkup
 from aiogram.fsm.context import FSMContext
 
+from app.bot.handlers.regions import regions_keyboard
 from app.db.session import async_session_maker
 from app.repositories.carrier import CarrierRepository
 from app.services.carrier_onboarding import CarrierOnboardingService
@@ -84,9 +85,9 @@ async def invite_start(message: Message, state: FSMContext) -> None:
         "Что потребуется:\n"
         "- регионы работы\n"
         "- автомобили и их характеристики\n"
-        "- количество сотрудников\n"
+        "- услуги сборки и упаковки\n"
         "- контактные данные\n\n"
-        "Анкета состоит из 7 шагов и обычно занимает 2–3 минуты.\n\n"
+        "Анкета состоит из 6 шагов и обычно занимает 2–3 минуты.\n\n"
         "Нажмите «Начать».",
         reply_markup=carrier_welcome_keyboard(),
     )
@@ -103,15 +104,18 @@ async def carrier_welcome_start(message: Message, state: FSMContext) -> None:
 
         await service.advance_profile_step(
             carrier_id=carrier_id,
-            step=CarrierProfileStep.ASSEMBLY_REQUIRED,
+            step=CarrierProfileStep.OPERATING_REGIONS,
         )
 
         await session.commit()
 
-    await state.set_state(CarrierOnboardingStates.assembly_required)
+    await state.update_data(selected_regions=[])
+
+    await state.set_state(CarrierOnboardingStates.operating_regions)
 
     await message.answer(
-        "Шаг 1 из 7.\n\n"
-        "Предоставляете ли вы услуги сборки и разборки мебели?",
-        reply_markup=carrier_yes_no_keyboard(),
+        "Шаг 1 из 6. Регионы работы.\n\n"
+        "В каких регионах Португалии вы работаете?\n\n"
+        "Можно выбрать несколько регионов. Когда закончите, нажмите «Готово».",
+        reply_markup=regions_keyboard(),
     )

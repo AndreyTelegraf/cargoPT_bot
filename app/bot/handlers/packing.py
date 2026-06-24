@@ -3,7 +3,7 @@ from aiogram import F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from app.bot.handlers.regions import regions_keyboard
+from app.bot.handlers.invite import carrier_yes_no_keyboard
 from app.bot.states.carrier_onboarding import CarrierOnboardingStates
 from app.db.session import async_session_maker
 from app.repositories.carrier import CarrierRepository
@@ -30,29 +30,22 @@ async def packing_required(
         repository = CarrierRepository(session)
         service = CarrierOnboardingService(repository)
 
-        await service.save_packing_required(
+        await service.complete_profile(
             carrier_id=carrier_id,
-            value=packing_required,
-        )
-
-        await service.advance_profile_step(
-            carrier_id=carrier_id,
-            step=CarrierProfileStep.OPERATING_REGIONS,
+            assembly_required=data["assembly_required"],
+            packing_required=packing_required,
+            operating_regions=data["operating_regions"],
         )
 
         await session.commit()
 
     await state.update_data(
         packing_required=packing_required,
-        selected_regions=[],
     )
 
-    await state.set_state(
-        CarrierOnboardingStates.operating_regions
-    )
+    await state.set_state(CarrierOnboardingStates.has_tail_lift)
 
     await message.answer(
-        "В каких регионах Португалии вы работаете?\n\n"
-        "Можно выбрать несколько регионов. Когда закончите, нажмите «Готово».",
-        reply_markup=regions_keyboard(),
+        "Есть ли гидроборт?",
+        reply_markup=carrier_yes_no_keyboard(),
     )
