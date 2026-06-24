@@ -3,6 +3,7 @@ from aiogram import F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.handlers.regions import regions_keyboard
 from app.bot.states.carrier_onboarding import CarrierOnboardingStates
 from app.db.session import async_session_maker
 from app.repositories.carrier import CarrierRepository
@@ -42,9 +43,16 @@ async def packing_required(
         await session.commit()
 
     await state.update_data(
-        packing_required=packing_required
+        packing_required=packing_required,
+        selected_regions=[],
+    )
+
+    await state.set_state(
+        CarrierOnboardingStates.operating_regions
     )
 
     await message.answer(
-        "В каких регионах Португалии вы работаете?"
+        "В каких регионах Португалии вы работаете?\n\n"
+        "Можно выбрать несколько регионов. Когда закончите, нажмите «Готово».",
+        reply_markup=regions_keyboard(),
     )
