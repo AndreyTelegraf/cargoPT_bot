@@ -79,6 +79,8 @@ class JobAddress(Base):
     kind: Mapped[str] = mapped_column(String, nullable=False)
 
     raw_text: Mapped[str] = mapped_column(Text, nullable=False)
+    original_google_maps_url: Mapped[str | None] = mapped_column(Text)
+    normalized_address: Mapped[str | None] = mapped_column(Text)
     city: Mapped[str | None] = mapped_column(String)
     postal_code: Mapped[str | None] = mapped_column(String)
 
