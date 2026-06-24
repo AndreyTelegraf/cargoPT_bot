@@ -2,21 +2,27 @@ from aiogram.types import KeyboardButton
 from aiogram.types import ReplyKeyboardMarkup
 
 
-def _keyboard(rows: list[list[str]]) -> ReplyKeyboardMarkup:
+def _keyboard(rows: list[list[str]], *, include_help: bool = True) -> ReplyKeyboardMarkup:
+    keyboard_rows = list(rows)
+    if include_help:
+        keyboard_rows.append(["Помощь"])
+
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text=value) for value in row]
-            for row in rows
+            for row in keyboard_rows
         ],
         resize_keyboard=True,
         one_time_keyboard=True,
     )
 
 
+def support_keyboard() -> ReplyKeyboardMarkup:
+    return _keyboard([], include_help=True)
+
+
 def client_start_keyboard() -> ReplyKeyboardMarkup:
-    return _keyboard([
-        ["Помощь", "Мои объявления"],
-    ])
+    return support_keyboard()
 
 
 def yes_no_keyboard() -> ReplyKeyboardMarkup:

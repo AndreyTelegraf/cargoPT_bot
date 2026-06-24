@@ -2,6 +2,7 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.job_request_keyboards import support_keyboard
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.job import JobRepository
@@ -55,7 +56,8 @@ async def _save_details(
     except ValueError:
         await message.answer(
             "Не понял этаж и лифт. Напишите в формате: этаж, лифт да/нет.\n"
-            "Примеры: 2, да; 0, нет; -1, да"
+            "Примеры: 2, да; 0, нет; -1, да",
+            reply_markup=support_keyboard(),
         )
         return
 
@@ -90,6 +92,7 @@ async def pickup_details(message: Message, state: FSMContext) -> None:
             "Вставьте ссылку на точку из Google Maps или введите полный адрес, "
             "например Rua Escura, 1, Porto, 4050-242"
         ),
+        next_reply_markup=support_keyboard(),
     )
 
 

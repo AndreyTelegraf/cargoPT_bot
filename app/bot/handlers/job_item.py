@@ -2,6 +2,7 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.job_request_keyboards import support_keyboard
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.job import JobRepository
@@ -18,7 +19,7 @@ async def job_item_description(
     description = (message.text or "").strip()
 
     if not description:
-        await message.answer("Опишите груз коротким текстом.")
+        await message.answer("Опишите груз коротким текстом.", reply_markup=support_keyboard())
         return
 
     data = await state.get_data()

@@ -6,6 +6,7 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.job_request_keyboards import support_keyboard
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.job import JobRepository
@@ -63,7 +64,8 @@ async def job_requested_datetime(
             "Примеры:\n"
             "24.06 10:00\n"
             "24.06.2026 15:30\n"
-            "24.06 — если точное время пока не важно."
+            "24.06 — если точное время пока не важно.",
+            reply_markup=support_keyboard(),
         )
         return
 
@@ -86,5 +88,6 @@ async def job_requested_datetime(
     await message.answer(
         "Что нужно перевезти?\n\n"
         "Опишите груз простыми словами: например, «диван 2 метра, 10 коробок, стиральная машина».\n"
-        "Если есть хрупкие, тяжёлые или нестандартные вещи — напишите это здесь."
+        "Если есть хрупкие, тяжёлые или нестандартные вещи — напишите это здесь.",
+        reply_markup=support_keyboard(),
     )

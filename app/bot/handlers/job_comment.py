@@ -1,8 +1,8 @@
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from aiogram.types import ReplyKeyboardRemove
 
+from app.bot.job_request_keyboards import support_keyboard
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.carrier import CarrierRepository
@@ -68,5 +68,5 @@ async def job_comment(
         "Заявка опубликована.\n\n"
         "Сейчас мы ищем подходящего перевозчика. "
         "Как только кто-то примет заказ, вы получите уведомление здесь.",
-        reply_markup=ReplyKeyboardRemove(),
+        reply_markup=support_keyboard(),
     )
