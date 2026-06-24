@@ -6,7 +6,6 @@ from aiogram.types import CallbackQuery
 from app.db.session import async_session_maker
 from app.domain.job_status import JobStatus
 from app.repositories.job import JobRepository
-from app.services.carrier_search import CarrierSearchService
 from app.services.assignment_confirmation import build_assignment_cleanup_target
 from app.services.assignment_confirmation import build_assignment_offer_distribution
 from app.services.assignment_confirmation import build_assignment_result_text
@@ -16,9 +15,6 @@ from app.services.assignment_confirmation import record_assignment_confirmation
 from app.services.assignment_confirmation import resolve_assignment_actor
 from app.services.job import InvalidJobStatusTransitionError
 from app.services.job import JobService
-from app.services.job_matching import JobMatchingService
-from app.services.job_offer import JobOfferService
-from app.services.offer_distribution import OfferDistributionService
 from app.services.offer_notification import send_job_offers_to_carriers
 
 router = Router()
