@@ -25,6 +25,8 @@ async def mobile_lift_floor(
         mobile_lift_max_floor=floor
     )
 
+    await state.set_state(CarrierOnboardingStates.mobile_lift_max_weight_kg)
+
     await message.answer(
-        "Какой максимальный вес может поднять мобильный лифт (кг)?"
+        "Какой максимальный вес может поднять мобильный лифт в кг?"
     )

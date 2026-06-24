@@ -25,6 +25,8 @@ async def crane_weight(
         crane_max_weight_kg=weight
     )
 
+    await state.set_state(CarrierOnboardingStates.crane_reach_meters)
+
     await message.answer(
-        "Какой максимальный вылет стрелы крана (метры)?"
+        "Какой максимальный вылет стрелы крана в метрах?"
     )

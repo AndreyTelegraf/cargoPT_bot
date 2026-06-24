@@ -25,6 +25,8 @@ async def employee_count(
         employee_count=employees
     )
 
+    await state.set_state(CarrierOnboardingStates.max_loaders)
+
     await message.answer(
         "Сколько грузчиков одновременно вы можете предоставить на один заказ?"
     )

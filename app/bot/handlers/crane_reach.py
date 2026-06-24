@@ -2,6 +2,7 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.handlers.invite import carrier_yes_no_keyboard
 from app.bot.states.carrier_onboarding import CarrierOnboardingStates
 
 router = Router()
@@ -25,6 +26,9 @@ async def crane_reach(
         crane_max_reach_m=reach
     )
 
+    await state.set_state(CarrierOnboardingStates.has_mobile_lift)
+
     await message.answer(
-        "Сколько сотрудников работает в вашей компании?"
+        "Есть ли мобильный лифт для подачи через окна?",
+        reply_markup=carrier_yes_no_keyboard(),
     )

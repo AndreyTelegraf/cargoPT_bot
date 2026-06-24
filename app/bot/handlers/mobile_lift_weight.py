@@ -25,6 +25,9 @@ async def mobile_lift_weight(
         mobile_lift_max_weight_kg=weight
     )
 
+    await state.set_state(CarrierOnboardingStates.employee_count)
+
     await message.answer(
-        "Какой максимальный вес может поднять кран (кг)?"
+        "Шаг 4 из 7. Команда.\n\n"
+        "Сколько сотрудников работает в вашей компании?"
     )

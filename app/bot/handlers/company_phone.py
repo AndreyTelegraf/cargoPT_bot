@@ -22,6 +22,8 @@ async def company_phone(
         company_phone=phone
     )
 
+    await state.set_state(CarrierOnboardingStates.company_email)
+
     await message.answer(
-        "Укажите контактный email компании"
+        "Укажите контактный email компании."
     )
