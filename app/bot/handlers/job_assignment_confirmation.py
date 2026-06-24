@@ -5,6 +5,7 @@ from aiogram.types import CallbackQuery
 
 from app.db.session import async_session_maker
 from app.domain.job_status import JobStatus
+from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
 from app.services.assignment_confirmation import build_assignment_cleanup_target
 from app.services.assignment_confirmation import build_assignment_result_text
@@ -27,6 +28,45 @@ async def _delete_message_by_id_safely(bot, *, chat_id: int | None, message_id: 
         await bot.delete_message(chat_id=chat_id, message_id=message_id)
     except TelegramBadRequest:
         return
+
+
+async def _send_assignment_final_notifications(
+    *,
+    bot,
+    job,
+    accepted_offer,
+    carrier_repository: CarrierRepository,
+) -> None:
+    if job.status not in {JobStatus.ASSIGNED, JobStatus.READY_FOR_MATCHING}:
+        return
+
+    carrier = None
+    if accepted_offer is not None:
+        carrier = await carrier_repository.get_carrier_by_id(accepted_offer.carrier_id)
+
+    if job.status == JobStatus.ASSIGNED:
+        client_text = (
+            f"Сделка по заявке №{job.id} подтверждена обеими сторонами.\n\n"
+            "Свяжитесь с перевозчиком напрямую и согласуйте последние детали перевозки."
+        )
+        carrier_text = (
+            f"Сделка по заявке №{job.id} подтверждена обеими сторонами.\n\n"
+            "Свяжитесь с клиентом напрямую и согласуйте последние детали перевозки."
+        )
+    else:
+        client_text = (
+            f"По заявке №{job.id} сделка не состоялась.\n\n"
+            "Заявка возвращена в поиск. Мы уже ищем нового перевозчика."
+        )
+        carrier_text = (
+            f"По заявке №{job.id} сделка не состоялась.\n\n"
+            "Заявка возвращена в поиск для других перевозчиков."
+        )
+
+    await bot.send_message(chat_id=job.client_telegram_user_id, text=client_text)
+
+    if carrier is not None and carrier.telegram_user_id is not None:
+        await bot.send_message(chat_id=carrier.telegram_user_id, text=carrier_text)
 
 
 @router.callback_query(F.data.startswith("assignment:"))
@@ -94,6 +134,13 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
             job=updated_job,
             accepted_offer=accepted_offer,
             job_repository=job_repository,
+            carrier_repository=carrier_repository,
+        )
+
+        await _send_assignment_final_notifications(
+            bot=callback.bot,
+            job=updated_job,
+            accepted_offer=accepted_offer,
             carrier_repository=carrier_repository,
         )
 
