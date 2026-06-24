@@ -30,6 +30,8 @@ def _format_bool(value: bool | None) -> str:
 def build_carrier_preview_text(data: dict) -> str:
     return (
         "Проверьте анкету перевозчика перед отправкой на модерацию.\n\n"
+        f"Компания: {data.get('company_name', 'не указано')}\n"
+        f"Контакт: {data.get('contact_name') or 'не указан'}\n\n"
         f"Сборка/разборка мебели: {_format_bool(data.get('assembly_required'))}\n"
         f"Упаковка груза: {_format_bool(data.get('packing_required'))}\n"
         f"Регионы работы: {data.get('operating_regions', 'не указано')}\n\n"
