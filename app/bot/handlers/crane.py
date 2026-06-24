@@ -28,6 +28,11 @@ async def crane(
         )
         return
 
+    await state.update_data(
+        crane_max_weight_kg=None,
+        crane_max_reach_m=None,
+    )
+
     await state.set_state(CarrierOnboardingStates.has_mobile_lift)
 
     await message.answer(

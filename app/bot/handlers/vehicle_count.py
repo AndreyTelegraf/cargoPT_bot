@@ -14,14 +14,29 @@ async def vehicle_count(
     message: Message,
     state: FSMContext,
 ) -> None:
+    count = int(message.text)
+
     await state.update_data(
-        vehicle_count=int(message.text)
+        vehicle_count=count,
+        current_vehicle_index=1,
+        vehicles=[],
+        vehicle_type=None,
+        payload_kg=None,
+        volume_m3=None,
+        has_tail_lift=None,
+        has_crane=None,
+        has_mobile_lift=None,
+        mobile_lift_max_floor=None,
+        mobile_lift_max_weight_kg=None,
+        crane_max_weight_kg=None,
+        crane_max_reach_m=None,
+        max_loaders=None,
     )
 
     await state.set_state(CarrierOnboardingStates.vehicle_type)
 
     await message.answer(
-        "Шаг 3 из 7. Автомобиль 1.\n\n"
+        f"Шаг 3 из 6. Автомобиль 1 из {count}.\n\n"
         "Выберите тип автомобиля.",
         reply_markup=vehicle_type_keyboard(),
     )

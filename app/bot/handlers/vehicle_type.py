@@ -41,6 +41,10 @@ async def vehicle_type(
         )
         return
 
+    data = await state.get_data()
+    current_index = data.get("current_vehicle_index", 1)
+    total_count = data.get("vehicle_count", 1)
+
     await state.update_data(
         vehicle_type=message.text
     )
@@ -48,6 +52,7 @@ async def vehicle_type(
     await state.set_state(CarrierOnboardingStates.payload_kg)
 
     await message.answer(
+        f"Автомобиль {current_index} из {total_count}.\n\n"
         "Грузоподъёмность автомобиля в кг?",
         reply_markup=ReplyKeyboardRemove(),
     )

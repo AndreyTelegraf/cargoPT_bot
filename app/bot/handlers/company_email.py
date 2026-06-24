@@ -29,7 +29,52 @@ def _format_bool(value: bool | None) -> str:
     return "Да" if value else "Нет"
 
 
+def _get_vehicles_data(data: dict) -> list[dict]:
+    vehicles = list(data.get("vehicles") or [])
+
+    if vehicles:
+        return vehicles
+
+    return [
+        {
+            "vehicle_type": data.get("vehicle_type"),
+            "payload_kg": data.get("payload_kg"),
+            "volume_m3": data.get("volume_m3"),
+            "has_tail_lift": data.get("has_tail_lift"),
+            "has_crane": data.get("has_crane"),
+            "has_mobile_lift": data.get("has_mobile_lift"),
+            "mobile_lift_max_floor": data.get("mobile_lift_max_floor"),
+            "mobile_lift_max_weight_kg": data.get("mobile_lift_max_weight_kg"),
+            "crane_max_weight_kg": data.get("crane_max_weight_kg"),
+            "crane_max_reach_m": data.get("crane_max_reach_m"),
+            "max_loaders": data.get("max_loaders"),
+        }
+    ]
+
+
+def _format_vehicle_preview(vehicle: dict, index: int) -> str:
+    return (
+        f"Автомобиль {index}\n"
+        f"Тип: {vehicle.get('vehicle_type', 'не указано')}\n"
+        f"Грузоподъёмность: {vehicle.get('payload_kg', 'не указано')} кг\n"
+        f"Объём: {vehicle.get('volume_m3', 'не указано')} м³\n"
+        f"Гидроборт: {_format_bool(vehicle.get('has_tail_lift'))}\n"
+        f"Кран: {_format_bool(vehicle.get('has_crane'))}\n"
+        f"Мобильный лифт: {_format_bool(vehicle.get('has_mobile_lift'))}\n"
+        f"Макс. этаж мобильного лифта: {vehicle.get('mobile_lift_max_floor', 'не указано')}\n"
+        f"Макс. вес мобильного лифта: {vehicle.get('mobile_lift_max_weight_kg', 'не указано')} кг\n"
+        f"Макс. вес крана: {vehicle.get('crane_max_weight_kg', 'не указано')} кг\n"
+        f"Вылет стрелы крана: {vehicle.get('crane_max_reach_m', 'не указано')} м\n"
+        f"Макс. грузчиков для автомобиля: {vehicle.get('max_loaders', 'не указано')}"
+    )
+
+
 def build_carrier_preview_text(data: dict) -> str:
+    vehicles_text = "\n\n".join(
+        _format_vehicle_preview(vehicle, index)
+        for index, vehicle in enumerate(_get_vehicles_data(data), start=1)
+    )
+
     return (
         "Проверьте анкету перевозчика перед отправкой на модерацию.\n\n"
         f"Компания: {data.get('company_name', 'не указано')}\n"
@@ -37,18 +82,7 @@ def build_carrier_preview_text(data: dict) -> str:
         f"Сборка/разборка мебели: {_format_bool(data.get('assembly_required'))}\n"
         f"Упаковка груза: {_format_bool(data.get('packing_required'))}\n"
         f"Регионы работы: {data.get('operating_regions', 'не указано')}\n\n"
-        "Автомобиль 1\n"
-        f"Тип: {data.get('vehicle_type', 'не указано')}\n"
-        f"Грузоподъёмность: {data.get('payload_kg', 'не указано')} кг\n"
-        f"Объём: {data.get('volume_m3', 'не указано')} м³\n"
-        f"Гидроборт: {_format_bool(data.get('has_tail_lift'))}\n"
-        f"Кран: {_format_bool(data.get('has_crane'))}\n"
-        f"Мобильный лифт: {_format_bool(data.get('has_mobile_lift'))}\n"
-        f"Макс. этаж мобильного лифта: {data.get('mobile_lift_max_floor', 'не указано')}\n"
-        f"Макс. вес мобильного лифта: {data.get('mobile_lift_max_weight_kg', 'не указано')} кг\n"
-        f"Макс. вес крана: {data.get('crane_max_weight_kg', 'не указано')} кг\n"
-        f"Вылет стрелы крана: {data.get('crane_max_reach_m', 'не указано')} м\n"
-        f"Макс. грузчиков для автомобиля: {data.get('max_loaders', 'не указано')}\n\n"
+        f"{vehicles_text}\n\n"
         f"Телефон: {data.get('company_phone', 'не указано')}\n"
         f"Email: {data.get('company_email', 'не указано')}\n\n"
         "Если всё верно, нажмите «Отправить на модерацию»."
@@ -73,6 +107,7 @@ async def company_email(
 
     data = await state.get_data()
     carrier_id = data["carrier_id"]
+    vehicles_data = _get_vehicles_data(data)
 
     async with async_session_maker() as session:
         repository = CarrierRepository(session)
@@ -80,33 +115,25 @@ async def company_email(
 
         existing_vehicles = await repository.list_vehicles_by_carrier(carrier_id)
 
-        if existing_vehicles:
-            vehicle = existing_vehicles[0]
-            vehicle.vehicle_type = data["vehicle_type"]
-            vehicle.payload_kg = data["payload_kg"]
-            vehicle.volume_m3 = data["volume_m3"]
-            vehicle.has_tail_lift = data["has_tail_lift"]
-            vehicle.has_crane = data["has_crane"]
-            vehicle.has_mobile_lift = data["has_mobile_lift"]
-            vehicle.mobile_lift_max_floor = data.get("mobile_lift_max_floor")
-            vehicle.mobile_lift_max_weight_kg = data.get("mobile_lift_max_weight_kg")
-            vehicle.crane_max_weight_kg = data.get("crane_max_weight_kg")
-            vehicle.crane_reach_meters = data.get("crane_max_reach_m")
-            vehicle.max_loaders = data.get("max_loaders")
-        else:
+        for vehicle in existing_vehicles:
+            await session.delete(vehicle)
+
+        await session.flush()
+
+        for vehicle in vehicles_data:
             await service.create_vehicle(
                 carrier_id=carrier_id,
-                vehicle_type=data["vehicle_type"],
-                payload_kg=data["payload_kg"],
-                volume_m3=data["volume_m3"],
-                has_tail_lift=data["has_tail_lift"],
-                has_crane=data["has_crane"],
-                has_mobile_lift=data["has_mobile_lift"],
-                mobile_lift_max_floor=data.get("mobile_lift_max_floor"),
-                mobile_lift_max_weight_kg=data.get("mobile_lift_max_weight_kg"),
-                crane_max_weight_kg=data.get("crane_max_weight_kg"),
-                crane_reach_meters=data.get("crane_max_reach_m"),
-                max_loaders=data.get("max_loaders"),
+                vehicle_type=vehicle["vehicle_type"],
+                payload_kg=vehicle["payload_kg"],
+                volume_m3=vehicle["volume_m3"],
+                has_tail_lift=vehicle["has_tail_lift"],
+                has_crane=vehicle["has_crane"],
+                has_mobile_lift=vehicle["has_mobile_lift"],
+                mobile_lift_max_floor=vehicle.get("mobile_lift_max_floor"),
+                mobile_lift_max_weight_kg=vehicle.get("mobile_lift_max_weight_kg"),
+                crane_max_weight_kg=vehicle.get("crane_max_weight_kg"),
+                crane_reach_meters=vehicle.get("crane_max_reach_m"),
+                max_loaders=vehicle.get("max_loaders"),
             )
 
         await session.commit()

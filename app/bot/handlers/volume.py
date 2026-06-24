@@ -33,6 +33,15 @@ async def volume_m3(
     )
 
     data = await state.get_data()
+
+    if "assembly_required" in data and "packing_required" in data:
+        await state.set_state(CarrierOnboardingStates.has_tail_lift)
+        await message.answer(
+            "Есть ли гидроборт?",
+            reply_markup=carrier_yes_no_keyboard(),
+        )
+        return
+
     carrier_id = data["carrier_id"]
 
     async with async_session_maker() as session:
