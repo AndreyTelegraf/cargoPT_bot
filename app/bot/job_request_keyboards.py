@@ -54,7 +54,7 @@ def loaders_keyboard() -> ReplyKeyboardMarkup:
 
 
 def media_skip_keyboard() -> ReplyKeyboardMarkup:
-    return _keyboard([["Пропустить медиа"]])
+    return _keyboard([["Готово с медиа"]])
 
 
 def comment_skip_keyboard() -> ReplyKeyboardMarkup:
