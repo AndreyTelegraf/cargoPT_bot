@@ -9,8 +9,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 os.environ["BOT_TOKEN"] = "123456:TESTTOKEN"
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///data/cargopt_dev.db"
 
-from app.bot.handlers.job_offer_response import _build_carrier_notification_text
-from app.bot.handlers.job_offer_response import _build_client_notification_text
+from app.services.job_offer import build_carrier_notification_text
+from app.services.job_offer import build_client_notification_text
 from app.bot.handlers.job_offer_response import router
 
 assert router is not None
@@ -29,8 +29,8 @@ carrier = SimpleNamespace(
     telegram_user_id=123456789,
 )
 
-client_text = _build_client_notification_text(job, carrier)
-carrier_text = _build_carrier_notification_text(job, carrier)
+client_text = build_client_notification_text(job, carrier)
+carrier_text = build_carrier_notification_text(job, carrier)
 
 assert "Перевозчик найден и принял заказ №42." in client_text
 assert "\\n" not in client_text

@@ -14,52 +14,11 @@ from app.services.job_offer import JobAlreadyAssignedError
 from app.services.job_offer import JobOfferService
 from app.services.job_offer import OfferAlreadyResolvedError
 from app.services.job_offer import parse_offer_callback
+from app.services.job_offer import build_client_notification_text
+from app.services.job_offer import build_carrier_notification_text
 
 router = Router()
 
-
-def _safe(value) -> str:
-    return html.escape(str(value), quote=False)
-
-
-def _format_contact_line(label: str, value) -> str:
-    return f"{label}: {_safe(value or 'не указан')}"
-
-
-def _format_telegram_username(username: str | None) -> str:
-    if not username:
-        return "не указан"
-    return "@" + _safe(username.lstrip("@"))
-
-
-def _telegram_user_link(user_id: int | None, label: str) -> str:
-    if not user_id:
-        return "не указан"
-    return f'<a href="tg://user?id={int(user_id)}">{_safe(label)}</a>'
-
-
-def _build_client_notification_text(job, carrier) -> str:
-    carrier_name = carrier.contact_name or carrier.company_name or "перевозчик"
-    return (
-        f"Перевозчик найден и принял заказ №{job.id}.\n\n"
-        f"Компания: {_safe(carrier.company_name or 'не указана')}\n"
-        f"Контакт: {_safe(carrier.contact_name or 'не указано')}\n"
-        f"Telegram: {_telegram_user_link(carrier.telegram_user_id, carrier_name)}\n"
-        f"Телефон: {_safe(carrier.phone or 'не указан')}\n\n"
-        "Теперь вы можете связаться напрямую."
-    )
-
-
-def _build_carrier_notification_text(job, carrier) -> str:
-    client_label = job.client_telegram_username or "клиент"
-    return (
-        f"Заказ №{job.id} закреплён за вами.\n\n"
-        f"Клиент: {_telegram_user_link(job.client_telegram_user_id, client_label)}\n"
-        f"Username: {_format_telegram_username(job.client_telegram_username)}\n"
-        f"Телефон: {_safe(job.client_phone or 'не указан')}\n"
-        f"WhatsApp: {_safe(job.client_whatsapp or 'не указан')}\n\n"
-        "Свяжитесь с клиентом для уточнения деталей."
-    )
 
 
 async def _delete_message_safely(message: Message) -> None:
@@ -124,11 +83,11 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
                 confirmation_keyboard = build_assignment_confirmation_keyboard(job.id)
                 await callback.bot.send_message(
                     chat_id=job.client_telegram_user_id,
-                    text=_build_client_notification_text(job, carrier),
+                    text=build_client_notification_text(job, carrier),
                     parse_mode="HTML",
                     reply_markup=confirmation_keyboard,
                 )
-                message_text = _build_carrier_notification_text(job, carrier)
+                message_text = build_carrier_notification_text(job, carrier)
         else:
             await offer_service.decline_offer(offer_id)
             message_text = "Вы отказались от заказа."
