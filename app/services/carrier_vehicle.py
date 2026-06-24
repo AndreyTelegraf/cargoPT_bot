@@ -24,6 +24,7 @@ class CarrierVehicleService:
         mobile_lift_max_weight_kg: int | None,
         crane_max_weight_kg: int | None,
         crane_reach_meters: float | None,
+        max_loaders: int | None = None,
     ) -> CarrierVehicle:
         now = datetime.now(UTC)
 
@@ -32,6 +33,7 @@ class CarrierVehicleService:
             vehicle_type=vehicle_type,
             payload_kg=payload_kg,
             volume_m3=volume_m3,
+            max_loaders=max_loaders,
             has_tail_lift=has_tail_lift,
             has_crane=has_crane,
             has_mobile_lift=has_mobile_lift,

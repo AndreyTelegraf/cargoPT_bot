@@ -47,8 +47,8 @@ def build_carrier_preview_text(data: dict) -> str:
         f"Макс. этаж мобильного лифта: {data.get('mobile_lift_max_floor', 'не указано')}\n"
         f"Макс. вес мобильного лифта: {data.get('mobile_lift_max_weight_kg', 'не указано')} кг\n"
         f"Макс. вес крана: {data.get('crane_max_weight_kg', 'не указано')} кг\n"
-        f"Вылет стрелы крана: {data.get('crane_max_reach_m', 'не указано')} м\n\n"
-        f"Макс. грузчиков на заказ: {data.get('max_loaders', 'не указано')}\n"
+        f"Вылет стрелы крана: {data.get('crane_max_reach_m', 'не указано')} м\n"
+        f"Макс. грузчиков для автомобиля: {data.get('max_loaders', 'не указано')}\n\n"
         f"Телефон: {data.get('company_phone', 'не указано')}\n"
         f"Email: {data.get('company_email', 'не указано')}\n\n"
         "Если всё верно, нажмите «Отправить на модерацию»."
@@ -92,6 +92,7 @@ async def company_email(
             vehicle.mobile_lift_max_weight_kg = data.get("mobile_lift_max_weight_kg")
             vehicle.crane_max_weight_kg = data.get("crane_max_weight_kg")
             vehicle.crane_reach_meters = data.get("crane_max_reach_m")
+            vehicle.max_loaders = data.get("max_loaders")
         else:
             await service.create_vehicle(
                 carrier_id=carrier_id,
@@ -105,6 +106,7 @@ async def company_email(
                 mobile_lift_max_weight_kg=data.get("mobile_lift_max_weight_kg"),
                 crane_max_weight_kg=data.get("crane_max_weight_kg"),
                 crane_reach_meters=data.get("crane_max_reach_m"),
+                max_loaders=data.get("max_loaders"),
             )
 
         await session.commit()

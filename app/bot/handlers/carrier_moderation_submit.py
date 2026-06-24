@@ -62,7 +62,8 @@ def build_admin_moderation_text(*, carrier, vehicles, data: dict, telegram_user)
             f"   Макс. этаж мобильного лифта: {_safe(vehicle.mobile_lift_max_floor or 'не указано')}\n"
             f"   Макс. вес мобильного лифта: {_safe(vehicle.mobile_lift_max_weight_kg or 'не указано')} кг\n"
             f"   Макс. вес крана: {_safe(vehicle.crane_max_weight_kg or 'не указано')} кг\n"
-            f"   Вылет стрелы крана: {_safe(vehicle.crane_reach_meters or 'не указано')} м"
+            f"   Вылет стрелы крана: {_safe(vehicle.crane_reach_meters or 'не указано')} м\n"
+            f"   Макс. грузчиков: {_safe(vehicle.max_loaders or 'не указано')}"
         )
 
     vehicles_text = "\n\n".join(vehicle_lines) if vehicle_lines else "не указаны"
@@ -76,7 +77,6 @@ def build_admin_moderation_text(*, carrier, vehicles, data: dict, telegram_user)
         f"<b>Регионы</b>\n{_safe(carrier.operating_regions or data.get('operating_regions') or 'не указаны')}\n\n"
         f"<b>Сборка мебели</b>\n{_format_bool(carrier.assembly_required)}\n\n"
         f"<b>Упаковка</b>\n{_format_bool(carrier.packing_required)}\n\n"
-        f"<b>Макс. грузчиков</b>\n{_safe(data.get('max_loaders', 'не указано'))}\n\n"
         f"<b>Автомобили</b>\n{vehicles_text}\n\n"
         f"<b>Telegram</b>\n{telegram_line}\n"
         f"ID: {_safe(carrier.telegram_user_id or 'не указан')}\n\n"

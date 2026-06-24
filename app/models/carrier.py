@@ -95,6 +95,7 @@ class CarrierVehicle(Base):
 
     payload_kg: Mapped[int | None] = mapped_column(Integer)
     volume_m3: Mapped[float | None] = mapped_column(Float)
+    max_loaders: Mapped[int | None] = mapped_column(Integer)
 
     has_tail_lift: Mapped[bool] = mapped_column(
         Boolean,
