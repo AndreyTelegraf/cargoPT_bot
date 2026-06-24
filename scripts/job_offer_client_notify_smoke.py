@@ -9,8 +9,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 os.environ["BOT_TOKEN"] = "123456:TESTTOKEN"
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///data/cargopt_dev.db"
 
-from app.services.job_offer import build_carrier_notification_text
-from app.services.job_offer import build_client_notification_text
+from app.services.offer_notifications import build_carrier_notification_text
+from app.services.offer_notifications import build_client_notification_text
 from app.bot.handlers.job_offer_response import router
 
 assert router is not None

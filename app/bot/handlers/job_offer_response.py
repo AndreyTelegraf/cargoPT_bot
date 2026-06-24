@@ -14,8 +14,8 @@ from app.services.job_offer import JobAlreadyAssignedError
 from app.services.job_offer import JobOfferService
 from app.services.job_offer import OfferAlreadyResolvedError
 from app.services.job_offer import parse_offer_callback
-from app.services.job_offer import build_client_notification_text
-from app.services.job_offer import build_carrier_notification_text
+from app.services.offer_notifications import build_client_notification_text
+from app.services.offer_notifications import build_carrier_notification_text
 
 router = Router()
 
