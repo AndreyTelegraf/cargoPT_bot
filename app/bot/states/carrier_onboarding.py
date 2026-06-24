@@ -21,3 +21,4 @@ class CarrierOnboardingStates(StatesGroup):
     max_loaders = State()
     company_phone = State()
     company_email = State()
+    moderation_review = State()
