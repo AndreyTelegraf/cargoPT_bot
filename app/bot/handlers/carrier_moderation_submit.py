@@ -138,6 +138,8 @@ def build_carrier_decision_notification(*, approved: bool) -> str:
         return (
             "Ваша анкета CargoPT одобрена.\n\n"
             "Теперь вы участвуете в распределении заказов.\n\n"
+            "Когда появится подходящий заказ, бот пришлёт вам предложение "
+            "с кнопками «Принять» и «Отказаться».\n\n"
             f"По вопросам: @{DEFAULT_ADMIN_USERNAME}"
         )
 
