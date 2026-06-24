@@ -25,6 +25,8 @@ async def payload_kg(
         payload_kg=payload
     )
 
+    await state.set_state(CarrierOnboardingStates.volume_m3)
+
     await message.answer(
-        "Объём кузова (м³)?"
+        "Объём кузова в м³?"
     )

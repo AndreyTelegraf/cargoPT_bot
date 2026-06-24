@@ -3,6 +3,7 @@ from aiogram import F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.handlers.invite import carrier_yes_no_keyboard
 from app.bot.states.carrier_onboarding import CarrierOnboardingStates
 
 router = Router()
@@ -18,6 +19,9 @@ async def tail_lift(
         has_tail_lift=(message.text == "Да")
     )
 
+    await state.set_state(CarrierOnboardingStates.has_crane)
+
     await message.answer(
-        "Есть ли кран? (Да/Нет)"
+        "Есть ли кран?",
+        reply_markup=carrier_yes_no_keyboard(),
     )

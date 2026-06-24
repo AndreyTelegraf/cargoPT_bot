@@ -14,10 +14,27 @@ async def mobile_lift(
     state: FSMContext,
 ) -> None:
 
+    has_mobile_lift = message.text == "Да"
+
     await state.update_data(
-        has_mobile_lift=(message.text == "Да")
+        has_mobile_lift=has_mobile_lift
     )
 
+    if has_mobile_lift:
+        await state.set_state(CarrierOnboardingStates.mobile_lift_max_floor)
+        await message.answer(
+            "На какой максимальный этаж может подавать мобильный лифт?"
+        )
+        return
+
+    await state.update_data(
+        mobile_lift_max_floor=None,
+        mobile_lift_max_weight_kg=None,
+    )
+
+    await state.set_state(CarrierOnboardingStates.employee_count)
+
     await message.answer(
-        "На какой максимальный этаж может подавать мобильный лифт?"
+        "Шаг 4 из 7. Команда.\n\n"
+        "Сколько сотрудников работает в вашей компании?"
     )
