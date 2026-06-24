@@ -8,6 +8,7 @@ from app.domain.job_status import JobStatus
 from app.repositories.job import JobRepository
 from app.services.carrier_search import CarrierSearchService
 from app.services.assignment_confirmation import build_assignment_cleanup_target
+from app.services.assignment_confirmation import build_assignment_offer_distribution
 from app.services.assignment_confirmation import build_assignment_result_text
 from app.services.assignment_confirmation import build_assignment_status_from_action
 from app.services.assignment_confirmation import parse_assignment_callback
@@ -99,12 +100,9 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
         )
 
         if should_delete_carrier_offer:
-            distribution = OfferDistributionService(
-                matching_service=JobMatchingService(
-                    CarrierSearchService(carrier_repository)
-                ),
-                offer_service=JobOfferService(job_repository),
+            distribution = build_assignment_offer_distribution(
                 job_repository=job_repository,
+                carrier_repository=carrier_repository,
             )
             new_offers = await distribution.create_offers_for_job(
                 updated_job,

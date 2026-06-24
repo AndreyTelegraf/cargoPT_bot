@@ -48,6 +48,21 @@ def build_assignment_cleanup_target(*, job: Job, accepted_offer) -> tuple[bool, 
     )
 
 
+def build_assignment_offer_distribution(*, job_repository, carrier_repository):
+    from app.services.carrier_search import CarrierSearchService
+    from app.services.job_matching import JobMatchingService
+    from app.services.job_offer import JobOfferService
+    from app.services.offer_distribution import OfferDistributionService
+
+    return OfferDistributionService(
+        matching_service=JobMatchingService(
+            CarrierSearchService(carrier_repository)
+        ),
+        offer_service=JobOfferService(job_repository),
+        job_repository=job_repository,
+    )
+
+
 class InvalidAssignmentConfirmationActorError(ValueError):
     pass
 
