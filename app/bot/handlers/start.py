@@ -5,12 +5,50 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from app.bot.handlers.job_start import start_job_request
+from app.db.session import async_session_maker
+from app.domain.carrier_status import CarrierStatus
+from app.repositories.carrier import CarrierRepository
 
 router = Router()
 
 
+def build_existing_carrier_start_text(carrier) -> str:
+    if carrier.status == CarrierStatus.PENDING_MODERATION:
+        return (
+            "Вы уже зарегистрированы как перевозчик CargoPT.\n\n"
+            "Ваша анкета отправлена на проверку.\n\n"
+            "Когда она будет обработана, администратор свяжется с вами."
+        )
+
+    if carrier.status == CarrierStatus.ACTIVE:
+        return (
+            "Вы уже зарегистрированы как активный перевозчик CargoPT.\n\n"
+            "Новые заказы будут приходить сюда, когда диспетчер назначит их вашей компании."
+        )
+
+    if carrier.status == CarrierStatus.PROFILE_COMPLETED:
+        return (
+            "Ваша анкета перевозчика уже заполнена.\n\n"
+            "Если нужно что-то изменить, свяжитесь с администратором CargoPT."
+        )
+
+    return (
+        "Вы уже привязаны к CargoPT как перевозчик.\n\n"
+        "Если нужно создать клиентскую заявку на перевозку, используйте команду /new_job."
+    )
+
+
 @router.message(CommandStart())
 async def start_handler(message: Message, state: FSMContext) -> None:
+    async with async_session_maker() as session:
+        repository = CarrierRepository(session)
+        carrier = await repository.get_carrier_by_telegram_user_id(message.from_user.id)
+
+    if carrier is not None and carrier.status != CarrierStatus.REJECTED:
+        await state.clear()
+        await message.answer(build_existing_carrier_start_text(carrier))
+        return
+
     await start_job_request(message, state)
 
 
