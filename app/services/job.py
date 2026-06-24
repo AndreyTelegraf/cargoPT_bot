@@ -171,6 +171,30 @@ class JobService:
             updated_at=datetime.now(UTC),
         )
 
+    async def update_needs_assembly(
+        self,
+        *,
+        job_id: int,
+        needs_assembly: bool,
+    ) -> Job:
+        return await self.repository.update_needs_assembly(
+            job_id=job_id,
+            needs_assembly=needs_assembly,
+            updated_at=datetime.now(UTC),
+        )
+
+    async def update_needs_packing(
+        self,
+        *,
+        job_id: int,
+        needs_packing: bool,
+    ) -> Job:
+        return await self.repository.update_needs_packing(
+            job_id=job_id,
+            needs_packing=needs_packing,
+            updated_at=datetime.now(UTC),
+        )
+
     async def finalize_for_matching(
         self,
         *,
