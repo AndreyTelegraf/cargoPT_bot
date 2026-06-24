@@ -8,7 +8,7 @@ assert "list_offer_carrier_ids_by_job" in repo_source
 assert "existing_carrier_ids = await self.job_repository.list_offer_carrier_ids_by_job(job.id)" in distribution_source
 assert "if vehicle.carrier_id not in existing_carrier_ids" in distribution_source
 assert "send_job_offers_to_carriers" in handler_source
-assert "OfferDistributionService" in handler_source
+assert "build_assignment_offer_distribution" in handler_source
 assert "should_delete_carrier_offer" in handler_source
 
 print("JOB_AUTO_REDISPATCH_SMOKE_OK")
