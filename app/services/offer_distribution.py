@@ -32,7 +32,11 @@ class OfferDistributionService:
         )
 
         existing_carrier_ids = await self.job_repository.list_offer_carrier_ids_by_job(job.id)
-        vehicles = await self.matching_service.find_matching_vehicles_for_job(job)
+        addresses = await self.job_repository.list_addresses_by_job(job.id)
+        vehicles = await self.matching_service.find_matching_vehicles_for_job(
+            job,
+            addresses=addresses,
+        )
         selected = [
             vehicle for vehicle in vehicles
             if vehicle.carrier_id not in existing_carrier_ids

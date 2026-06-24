@@ -17,6 +17,7 @@ from app.domain.carrier_status import CarrierStatus
 from app.models.carrier import CarrierCompany
 from app.models.carrier import CarrierVehicle
 from app.models.job import Job
+from app.models.job import JobAddress
 from app.repositories.carrier import CarrierRepository
 from app.services.carrier_search import CarrierSearchService
 from app.services.job_matching import JobMatchingService
@@ -100,6 +101,24 @@ async def exercise_job_matching() -> None:
             created_at=now,
             updated_at=now,
         )
+
+        job.addresses = [
+            JobAddress(
+                job_id=1,
+                kind="pickup",
+                raw_text="Rua Augusta 1, Lisboa",
+                original_google_maps_url=None,
+                normalized_address="Rua Augusta 1, Lisboa",
+                city=None,
+                postal_code=None,
+                floor=None,
+                has_elevator=None,
+                latitude=None,
+                longitude=None,
+                map_url=None,
+                created_at=now,
+            )
+        ]
 
         search = CarrierSearchService(repo)
         matching = JobMatchingService(search)

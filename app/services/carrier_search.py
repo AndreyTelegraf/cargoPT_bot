@@ -17,6 +17,7 @@ class CarrierSearchService:
         needs_mobile_lift: bool = False,
         needs_assembly: bool = False,
         needs_packing: bool = False,
+        regions: list[str] | None = None,
     ) -> list[CarrierVehicle]:
         return await self.repository.search_available_vehicles(
             min_payload_kg=min_payload_kg,
@@ -27,4 +28,5 @@ class CarrierSearchService:
             needs_mobile_lift=needs_mobile_lift,
             needs_assembly=needs_assembly,
             needs_packing=needs_packing,
+            regions=regions,
         )

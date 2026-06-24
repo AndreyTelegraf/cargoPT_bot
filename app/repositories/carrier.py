@@ -218,6 +218,7 @@ class CarrierRepository:
         needs_mobile_lift: bool = False,
         needs_assembly: bool = False,
         needs_packing: bool = False,
+        regions: list[str] | None = None,
     ) -> list[CarrierVehicle]:
         stmt = (
             select(CarrierVehicle)
@@ -240,6 +241,15 @@ class CarrierRepository:
 
         if needs_packing:
             stmt = stmt.where(CarrierCompany.packing_required.is_(True))
+
+        if regions and "all_portugal" not in regions:
+            region_conditions = [
+                CarrierCompany.operating_regions == "all_portugal",
+            ]
+            for region in regions:
+                region_conditions.append(CarrierCompany.operating_regions.like(f"%{region}%"))
+            from sqlalchemy import or_
+            stmt = stmt.where(or_(*region_conditions))
 
         if needs_tail_lift:
             stmt = stmt.where(CarrierVehicle.has_tail_lift.is_(True))

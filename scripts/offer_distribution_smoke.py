@@ -18,6 +18,7 @@ from app.domain.job_status import JobStatus
 from app.models.carrier import CarrierCompany
 from app.models.carrier import CarrierVehicle
 from app.models.job import Job
+from app.models.job import JobAddress
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
 from app.services.carrier_search import CarrierSearchService
@@ -85,7 +86,7 @@ async def exercise_offer_distribution() -> None:
                     paid_until=None,
                     assembly_required=True,
                     packing_required=True,
-                    operating_regions="Lisboa",
+                    operating_regions="Lisboa" if idx < 2 else "Porto",
                     profile_completed_at=now,
                     current_profile_step=None,
                     internal_note=None,
@@ -126,6 +127,23 @@ async def exercise_offer_distribution() -> None:
         offered_job = await job_repo.create_job(
             build_job(now, payload=1000, volume=10.0)
         )
+        await job_repo.add_address(
+            JobAddress(
+                job_id=offered_job.id,
+                kind="pickup",
+                raw_text="Rua Augusta 1, Lisboa",
+                original_google_maps_url=None,
+                normalized_address="Rua Augusta 1, Lisboa",
+                city=None,
+                postal_code=None,
+                floor=None,
+                has_elevator=None,
+                latitude=None,
+                longitude=None,
+                map_url=None,
+                created_at=now,
+            )
+        )
 
         offers = await distribution.create_offers_for_job(
             offered_job,
@@ -147,6 +165,23 @@ async def exercise_offer_distribution() -> None:
 
         unmatched_job = await job_repo.create_job(
             build_job(now, payload=999999, volume=999999.0)
+        )
+        await job_repo.add_address(
+            JobAddress(
+                job_id=unmatched_job.id,
+                kind="pickup",
+                raw_text="Rua Augusta 1, Lisboa",
+                original_google_maps_url=None,
+                normalized_address="Rua Augusta 1, Lisboa",
+                city=None,
+                postal_code=None,
+                floor=None,
+                has_elevator=None,
+                latitude=None,
+                longitude=None,
+                map_url=None,
+                created_at=now,
+            )
         )
 
         unmatched_offers = await distribution.create_offers_for_job(
