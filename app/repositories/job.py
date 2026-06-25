@@ -201,6 +201,46 @@ class JobRepository:
         result = await self.session.execute(stmt)
         return set(result.scalars().all())
 
+    async def list_expired_pending_offers(
+        self,
+        *,
+        now,
+        limit: int = 100,
+    ) -> list[JobOffer]:
+        stmt = (
+            select(JobOffer)
+            .where(JobOffer.status == "pending")
+            .where(JobOffer.expires_at.is_not(None))
+            .where(JobOffer.expires_at < now)
+            .order_by(JobOffer.expires_at, JobOffer.id)
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def expire_offer_if_pending(
+        self,
+        *,
+        offer_id: int,
+        expired_at,
+    ) -> JobOffer | None:
+        offer = await self.get_offer_by_id(offer_id)
+
+        if offer is None:
+            return None
+
+        if offer.status != "pending":
+            return offer
+
+        offer.status = "expired"
+        offer.responded_at = expired_at
+        offer.updated_at = expired_at
+
+        await self.session.flush()
+
+        return offer
+
+
     async def update_assignment_confirmation_status(
         self,
         *,
