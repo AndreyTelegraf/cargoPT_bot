@@ -28,6 +28,16 @@ async def _delete_message_safely(message: Message) -> None:
         await message.edit_reply_markup(reply_markup=None)
 
 
+async def _delete_message_by_id_safely(bot, *, chat_id: int | None, message_id: int | None) -> None:
+    if chat_id is None or message_id is None:
+        return
+
+    try:
+        await bot.delete_message(chat_id=chat_id, message_id=message_id)
+    except TelegramBadRequest:
+        return
+
+
 async def _finalize_offer_message(message: Message, text: str, reply_markup=None) -> None:
     if message.text is not None:
         await message.edit_text(text, parse_mode="HTML", reply_markup=reply_markup)
@@ -48,6 +58,7 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
         return
 
     telegram_user_id = callback.from_user.id
+    sibling_offer_message_refs: list[tuple[int | None, int | None]] = []
 
     async with async_session_maker() as session:
         carrier_repository = CarrierRepository(session)
@@ -88,6 +99,15 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
                     reply_markup=confirmation_keyboard,
                 )
                 message_text = build_carrier_notification_text(job, carrier)
+
+                sibling_offers = await job_repository.list_offers_by_job(job.id)
+                sibling_offer_message_refs = [
+                    (sibling.carrier_message_chat_id, sibling.carrier_message_id)
+                    for sibling in sibling_offers
+                    if sibling.id != accepted_offer.id
+                    and sibling.carrier_message_chat_id is not None
+                    and sibling.carrier_message_id is not None
+                ]
         else:
             await offer_service.decline_offer(offer_id)
             message_text = "Вы отказались от заказа."
@@ -103,5 +123,12 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
             )
         else:
             await _delete_message_safely(callback.message)
+
+    for chat_id, message_id in sibling_offer_message_refs:
+        await _delete_message_by_id_safely(
+            callback.bot,
+            chat_id=chat_id,
+            message_id=message_id,
+        )
 
     await callback.answer()
