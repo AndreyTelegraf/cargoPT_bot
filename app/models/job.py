@@ -169,3 +169,21 @@ class JobOffer(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ClientBan(Base):
+    __tablename__ = "client_ban"
+
+    __table_args__ = (
+        Index("ix_client_ban_telegram_user_id", "telegram_user_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    telegram_user_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    username: Mapped[str | None] = mapped_column(String)
+    reason: Mapped[str | None] = mapped_column(Text)
+    banned_by_admin_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    banned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    unbanned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    unbanned_by_admin_id: Mapped[int | None] = mapped_column(Integer)
+
