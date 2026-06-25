@@ -1,10 +1,6 @@
-from datetime import UTC
-from datetime import datetime
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.job import ClientBan
 from app.models.job import Job
 from app.models.job import JobAddress
 from app.models.job import JobItem
@@ -15,60 +11,6 @@ from app.models.job import JobOffer
 class JobRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
-
-
-async def get_active_client_ban(
-    self,
-    telegram_user_id: int,
-) -> ClientBan | None:
-    stmt = (
-        select(ClientBan)
-        .where(ClientBan.telegram_user_id == telegram_user_id)
-        .where(ClientBan.unbanned_at.is_(None))
-        .order_by(ClientBan.id.desc())
-    )
-    result = await self.session.execute(stmt)
-    return result.scalars().first()
-
-async def ban_client(
-    self,
-    *,
-    telegram_user_id: int,
-    username: str | None,
-    reason: str | None,
-    banned_by_admin_id: int,
-) -> ClientBan:
-    existing = await self.get_active_client_ban(telegram_user_id)
-    if existing is not None:
-        return existing
-
-    ban = ClientBan(
-        telegram_user_id=telegram_user_id,
-        username=username,
-        reason=reason,
-        banned_by_admin_id=banned_by_admin_id,
-        banned_at=datetime.now(UTC),
-        unbanned_at=None,
-        unbanned_by_admin_id=None,
-    )
-    self.session.add(ban)
-    await self.session.flush()
-    return ban
-
-async def unban_client(
-    self,
-    *,
-    telegram_user_id: int,
-    unbanned_by_admin_id: int,
-) -> ClientBan | None:
-    ban = await self.get_active_client_ban(telegram_user_id)
-    if ban is None:
-        return None
-
-    ban.unbanned_at = datetime.now(UTC)
-    ban.unbanned_by_admin_id = unbanned_by_admin_id
-    await self.session.flush()
-    return ban
 
     async def create_job(self, job: Job) -> Job:
         self.session.add(job)
