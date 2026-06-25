@@ -32,7 +32,7 @@ async def job_media(
     elif message.video:
         media_type = "video"
         telegram_file_id = message.video.file_id
-    elif (message.text or "").strip() in {"-", "Пропустить медиа", "Готово с медиа"}:
+    elif (message.text or "").strip() in {"-", "Пропустить медиа"}:
         await state.set_state(JobRequestStates.estimated_payload_kg)
         await message.answer(
             "Оцените примерный вес груза.\n\n"
@@ -67,6 +67,6 @@ async def job_media(
     if not data.get("media_ack_sent"):
         await state.update_data(media_ack_sent=True)
         await message.answer(
-            "Медиа сохранено. Можно прислать ещё фото/видео или нажать «Готово с медиа».",
+            "Медиа сохранено. Можно прислать ещё фото/видео или нажать «Пропустить медиа».",
             reply_markup=media_skip_keyboard(),
         )
