@@ -31,6 +31,13 @@ async def _create_job_and_ask_pickup(
 ) -> None:
     async with async_session_maker() as session:
         repository = JobRepository(session)
+        ban = await repository.get_active_client_ban(message.from_user.id)
+        if ban is not None:
+            await message.answer(
+                "Вы временно отключены от создания заявок CargoPT. "
+                "По вопросам: https://t.me/andreytelegraf"
+            )
+            return
         service = JobService(repository)
 
         job = await service.create_draft_job(

@@ -23,6 +23,7 @@ from app.bot.handlers.job_offer_response import router as job_offer_response_rou
 from app.bot.handlers.invite import router as invite_router
 from app.bot.handlers.carrier_invite_admin import router as carrier_invite_admin_router
 from app.bot.handlers.dispatcher_jobs_admin import router as dispatcher_jobs_admin_router
+from app.bot.handlers.admin_controls import router as admin_controls_router
 from app.bot.handlers.job_assignment_confirmation import router as job_assignment_confirmation_router
 from app.bot.handlers.assembly import router as assembly_router
 from app.bot.handlers.packing import router as packing_router
@@ -49,6 +50,7 @@ def setup_routers(dp: Dispatcher) -> None:
     dp.include_router(start_router)
     dp.include_router(carrier_invite_admin_router)
     dp.include_router(dispatcher_jobs_admin_router)
+    dp.include_router(admin_controls_router)
     dp.include_router(packing_router)
     dp.include_router(regions_router)
     dp.include_router(vehicle_count_router)
