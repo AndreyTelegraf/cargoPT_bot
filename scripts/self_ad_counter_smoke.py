@@ -45,10 +45,15 @@ async def main():
             assert posted is False
             assert wrong_topic.sent == []
 
-            bot_message = FakeMessage(is_bot=True)
-            posted = await self_ad_counter.process_self_ad_message(bot_message)
+            channel_sender_message = FakeMessage(is_bot=True)
+            posted = await self_ad_counter.process_self_ad_message(channel_sender_message)
             assert posted is False
-            assert bot_message.sent == []
+            assert channel_sender_message.sent == []
+
+            own_ad_message = FakeMessage(text=self_ad_counter.SELF_AD_TEXT)
+            posted = await self_ad_counter.process_self_ad_message(own_ad_message)
+            assert posted is False
+            assert own_ad_message.sent == []
 
             assert sent == 1
         finally:

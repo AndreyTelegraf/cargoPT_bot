@@ -5,11 +5,11 @@ from typing import Any
 
 from app.config import settings
 
-SELF_AD_TEXT = """Публикуйте объявления через @cargo_pt_bot.
+SELF_AD_TEXT = """🚚 <b>Нужно перевезти мебель, вещи или технику?</b>
 
-Бот сам соберёт заявку по шагам и отправит её в нужный раздел без хаоса в комментариях.
+Заполните заявку через <a href="https://t.me/cargo_pt_bot">@cargo_pt_bot</a>.
 
-Подходит для перевозок, грузчиков и переездов по Португалии."""
+Агрегатор автоматически разошлёт заявку подходящим под ваш заказ перевозчикам."""
 
 _lock = Lock()
 
@@ -44,8 +44,7 @@ def is_target_text_message(message: Any) -> bool:
     if not isinstance(text, str) or not text.strip():
         return False
 
-    from_user = getattr(message, "from_user", None)
-    if bool(getattr(from_user, "is_bot", False)):
+    if text.strip() == SELF_AD_TEXT.strip():
         return False
 
     thread_id = getattr(message, "message_thread_id", None)
