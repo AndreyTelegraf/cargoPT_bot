@@ -1,3 +1,6 @@
+from datetime import UTC
+from datetime import datetime
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -279,11 +282,15 @@ class CarrierRepository:
         needs_packing: bool = False,
         regions: list[str] | None = None,
     ) -> list[CarrierVehicle]:
+        now = datetime.now(UTC)
+
         stmt = (
             select(CarrierVehicle)
             .join(CarrierCompany)
             .where(CarrierVehicle.is_active.is_(True))
             .where(CarrierCompany.status == CarrierStatus.ACTIVE)
+            .where(CarrierCompany.paid_until.is_not(None))
+            .where(CarrierCompany.paid_until >= now)
         )
 
         if min_payload_kg is not None:

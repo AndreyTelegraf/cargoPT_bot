@@ -5,6 +5,7 @@ import subprocess
 import sys
 from datetime import UTC
 from datetime import datetime
+from datetime import timedelta
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -50,10 +51,29 @@ async def exercise_search() -> None:
                 phone=None,
                 telegram_user_id=1001,
                 status=CarrierStatus.ACTIVE,
-                paid_until=None,
+                paid_until=now + timedelta(days=30),
                 assembly_required=True,
                 packing_required=True,
                 operating_regions="Lisboa, Porto",
+                profile_completed_at=now,
+                current_profile_step=None,
+                internal_note=None,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+
+        expired = await repo.create_carrier(
+            CarrierCompany(
+                company_name="Expired Carrier",
+                contact_name=None,
+                phone=None,
+                telegram_user_id=1003,
+                status=CarrierStatus.ACTIVE,
+                paid_until=now - timedelta(days=1),
+                assembly_required=True,
+                packing_required=True,
+                operating_regions="Lisboa",
                 profile_completed_at=now,
                 current_profile_step=None,
                 internal_note=None,
@@ -95,6 +115,26 @@ async def exercise_search() -> None:
                 crane_max_weight_kg=None,
                 crane_reach_meters=None,
                 max_loaders=3,
+                is_active=True,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+
+        await repo.create_vehicle(
+            CarrierVehicle(
+                carrier_id=expired.id,
+                vehicle_type="large_van",
+                payload_kg=5000,
+                volume_m3=50.0,
+                has_tail_lift=True,
+                has_crane=True,
+                has_mobile_lift=True,
+                mobile_lift_max_floor=10,
+                mobile_lift_max_weight_kg=500,
+                crane_max_weight_kg=2000,
+                crane_reach_meters=12,
+                max_loaders=6,
                 is_active=True,
                 created_at=now,
                 updated_at=now,

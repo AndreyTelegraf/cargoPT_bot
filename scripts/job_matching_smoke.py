@@ -5,6 +5,7 @@ import subprocess
 import sys
 from datetime import UTC
 from datetime import datetime
+from datetime import timedelta
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -53,7 +54,7 @@ async def exercise_job_matching() -> None:
                 phone=None,
                 telegram_user_id=2001,
                 status=CarrierStatus.ACTIVE,
-                paid_until=None,
+                paid_until=now + timedelta(days=30),
                 assembly_required=True,
                 packing_required=True,
                 operating_regions="Lisboa",
