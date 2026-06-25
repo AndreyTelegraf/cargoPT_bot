@@ -35,10 +35,13 @@ class CarrierRepository:
             select(CarrierCompany)
             .where(CarrierCompany.telegram_username.is_not(None))
             .where(CarrierCompany.telegram_username.ilike(cleaned))
+            .where(CarrierCompany.status != CarrierStatus.REJECTED)
+            .order_by(CarrierCompany.id.desc())
+            .limit(1)
         )
 
         result = await self.session.execute(stmt)
-        carrier = result.scalar_one_or_none()
+        carrier = result.scalars().first()
 
         if carrier is not None:
             return carrier
@@ -46,10 +49,13 @@ class CarrierRepository:
         company_stmt = (
             select(CarrierCompany)
             .where(CarrierCompany.company_name.ilike(f"@{cleaned}"))
+            .where(CarrierCompany.status != CarrierStatus.REJECTED)
+            .order_by(CarrierCompany.id.desc())
+            .limit(1)
         )
 
         company_result = await self.session.execute(company_stmt)
-        return company_result.scalar_one_or_none()
+        return company_result.scalars().first()
 
     async def get_carrier_by_telegram_user_id(
         self,
