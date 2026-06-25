@@ -38,6 +38,16 @@ class CarrierOnboardingService:
 
         return await self.repository.create_carrier(carrier)
 
+    async def reuse_carrier_for_reinvite(
+        self,
+        *,
+        carrier_id: int,
+    ) -> CarrierCompany:
+        return await self.repository.reset_carrier_for_reinvite(
+            carrier_id=carrier_id,
+            updated_at=datetime.now(UTC),
+        )
+
     async def create_invite_token(
         self,
         *,

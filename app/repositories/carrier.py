@@ -57,6 +57,47 @@ class CarrierRepository:
         company_result = await self.session.execute(company_stmt)
         return company_result.scalars().first()
 
+    async def get_latest_carrier_by_company_name(
+        self,
+        company_name: str,
+    ) -> CarrierCompany | None:
+        cleaned = company_name.strip().lower()
+
+        stmt = (
+            select(CarrierCompany)
+            .where(CarrierCompany.company_name.ilike(cleaned))
+            .order_by(CarrierCompany.id.desc())
+            .limit(1)
+        )
+
+        result = await self.session.execute(stmt)
+        return result.scalars().first()
+
+    async def reset_carrier_for_reinvite(
+        self,
+        carrier_id: int,
+        *,
+        updated_at,
+    ) -> CarrierCompany:
+        carrier = await self.get_carrier_by_id(carrier_id)
+
+        if carrier is None:
+            raise ValueError("carrier not found")
+
+        carrier.telegram_user_id = None
+        carrier.telegram_username = None
+        carrier.status = CarrierStatus.INVITED
+        carrier.paid_until = None
+        carrier.assembly_required = False
+        carrier.packing_required = False
+        carrier.operating_regions = None
+        carrier.profile_completed_at = None
+        carrier.current_profile_step = None
+        carrier.updated_at = updated_at
+
+        await self.session.flush()
+        return carrier
+
     async def get_carrier_by_telegram_user_id(
         self,
         telegram_user_id: int,

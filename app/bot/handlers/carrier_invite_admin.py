@@ -34,12 +34,21 @@ async def carrier_invite(message: Message) -> None:
         repository = CarrierRepository(session)
         service = CarrierOnboardingService(repository)
 
-        carrier = await service.create_draft_carrier(
-            company_name=company_name,
-            contact_name=None,
-            phone=None,
-            internal_note=f"Invite created by Telegram user {message.from_user.id}",
+        existing_carrier = await repository.get_latest_carrier_by_company_name(
+            company_name
         )
+
+        if existing_carrier is None:
+            carrier = await service.create_draft_carrier(
+                company_name=company_name,
+                contact_name=None,
+                phone=None,
+                internal_note=f"Invite created by Telegram user {message.from_user.id}",
+            )
+        else:
+            carrier = await service.reuse_carrier_for_reinvite(
+                carrier_id=existing_carrier.id,
+            )
 
         invite = await service.create_invite_token(
             carrier_id=carrier.id,
