@@ -71,3 +71,67 @@ async def unban_client(message: Message) -> None:
         await message.answer("Активная блокировка не найдена.")
     else:
         await message.answer(f"Клиент {telegram_user_id} разблокирован.")
+
+@router.message(Command("suspend_carrier"))
+async def suspend_carrier(message: Message) -> None:
+    if not _is_admin(message):
+        await message.answer("Команда доступна только администратору CargoPT.")
+        return
+
+    parts = (message.text or "").split(maxsplit=1)
+
+    if len(parts) != 2 or not parts[1].isdigit():
+        await message.answer("Формат: /suspend_carrier <carrier_id>")
+        return
+
+    carrier_id = int(parts[1])
+
+    from app.repositories.carrier import CarrierRepository
+
+    async with async_session_maker() as session:
+        repo = CarrierRepository(session)
+
+        try:
+            carrier = await repo.suspend_carrier(carrier_id)
+        except ValueError:
+            await message.answer("Перевозчик не найден.")
+            return
+
+        await session.commit()
+
+    await message.answer(
+        f"Перевозчик #{carrier.id} временно отключён от получения заявок."
+    )
+
+
+@router.message(Command("unsuspend_carrier"))
+async def unsuspend_carrier(message: Message) -> None:
+    if not _is_admin(message):
+        await message.answer("Команда доступна только администратору CargoPT.")
+        return
+
+    parts = (message.text or "").split(maxsplit=1)
+
+    if len(parts) != 2 or not parts[1].isdigit():
+        await message.answer("Формат: /unsuspend_carrier <carrier_id>")
+        return
+
+    carrier_id = int(parts[1])
+
+    from app.repositories.carrier import CarrierRepository
+
+    async with async_session_maker() as session:
+        repo = CarrierRepository(session)
+
+        try:
+            carrier = await repo.unsuspend_carrier(carrier_id)
+        except ValueError:
+            await message.answer("Перевозчик не найден.")
+            return
+
+        await session.commit()
+
+    await message.answer(
+        f"Перевозчик #{carrier.id} возвращён в ротацию заявок."
+    )
+

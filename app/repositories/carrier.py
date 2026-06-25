@@ -157,6 +157,34 @@ class CarrierRepository:
         await self.session.flush()
         return carrier
 
+    async def suspend_carrier(
+        self,
+        carrier_id: int,
+    ) -> CarrierCompany:
+        carrier = await self.get_carrier_by_id(carrier_id)
+
+        if carrier is None:
+            raise ValueError("carrier not found")
+
+        carrier.status = CarrierStatus.SUSPENDED
+        await self.session.flush()
+
+        return carrier
+
+    async def unsuspend_carrier(
+        self,
+        carrier_id: int,
+    ) -> CarrierCompany:
+        carrier = await self.get_carrier_by_id(carrier_id)
+
+        if carrier is None:
+            raise ValueError("carrier not found")
+
+        carrier.status = CarrierStatus.ACTIVE
+        await self.session.flush()
+
+        return carrier
+
     async def approve_carrier(
         self,
         carrier_id: int,
