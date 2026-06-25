@@ -1,6 +1,7 @@
 from datetime import UTC
 from datetime import datetime
 
+from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -68,6 +69,23 @@ class JobRepository:
         ban.unbanned_by_admin_id = unbanned_by_admin_id
         await self.session.flush()
         return ban
+
+    async def get_latest_job_by_client_username(
+        self,
+        username: str,
+    ) -> Job | None:
+        cleaned = username.strip().lstrip("@").lower()
+        if not cleaned:
+            return None
+
+        stmt = (
+            select(Job)
+            .where(Job.client_telegram_username.is_not(None))
+            .where(func.lower(Job.client_telegram_username) == cleaned)
+            .order_by(Job.id.desc())
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().first()
 
     async def create_job(self, job: Job) -> Job:
         self.session.add(job)
