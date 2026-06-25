@@ -1,3 +1,5 @@
+import re
+
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
@@ -11,34 +13,133 @@ from app.services.job import JobService
 router = Router()
 
 
-def _parse_floor_elevator(raw_text: str) -> tuple[int | None, bool | None]:
-    text = raw_text.strip().casefold()
+_FLOOR_WORDS = {
+    "подвал": -1,
+    "минус первый": -1,
+    "цоколь": -1,
+    "cave": -1,
+    "rés do chão": 0,
+    "res do chao": 0,
+    "rés-do-chão": 0,
+    "res-do-chao": 0,
+    "ground floor": 0,
+    "ground": 0,
+    "нулевой": 0,
+    "нулевом": 0,
+    "primeiro": 1,
+    "первый": 1,
+    "первом": 1,
+    "второй": 2,
+    "втором": 2,
+    "третий": 3,
+    "третьем": 3,
+    "четвертый": 4,
+    "четвёртый": 4,
+    "четвертом": 4,
+    "четвёртом": 4,
+    "пятый": 5,
+    "пятом": 5,
+    "шестой": 6,
+    "шестом": 6,
+    "седьмой": 7,
+    "седьмом": 7,
+    "восьмой": 8,
+    "восьмом": 8,
+    "девятый": 9,
+    "девятом": 9,
+    "десятый": 10,
+    "десятом": 10,
+}
+
+
+def _normalize_floor_elevator_text(raw_text: str) -> str:
+    text = raw_text.strip().casefold().replace("ё", "е")
+    text = text.replace("não", "nao")
+    text = re.sub(r"[;,.:()\[\]{}]", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+def _parse_floor(text: str) -> int:
     if not text:
         raise ValueError("empty details")
 
-    parts = [part.strip() for part in text.replace(";", ",").split(",") if part.strip()]
-    if not parts:
-        raise ValueError("empty details")
+    if re.search(r"(?<!\w)(r\s*/\s*c|rc)(?!\w)", text):
+        return 0
 
-    try:
-        floor = int(parts[0])
-    except ValueError as exc:
-        raise ValueError("invalid floor") from exc
+    explicit_patterns = [
+        r"(?:этаж|етаж|floor|andar|piso)\s*(?:№|#|nº|n\.|:|-)?\s*(-?\d+)",
+        r"(-?\d+)\s*(?:й|ой|ый|ом|º|°)?\s*(?:этаж|етаж|floor|andar|piso)",
+        r"(?:на|ao|no)\s*(-?\d+)\s*(?:й|ой|ый|ом|º|°)?",
+    ]
 
-    has_elevator = None
-    rest = " ".join(parts[1:])
+    for pattern in explicit_patterns:
+        match = re.search(pattern, text)
+        if match:
+            return int(match.group(1))
 
-    if rest:
-        positive = {"да", "yes", "y", "+", "есть", "sim"}
-        negative = {"нет", "no", "n", "-", "sem", "nao", "não"}
+    for word, value in sorted(_FLOOR_WORDS.items(), key=lambda item: len(item[0]), reverse=True):
+        if re.search(rf"(?<!\w){re.escape(word)}(?!\w)", text):
+            return value
 
-        if rest in positive:
-            has_elevator = True
-        elif rest in negative:
-            has_elevator = False
-        else:
-            raise ValueError("invalid elevator")
+    match = re.search(r"(?<!\d)-?\d+(?!\d)", text)
+    if match:
+        return int(match.group(0))
 
+    raise ValueError("invalid floor")
+
+
+def _parse_elevator(text: str) -> bool | None:
+    negative_patterns = [
+        r"нет\s+лифт\w*",
+        r"лифт\w*\s+нет",
+        r"без\s+лифт\w*",
+        r"no\s+elevator",
+        r"without\s+elevator",
+        r"sem\s+elevador",
+        r"nao\s+tem\s+elevador",
+        r"elevador\s+nao",
+        r"лифт\w*\s*[-—]\s*нет",
+    ]
+
+    positive_patterns = [
+        r"есть\s+лифт\w*",
+        r"лифт\w*\s+есть",
+        r"с\s+лифт\w*",
+        r"with\s+elevator",
+        r"com\s+elevador",
+        r"tem\s+elevador",
+        r"elevador\s+sim",
+        r"лифт\w*\s*[-—]\s*да",
+    ]
+
+    for pattern in negative_patterns:
+        if re.search(pattern, text):
+            return False
+
+    for pattern in positive_patterns:
+        if re.search(pattern, text):
+            return True
+
+    parts = [part.strip() for part in re.split(r"[,;]", text) if part.strip()]
+    tail = " ".join(parts[1:]) if len(parts) > 1 else text
+
+    positive_words = {"да", "yes", "y", "+", "есть", "sim"}
+    negative_words = {"нет", "no", "n", "-", "sem", "nao"}
+
+    tokens = set(tail.split())
+    if tokens & negative_words:
+        return False
+    if tokens & positive_words:
+        return True
+
+    return None
+
+
+def _parse_floor_elevator(raw_text: str) -> tuple[int | None, bool | None]:
+    text = _normalize_floor_elevator_text(raw_text)
+    floor = _parse_floor(text)
+    has_elevator = _parse_elevator(text)
     return floor, has_elevator
 
 
