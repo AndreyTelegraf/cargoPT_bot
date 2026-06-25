@@ -38,7 +38,18 @@ class CarrierRepository:
         )
 
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        carrier = result.scalar_one_or_none()
+
+        if carrier is not None:
+            return carrier
+
+        company_stmt = (
+            select(CarrierCompany)
+            .where(CarrierCompany.company_name.ilike(f"@{cleaned}"))
+        )
+
+        company_result = await self.session.execute(company_stmt)
+        return company_result.scalar_one_or_none()
 
     async def get_carrier_by_telegram_user_id(
         self,
