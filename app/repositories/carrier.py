@@ -47,6 +47,21 @@ class CarrierRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def update_carrier_telegram_username(
+        self,
+        carrier_id: int,
+        username: str | None,
+    ) -> CarrierCompany:
+        carrier = await self.get_carrier_by_id(carrier_id)
+
+        if carrier is None:
+            raise ValueError("carrier not found")
+
+        carrier.telegram_username = username
+        await self.session.flush()
+
+        return carrier
+
     async def create_invite_token(
         self,
         invite: AdminInviteToken,

@@ -47,6 +47,12 @@ async def start_handler(message: Message, state: FSMContext) -> None:
     async with async_session_maker() as session:
         repository = CarrierRepository(session)
         carrier = await repository.get_carrier_by_telegram_user_id(message.from_user.id)
+        if carrier is not None and message.from_user.username:
+            await repository.update_carrier_telegram_username(
+                carrier.id,
+                message.from_user.username,
+            )
+            await session.commit()
 
     if carrier is not None and carrier.status != CarrierStatus.REJECTED:
         await state.clear()

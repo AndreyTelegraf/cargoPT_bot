@@ -34,6 +34,7 @@ class CarrierCompany(Base):
         Integer,
         unique=True,
     )
+    telegram_username: Mapped[str | None] = mapped_column(String)
 
     status: Mapped[str] = mapped_column(String, nullable=False)
 
