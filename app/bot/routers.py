@@ -43,6 +43,7 @@ from app.bot.handlers.max_loaders import router as max_loaders_router
 from app.bot.handlers.company_phone import router as company_phone_router
 from app.bot.handlers.company_email import router as company_email_router
 from app.bot.handlers.carrier_moderation_submit import router as carrier_moderation_submit_router
+from app.bot.handlers.self_ad import router as self_ad_router
 
 
 def setup_routers(dp: Dispatcher) -> None:
@@ -89,3 +90,4 @@ def setup_routers(dp: Dispatcher) -> None:
     dp.include_router(job_comment_router)
     dp.include_router(job_offer_response_router)
     dp.include_router(job_assignment_confirmation_router)
+    dp.include_router(self_ad_router)
