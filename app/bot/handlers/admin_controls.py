@@ -9,6 +9,16 @@ from app.repositories.job import JobRepository
 router = Router()
 
 
+async def _resolve_carrier_target(repo, raw_value):
+    value = raw_value.strip()
+
+    if value.isdigit():
+        return await repo.get_carrier_by_id(int(value))
+
+    return await repo.get_carrier_by_username(value)
+
+
+
 def _is_admin(message: Message) -> bool:
     return message.from_user is not None and message.from_user.id in ADMIN_TELEGRAM_USER_IDS
 
@@ -117,22 +127,23 @@ async def suspend_carrier(message: Message) -> None:
 
     parts = (message.text or "").split(maxsplit=1)
 
-    if len(parts) != 2 or not parts[1].isdigit():
-        await message.answer("Формат: /suspend_carrier <carrier_id>")
+    if len(parts) != 2:
+        await message.answer("Формат: /suspend_carrier <carrier_id|@username>")
         return
 
-    carrier_id = int(parts[1])
+    target = parts[1]
 
     from app.repositories.carrier import CarrierRepository
 
     async with async_session_maker() as session:
         repo = CarrierRepository(session)
 
-        try:
-            carrier = await repo.suspend_carrier(carrier_id)
-        except ValueError:
+        carrier = await _resolve_carrier_target(repo, target)
+        if carrier is None:
             await message.answer("Перевозчик не найден.")
             return
+
+        carrier = await repo.suspend_carrier(carrier.id)
 
         await session.commit()
 
@@ -149,22 +160,23 @@ async def unsuspend_carrier(message: Message) -> None:
 
     parts = (message.text or "").split(maxsplit=1)
 
-    if len(parts) != 2 or not parts[1].isdigit():
-        await message.answer("Формат: /unsuspend_carrier <carrier_id>")
+    if len(parts) != 2:
+        await message.answer("Формат: /unsuspend_carrier <carrier_id|@username>")
         return
 
-    carrier_id = int(parts[1])
+    target = parts[1]
 
     from app.repositories.carrier import CarrierRepository
 
     async with async_session_maker() as session:
         repo = CarrierRepository(session)
 
-        try:
-            carrier = await repo.unsuspend_carrier(carrier_id)
-        except ValueError:
+        carrier = await _resolve_carrier_target(repo, target)
+        if carrier is None:
             await message.answer("Перевозчик не найден.")
             return
+
+        carrier = await repo.unsuspend_carrier(carrier.id)
 
         await session.commit()
 
