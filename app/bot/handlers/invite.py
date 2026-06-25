@@ -47,6 +47,18 @@ async def invite_start(message: Message, state: FSMContext) -> None:
         repository = CarrierRepository(session)
         service = CarrierOnboardingService(repository)
 
+        existing_carrier = await repository.get_carrier_by_telegram_user_id(
+            message.from_user.id
+        )
+        if existing_carrier is not None:
+            await session.commit()
+            await state.clear()
+            await message.answer(
+                "Вы уже зарегистрированы как перевозчик CargoPT. "
+                "Если нужно изменить анкету или пройти её заново, свяжитесь с администратором."
+            )
+            return
+
         try:
             invite = await service.claim_invite_token(
                 token=token,
