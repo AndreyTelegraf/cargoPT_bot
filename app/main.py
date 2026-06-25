@@ -3,6 +3,7 @@ from contextlib import suppress
 
 from app.bot.dispatcher import build_dispatcher
 from app.scheduler.offer_expiry import run_offer_expiry_loop
+from app.scheduler.subscription_reminder import run_subscription_reminder_loop
 
 
 async def run() -> None:
@@ -10,13 +11,18 @@ async def run() -> None:
     offer_expiry_task = asyncio.create_task(
         run_offer_expiry_loop(bot=bot)
     )
+    subscription_reminder_task = asyncio.create_task(
+        run_subscription_reminder_loop(bot=bot)
+    )
 
     try:
         await dp.start_polling(bot)
     finally:
-        offer_expiry_task.cancel()
-        with suppress(asyncio.CancelledError):
-            await offer_expiry_task
+        for task in (offer_expiry_task, subscription_reminder_task):
+            task.cancel()
+        for task in (offer_expiry_task, subscription_reminder_task):
+            with suppress(asyncio.CancelledError):
+                await task
 
 
 def main() -> None:

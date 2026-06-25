@@ -76,6 +76,45 @@ class CarrierRepository:
 
         return carrier
 
+    async def list_subscription_reminder_candidates(
+        self,
+        *,
+        now,
+        until,
+    ) -> list[CarrierCompany]:
+        stmt = (
+            select(CarrierCompany)
+            .where(CarrierCompany.status == CarrierStatus.ACTIVE)
+            .where(CarrierCompany.telegram_user_id.is_not(None))
+            .where(CarrierCompany.paid_until.is_not(None))
+            .where(CarrierCompany.paid_until <= until)
+            .order_by(CarrierCompany.paid_until, CarrierCompany.id)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def mark_subscription_reminder_sent(
+        self,
+        *,
+        carrier_id: int,
+        marker: str,
+        updated_at,
+    ) -> CarrierCompany:
+        carrier = await self.get_carrier_by_id(carrier_id)
+
+        if carrier is None:
+            raise ValueError("carrier not found")
+
+        previous_note = carrier.internal_note or ""
+        if marker not in previous_note:
+            carrier.internal_note = (previous_note + "\n" if previous_note else "") + marker
+
+        carrier.updated_at = updated_at
+        await self.session.flush()
+
+        return carrier
+
+
     async def create_invite_token(
         self,
         invite: AdminInviteToken,
