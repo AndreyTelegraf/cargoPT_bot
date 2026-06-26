@@ -155,9 +155,14 @@ async def evaluate_assignment_confirmation(service: JobService, *, job_id: int) 
     }
 
     if ASSIGNMENT_CONFIRMATION_FAILED in votes:
+        now = datetime.now(UTC)
+        await service.repository.cancel_accepted_offer_by_job(
+            job_id=job_id,
+            cancelled_at=now,
+        )
         await service.repository.clear_assignment_confirmation_statuses(
             job_id=job_id,
-            updated_at=datetime.now(UTC),
+            updated_at=now,
         )
         return await _transition_job_status(
             service,

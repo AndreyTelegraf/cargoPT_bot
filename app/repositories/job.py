@@ -326,6 +326,25 @@ class JobRepository:
 
         return offer
 
+    async def cancel_accepted_offer_by_job(
+        self,
+        *,
+        job_id: int,
+        cancelled_at,
+    ) -> JobOffer | None:
+        accepted_offer = await self.get_accepted_offer_by_job_id(job_id)
+
+        if accepted_offer is None:
+            return None
+
+        accepted_offer.status = "cancelled"
+        accepted_offer.responded_at = cancelled_at
+        accepted_offer.updated_at = cancelled_at
+
+        await self.session.flush()
+
+        return accepted_offer
+
     async def decline_pending_offers_by_job_except(
         self,
         job_id: int,

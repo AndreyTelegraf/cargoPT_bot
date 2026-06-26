@@ -183,8 +183,13 @@ async def exercise_assignment_confirmation() -> None:
             raise SystemExit("carrier vote was not cleared")
 
         accepted = await job_repo.get_accepted_offer_by_job_id(job_id)
-        if accepted is None or accepted.status != JobOfferStatus.ACCEPTED:
-            raise SystemExit("accepted offer missing after fail")
+        if accepted is not None:
+            raise SystemExit("accepted offer must be cancelled after fail")
+
+        offers = await job_repo.list_offers_by_job(job_id)
+        statuses = [offer.status for offer in offers]
+        if JobOfferStatus.CANCELLED not in statuses:
+            raise SystemExit(f"cancelled offer missing after fail: {statuses}")
 
         await session.commit()
 
