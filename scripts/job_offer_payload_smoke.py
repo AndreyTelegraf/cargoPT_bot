@@ -44,6 +44,9 @@ assert "Гидроборт: да" in payload
 assert "Кран: нет" in payload
 assert "Подъём через окно: нет" in payload
 assert "<b>Комментарий</b>\ntest comment" in payload
-assert "Telegram: @client_user" in payload
+assert "<b>Контакты клиента</b>" not in payload
+assert "Telegram: @client_user" not in payload
+assert "+351910000000" not in payload
+assert "WhatsApp" not in payload
 
 print("JOB_OFFER_PAYLOAD_SMOKE_OK")

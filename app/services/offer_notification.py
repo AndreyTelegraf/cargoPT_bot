@@ -75,10 +75,6 @@ def build_offer_text(job, items, pickup, dropoff) -> str:
         f"Подъём через окно: {_format_bool(job.needs_mobile_lift)}\n\n"
         "<b>Комментарий</b>\n"
         f"{_safe(job.comment or 'нет')}\n\n"
-        "<b>Контакты клиента</b>\n"
-        f"Telegram: @{_safe(job.client_telegram_username or 'username_missing')}\n"
-        f"Телефон: {_safe(job.client_phone or 'не указан')}\n"
-        f"WhatsApp: {_safe(job.client_whatsapp or 'не указан')}\n\n"
         "Примите или отклоните заявку."
     )
 

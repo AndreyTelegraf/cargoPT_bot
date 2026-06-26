@@ -49,5 +49,7 @@ assert "Телефон: +351910000000" in carrier_text
 assert "WhatsApp: +351920000000" in carrier_text
 assert "Свяжитесь с клиентом для уточнения деталей." in carrier_text
 assert "Telegram: 987654321" not in carrier_text
+assert "Контакты клиента" not in client_text
+assert "Контакты клиента" not in carrier_text
 
 print("JOB_OFFER_CLIENT_NOTIFY_SMOKE_OK")
