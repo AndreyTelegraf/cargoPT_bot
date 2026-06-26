@@ -4,6 +4,7 @@ from aiogram.types import Message
 
 from app.bot.handlers.vehicle_type import vehicle_type_keyboard
 from app.bot.states.carrier_onboarding import CarrierOnboardingStates
+from app.services.input_normalization import parse_first_int
 
 router = Router()
 
@@ -46,7 +47,7 @@ async def max_loaders(
 ) -> None:
 
     try:
-        loaders = int(message.text)
+        loaders = parse_first_int(message.text)
     except Exception:
         return
 

@@ -8,6 +8,7 @@ from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.job import JobRepository
 from app.services.job import JobService
+from app.services.input_normalization import parse_first_float
 
 router = Router()
 
@@ -17,7 +18,7 @@ async def job_estimated_volume(
     message: Message,
     state: FSMContext,
 ) -> None:
-    raw_value = (message.text or "").strip().replace(",", ".")
+    raw_value = (message.text or "").strip()
 
     volume_map = {
         "до 3 м³": 3.0,
@@ -31,7 +32,7 @@ async def job_estimated_volume(
         value = volume_map[raw_value]
     else:
         try:
-            value = float(raw_value)
+            value = parse_first_float(raw_value)
         except ValueError:
             await message.answer("Выберите вариант кнопкой или укажите объём числом в м³.")
             return

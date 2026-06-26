@@ -8,6 +8,7 @@ from app.domain.carrier_profile_step import CarrierProfileStep
 from app.repositories.carrier import CarrierRepository
 from app.services.carrier_onboarding import CarrierOnboardingService
 from app.bot.states.carrier_onboarding import CarrierOnboardingStates
+from app.services.input_normalization import parse_first_float
 
 router = Router()
 
@@ -19,9 +20,7 @@ async def volume_m3(
 ) -> None:
 
     try:
-        volume = float(
-            message.text.replace(",", ".")
-        )
+        volume = parse_first_float(message.text)
     except Exception:
         return
 

@@ -4,6 +4,7 @@ from aiogram.types import Message
 
 from app.bot.handlers.invite import carrier_yes_no_keyboard
 from app.bot.states.carrier_onboarding import CarrierOnboardingStates
+from app.services.input_normalization import parse_first_int
 
 router = Router()
 
@@ -15,7 +16,7 @@ async def crane_reach(
 ) -> None:
 
     try:
-        reach = int(message.text)
+        reach = parse_first_int(message.text)
     except Exception:
         return
 

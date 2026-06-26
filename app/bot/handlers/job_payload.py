@@ -8,6 +8,7 @@ from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.job import JobRepository
 from app.services.job import JobService
+from app.services.input_normalization import parse_first_int
 
 router = Router()
 
@@ -31,7 +32,7 @@ async def job_estimated_payload(
         value = payload_map[raw_value]
     else:
         try:
-            value = int(raw_value)
+            value = parse_first_int(raw_value)
         except ValueError:
             await message.answer("Выберите вариант кнопкой или укажите вес числом в кг.")
             return

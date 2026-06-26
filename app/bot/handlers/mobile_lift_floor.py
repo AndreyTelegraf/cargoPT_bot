@@ -3,6 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from app.bot.states.carrier_onboarding import CarrierOnboardingStates
+from app.services.input_normalization import parse_first_int
 
 router = Router()
 
@@ -14,7 +15,7 @@ async def mobile_lift_floor(
 ) -> None:
 
     try:
-        floor = int(message.text)
+        floor = parse_first_int(message.text)
     except Exception:
         return
 
