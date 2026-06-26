@@ -228,6 +228,9 @@ async def pay_carrier(message: Message) -> None:
             return
 
         base = carrier.paid_until
+        if base is not None and base.tzinfo is None:
+            base = base.replace(tzinfo=UTC)
+
         if base is None or base < now:
             base = now
 
