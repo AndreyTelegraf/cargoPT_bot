@@ -3,7 +3,7 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from app.bot.job_request_keyboards import support_keyboard
+from app.bot.job_request_keyboards import floor_keyboard
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.job import JobRepository
@@ -51,8 +51,7 @@ async def job_pickup_address(
     await state.set_state(JobRequestStates.pickup_details)
 
     await message.answer(
-        "Этаж загрузки и лифт.\n\n"
-        "Напишите в формате: этаж, лифт да/нет.\n"
-        "Примеры: 2, да; 0, нет; -1, да",
-        reply_markup=support_keyboard(),
+        "Этаж загрузки.\n\n"
+        "Выберите этаж кнопкой или введите число от 0 до 24. Если это подвал — нажмите «Подвал».",
+        reply_markup=floor_keyboard(),
     )

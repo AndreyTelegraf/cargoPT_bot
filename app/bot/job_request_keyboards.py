@@ -29,6 +29,18 @@ def yes_no_keyboard() -> ReplyKeyboardMarkup:
     return _keyboard([["Да", "Нет"]])
 
 
+
+def floor_keyboard() -> ReplyKeyboardMarkup:
+    floors = [str(value) for value in range(0, 25)]
+    rows = [floors[index:index + 5] for index in range(0, len(floors), 5)]
+    rows.append(["Подвал"])
+    return _keyboard(rows)
+
+
+def elevator_keyboard() -> ReplyKeyboardMarkup:
+    return _keyboard([["Да", "Нет"]])
+
+
 def payload_keyboard() -> ReplyKeyboardMarkup:
     return _keyboard([
         ["до 500 кг", "до 1000 кг"],
