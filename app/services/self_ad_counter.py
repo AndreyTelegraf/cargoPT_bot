@@ -13,6 +13,11 @@ SELF_AD_TEXT = """🚚 <b>Нужно быстро перевезти мебел�
 
 Это проще и эффективнее, чем обзванивать перевозчиков самостоятельно."""
 
+SELF_AD_TARGETS = {
+    ("baraholka_pt", 429),
+    ("proflistpt", 8490),
+}
+
 _lock = Lock()
 
 
@@ -20,55 +25,81 @@ def _state_path() -> Path:
     return Path(settings.self_ad_state_path)
 
 
-def _load_count() -> int:
+def _load_counts() -> dict[str, int]:
     path = _state_path()
     if not path.exists():
-        return 0
+        return {}
     try:
         data = json.loads(path.read_text())
     except (json.JSONDecodeError, OSError):
-        return 0
-    value = data.get("text_count", 0)
-    return value if isinstance(value, int) and value >= 0 else 0
+        return {}
+    if isinstance(data.get("text_counts"), dict):
+        counts = data["text_counts"]
+        return {
+            str(key): value
+            for key, value in counts.items()
+            if isinstance(value, int) and value >= 0
+        }
+    legacy_value = data.get("text_count", 0)
+    if isinstance(legacy_value, int) and legacy_value >= 0:
+        return {"baraholka_pt:429": legacy_value}
+    return {}
 
 
-def _save_count(count: int) -> None:
+def _save_counts(counts: dict[str, int]) -> None:
     path = _state_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"text_count": count}, ensure_ascii=False, indent=2))
+    path.write_text(
+        json.dumps({"text_counts": counts}, ensure_ascii=False, indent=2)
+    )
 
 
-def is_target_text_message(message: Any) -> bool:
+def _target_key(username: str, thread_id: int) -> str:
+    return f"{username.lower()}:{thread_id}"
+
+
+def _message_target_key(message: Any) -> str | None:
     if not settings.self_ad_enabled:
-        return False
+        return None
 
     text = getattr(message, "text", None)
     if not isinstance(text, str) or not text.strip():
-        return False
+        return None
 
     if text.strip() == SELF_AD_TEXT.strip():
-        return False
+        return None
 
     thread_id = getattr(message, "message_thread_id", None)
-    if thread_id != settings.self_ad_topic_id:
-        return False
+    if not isinstance(thread_id, int):
+        return None
 
     chat = getattr(message, "chat", None)
     username = getattr(chat, "username", None)
-    if isinstance(username, str) and username.lower() == settings.self_ad_chat_username.lower():
-        return True
+    if not isinstance(username, str):
+        return None
 
-    return False
+    target = (username.lower(), thread_id)
+    if target not in SELF_AD_TARGETS:
+        return None
+
+    return _target_key(username, thread_id)
+
+
+def is_target_text_message(message: Any) -> bool:
+    return _message_target_key(message) is not None
 
 
 async def process_self_ad_message(message: Any) -> bool:
-    if not is_target_text_message(message):
+    target_key = _message_target_key(message)
+    if target_key is None:
         return False
 
     async with _lock:
-        count = _load_count() + 1
+        counts = _load_counts()
+        count = counts.get(target_key, 0) + 1
+        counts[target_key] = count
         should_post = count % settings.self_ad_every_n == 0
-        _save_count(count)
+        _save_counts(counts)
 
     if should_post:
         await message.answer(
