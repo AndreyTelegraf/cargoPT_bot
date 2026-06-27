@@ -1,3 +1,7 @@
+from datetime import UTC
+from datetime import datetime
+from datetime import timedelta
+
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
@@ -32,6 +36,30 @@ async def job_comment(
         job_repository = JobRepository(session)
         carrier_repository = CarrierRepository(session)
         job_service = JobService(job_repository)
+
+        active_jobs = await job_repository.count_active_client_jobs(
+            message.from_user.id
+        )
+        if active_jobs >= 2:
+            await message.answer(
+                "У вас уже есть 2 активные заявки. "
+                "Дождитесь ответа по одной из них или отмените лишнюю через диспетчера: https://t.me/andreytelegraf"
+            )
+            await session.rollback()
+            return
+
+        sent_since = datetime.now(UTC) - timedelta(hours=24)
+        sent_jobs = await job_repository.count_sent_client_jobs_since(
+            message.from_user.id,
+            sent_since,
+        )
+        if sent_jobs >= 3:
+            await message.answer(
+                "Лимит CargoPT: не больше 3 отправленных заявок за 24 часа. "
+                "Попробуйте позже или напишите диспетчеру: https://t.me/andreytelegraf"
+            )
+            await session.rollback()
+            return
 
         job = await job_service.finalize_for_matching(
             job_id=job_id,

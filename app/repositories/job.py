@@ -110,6 +110,56 @@ class JobRepository:
         result = await self.session.execute(stmt)
         return result.scalars().first()
 
+    async def count_active_client_jobs(
+        self,
+        telegram_user_id: int,
+    ) -> int:
+        stmt = (
+            select(func.count(Job.id))
+            .where(Job.client_telegram_user_id == telegram_user_id)
+            .where(
+                Job.status.in_(
+                    (
+                        "ready_for_matching",
+                        "matching",
+                        "offered",
+                        "assigned_pending_confirmation",
+                    )
+                )
+            )
+        )
+        result = await self.session.execute(stmt)
+        return int(result.scalar_one())
+
+    async def count_sent_client_jobs_since(
+        self,
+        telegram_user_id: int,
+        since,
+    ) -> int:
+        stmt = (
+            select(func.count(Job.id))
+            .where(Job.client_telegram_user_id == telegram_user_id)
+            .where(Job.updated_at >= since)
+            .where(
+                Job.status.in_(
+                    (
+                        "ready_for_matching",
+                        "matching",
+                        "offered",
+                        "assigned_pending_confirmation",
+                        "assigned",
+                        "in_progress",
+                        "completed",
+                        "cancelled",
+                        "offers_exhausted",
+                        "expired_without_response",
+                    )
+                )
+            )
+        )
+        result = await self.session.execute(stmt)
+        return int(result.scalar_one())
+
     async def list_recent_jobs(self, limit: int = 20) -> list[Job]:
         stmt = select(Job).order_by(Job.id.desc()).limit(limit)
         result = await self.session.execute(stmt)
