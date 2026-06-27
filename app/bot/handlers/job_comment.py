@@ -92,9 +92,17 @@ async def job_comment(
 
     await state.clear()
 
-    await message.answer(
-        "Заявка опубликована.\n\n"
-        "Сейчас мы ищем подходящего перевозчика. "
-        "Как только кто-то примет заказ, вы получите уведомление здесь.",
-        reply_markup=support_keyboard(),
-    )
+    if sent_count > 0:
+        await message.answer(
+            "Заявка опубликована.\n\n"
+            f"Мы отправили её подходящим перевозчикам: {sent_count}. "
+            "Как только кто-то примет заказ, вы получите уведомление.",
+            reply_markup=support_keyboard(),
+        )
+    else:
+        await message.answer(
+            "Заявка опубликована.\n\n"
+            "Сейчас в системе нет подходящих перевозчиков. "
+            "Диспетчер CargoPT проверит заявку вручную.",
+            reply_markup=support_keyboard(),
+        )
