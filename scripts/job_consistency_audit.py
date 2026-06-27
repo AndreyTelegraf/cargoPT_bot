@@ -30,7 +30,7 @@ WHERE
       accepted > 1
    OR (accepted = 1 AND job_status NOT IN ('assigned','assigned_pending_confirmation'))
    OR (pending > 0 AND job_status NOT IN ('offered','matching'))
-   OR (total_offers = 0 AND job_status NOT IN ('draft','ready_for_matching','unmatched'))
+   OR (total_offers = 0 AND job_status NOT IN ('draft','ready_for_matching','unmatched','no_carriers_found'))
 ORDER BY id;
 """
 

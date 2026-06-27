@@ -71,5 +71,18 @@ async def process_expired_pending_offers(
                 job_repository=job_repository,
                 carrier_repository=carrier_repository,
             )
+        else:
+            offers = await job_repository.list_offers_by_job(job.id)
+            has_declined = any(offer.status == "declined" for offer in offers)
+
+            await job_repository.update_job_status(
+                job_id=job.id,
+                status=(
+                    JobStatus.OFFERS_EXHAUSTED
+                    if has_declined
+                    else JobStatus.EXPIRED_WITHOUT_RESPONSE
+                ),
+                updated_at=job.updated_at,
+            )
 
     return len(expired_offers)

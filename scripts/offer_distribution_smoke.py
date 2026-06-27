@@ -196,8 +196,8 @@ async def exercise_offer_distribution() -> None:
         if unmatched_offers:
             raise SystemExit(f"expected no offers, got {len(unmatched_offers)}")
 
-        if loaded_unmatched_job.status != JobStatus.UNMATCHED:
-            raise SystemExit(f"expected unmatched status, got {loaded_unmatched_job.status}")
+        if loaded_unmatched_job.status != JobStatus.NO_CARRIERS_FOUND:
+            raise SystemExit(f"expected no_carriers_found status, got {loaded_unmatched_job.status}")
 
         await session.commit()
 

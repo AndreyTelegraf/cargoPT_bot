@@ -7,6 +7,7 @@ from aiogram.types import CallbackQuery
 from aiogram.types import Message
 
 from app.bot.assignment_confirmation_keyboard import build_assignment_confirmation_keyboard
+from app.domain.job_status import JobStatus
 from app.db.session import async_session_maker
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
@@ -145,6 +146,12 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
                             offers=new_offers,
                             job_repository=job_repository,
                             carrier_repository=carrier_repository,
+                        )
+                    else:
+                        await job_repository.update_job_status(
+                            job_id=job.id,
+                            status=JobStatus.OFFERS_EXHAUSTED,
+                            updated_at=job.updated_at,
                         )
 
         await session.commit()

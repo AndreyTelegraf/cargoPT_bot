@@ -52,7 +52,7 @@ class OfferDistributionService:
             )
             offers.append(offer)
 
-        target_status = JobStatus.OFFERED if offers else JobStatus.UNMATCHED
+        target_status = JobStatus.OFFERED if offers else JobStatus.NO_CARRIERS_FOUND
 
         await self.job_repository.update_job_status(
             job_id=job.id,
