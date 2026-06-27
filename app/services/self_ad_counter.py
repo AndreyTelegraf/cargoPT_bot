@@ -3,13 +3,15 @@ from asyncio import Lock
 from pathlib import Path
 from typing import Any
 
+from aiogram.types import LinkPreviewOptions
+
 from app.config import settings
 
-SELF_AD_TEXT = """🚚 <b>Нужно перевезти мебель, вещи или технику?</b>
+SELF_AD_TEXT = """🚚 <b>Нужно быстро перевезти мебель, вещи или технику?</b>
 
-Заполните заявку через <a href="https://t.me/cargo_pt_bot">@cargo_pt_bot</a>.
+Заполните заявку через <a href="https://t.me/CargoPT_bot">@cargo_pt_bot</a>, агрегатор оперативно подберёт лучшую транспортную компанию, а подходящий исполнитель сам с вами свяжется.
 
-Агрегатор автоматически разошлёт заявку подходящим под ваш заказ перевозчикам."""
+Это проще и эффективнее, чем искать перевозчика самостоятельно."""
 
 _lock = Lock()
 
@@ -69,6 +71,13 @@ async def process_self_ad_message(message: Any) -> bool:
         _save_count(count)
 
     if should_post:
-        await message.answer(SELF_AD_TEXT)
+        await message.answer(
+            SELF_AD_TEXT,
+            parse_mode="HTML",
+            link_preview_options=LinkPreviewOptions(
+                is_disabled=False,
+                url="https://t.me/CargoPT_bot",
+            ),
+        )
 
     return should_post

@@ -18,8 +18,8 @@ class FakeMessage:
         self.from_user = SimpleNamespace(is_bot=is_bot)
         self.sent = []
 
-    async def answer(self, text):
-        self.sent.append(text)
+    async def answer(self, text, **kwargs):
+        self.sent.append((text, kwargs))
 
 
 async def main():
@@ -38,6 +38,11 @@ async def main():
             posted = await self_ad_counter.process_self_ad_message(msg)
             assert posted is True
             assert len(msg.sent) == 1
+            assert msg.sent[0][1].get("parse_mode") == "HTML"
+            link_preview = msg.sent[0][1].get("link_preview_options")
+            assert link_preview is not None
+            assert link_preview.url == "https://t.me/CargoPT_bot"
+            assert link_preview.is_disabled is False
             sent += len(msg.sent)
 
             wrong_topic = FakeMessage(topic_id=430)
