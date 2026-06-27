@@ -193,11 +193,11 @@ async def exercise_offer_distribution() -> None:
 
         loaded_unmatched_job = await job_repo.get_job_by_id(unmatched_job.id)
 
-        if unmatched_offers:
-            raise SystemExit(f"expected no offers, got {len(unmatched_offers)}")
+        if len(unmatched_offers) != 2:
+            raise SystemExit(f"expected 2 fallback offers, got {len(unmatched_offers)}")
 
-        if loaded_unmatched_job.status != JobStatus.NO_CARRIERS_FOUND:
-            raise SystemExit(f"expected no_carriers_found status, got {loaded_unmatched_job.status}")
+        if loaded_unmatched_job.status != JobStatus.OFFERED:
+            raise SystemExit(f"expected offered fallback status, got {loaded_unmatched_job.status}")
 
         await session.commit()
 

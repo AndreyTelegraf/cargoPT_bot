@@ -22,7 +22,7 @@ class OfferDistributionService:
         self,
         job: Job,
         *,
-        limit: int = 5,
+        limit: int | None = None,
         expires_in_minutes: int = 60,
     ) -> list[JobOffer]:
         await self.job_repository.update_job_status(
@@ -37,10 +37,16 @@ class OfferDistributionService:
             job,
             addresses=addresses,
         )
+        if not vehicles:
+            vehicles = await self.matching_service.carrier_search.find_matching_vehicles()
+
         selected = [
             vehicle for vehicle in vehicles
             if vehicle.carrier_id not in existing_carrier_ids
-        ][:limit]
+        ]
+
+        if limit is not None:
+            selected = selected[:limit]
 
         offers = []
 
