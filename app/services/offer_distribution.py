@@ -40,13 +40,18 @@ class OfferDistributionService:
         if not vehicles:
             vehicles = await self.matching_service.carrier_search.find_matching_vehicles()
 
-        selected = [
-            vehicle for vehicle in vehicles
-            if vehicle.carrier_id not in existing_carrier_ids
-        ]
+        selected = []
+        selected_carrier_ids = set(existing_carrier_ids)
 
-        if limit is not None:
-            selected = selected[:limit]
+        for vehicle in vehicles:
+            if vehicle.carrier_id in selected_carrier_ids:
+                continue
+
+            selected.append(vehicle)
+            selected_carrier_ids.add(vehicle.carrier_id)
+
+            if limit is not None and len(selected) >= limit:
+                break
 
         offers = []
 

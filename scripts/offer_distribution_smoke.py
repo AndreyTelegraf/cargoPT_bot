@@ -117,6 +117,26 @@ async def exercise_offer_distribution() -> None:
                 )
             )
 
+        await carrier_repo.create_vehicle(
+            CarrierVehicle(
+                carrier_id=carriers[0].id,
+                vehicle_type="duplicate_large_van",
+                payload_kg=3000,
+                volume_m3=20.0,
+                has_tail_lift=True,
+                has_crane=False,
+                has_mobile_lift=False,
+                mobile_lift_max_floor=None,
+                mobile_lift_max_weight_kg=None,
+                crane_max_weight_kg=None,
+                crane_reach_meters=None,
+                max_loaders=4,
+                is_active=True,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+
         distribution = OfferDistributionService(
             matching_service=JobMatchingService(
                 CarrierSearchService(carrier_repo)
@@ -161,6 +181,9 @@ async def exercise_offer_distribution() -> None:
         if len(stored) != 2:
             raise SystemExit(f"expected 2 stored offers, got {len(stored)}")
 
+        if len({offer.carrier_id for offer in stored}) != len(stored):
+            raise SystemExit("expected one offer per carrier for strict matches")
+
         if loaded_offered_job.status != JobStatus.OFFERED:
             raise SystemExit(f"expected offered status, got {loaded_offered_job.status}")
 
@@ -195,6 +218,9 @@ async def exercise_offer_distribution() -> None:
 
         if len(unmatched_offers) != 2:
             raise SystemExit(f"expected 2 fallback offers, got {len(unmatched_offers)}")
+
+        if len({offer.carrier_id for offer in unmatched_offers}) != len(unmatched_offers):
+            raise SystemExit("expected one offer per carrier for fallback matches")
 
         if loaded_unmatched_job.status != JobStatus.OFFERED:
             raise SystemExit(f"expected offered fallback status, got {loaded_unmatched_job.status}")
