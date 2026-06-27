@@ -1,6 +1,7 @@
 from datetime import UTC
 from datetime import datetime
 
+from app.bot.handlers.carrier_invite_admin import ADMIN_TELEGRAM_USER_IDS
 from app.domain.job_status import JobStatus
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
@@ -9,6 +10,33 @@ from app.services.job_matching import JobMatchingService
 from app.services.job_offer import JobOfferService
 from app.services.offer_distribution import OfferDistributionService
 from app.services.offer_notification import send_job_offers_to_carriers
+
+
+def build_offer_escalation_text(*, job, offers) -> str:
+    pending = sum(1 for offer in offers if offer.status == "pending")
+    declined = sum(1 for offer in offers if offer.status == "declined")
+    expired = sum(1 for offer in offers if offer.status == "expired")
+    accepted = sum(1 for offer in offers if offer.status == "accepted")
+    client = job.client_telegram_username or str(job.client_telegram_user_id)
+
+    return (
+        f"Заявка #{job.id} требует ручного контроля.\n\n"
+        f"Клиент: @{client}\n"
+        f"Статус: {job.status}\n\n"
+        f"Офферы:\n"
+        f"отправлено — {len(offers)}\n"
+        f"pending — {pending}\n"
+        f"accepted — {accepted}\n"
+        f"declined — {declined}\n"
+        f"expired — {expired}"
+    )
+
+
+async def notify_admins_about_unassigned_job(*, bot, job, offers) -> None:
+    text = build_offer_escalation_text(job=job, offers=offers)
+
+    for admin_id in ADMIN_TELEGRAM_USER_IDS:
+        await bot.send_message(chat_id=admin_id, text=text)
 
 
 async def process_expired_pending_offers(
@@ -83,6 +111,11 @@ async def process_expired_pending_offers(
                     else JobStatus.EXPIRED_WITHOUT_RESPONSE
                 ),
                 updated_at=job.updated_at,
+            )
+            await notify_admins_about_unassigned_job(
+                bot=bot,
+                job=job,
+                offers=offers,
             )
 
     return len(expired_offers)

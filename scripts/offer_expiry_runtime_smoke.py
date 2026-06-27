@@ -31,7 +31,11 @@ DATABASE_URL = "sqlite+aiosqlite:///.tmp_offer_expiry_runtime_smoke/cargopt_dev.
 
 
 class DummyBot:
+    def __init__(self):
+        self.messages = []
+
     async def send_message(self, *args, **kwargs):
+        self.messages.append((args, kwargs))
         return None
 
     async def send_photo(self, *args, **kwargs):
@@ -211,8 +215,9 @@ async def exercise_offer_expiry() -> None:
 
         await session.commit()
 
+        bot = DummyBot()
         processed = await process_expired_pending_offers(
-            bot=DummyBot(),
+            bot=bot,
             session=session,
         )
         await session.commit()
@@ -233,6 +238,9 @@ async def exercise_offer_expiry() -> None:
         loaded_job = await job_repo.get_job_by_id(job.id)
         if loaded_job.status != JobStatus.OFFERED:
             raise SystemExit(f"unexpected job status: {loaded_job.status}")
+
+        if bot.messages:
+            raise SystemExit("did not expect admin escalation while redispatch succeeded")
 
     await engine.dispose()
 
