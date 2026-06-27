@@ -18,7 +18,7 @@ from app.services.job_offer import parse_offer_callback
 from app.services.carrier_search import CarrierSearchService
 from app.services.job_matching import JobMatchingService
 from app.services.offer_distribution import OfferDistributionService
-from app.services.offer_expiry import notify_admins_about_unassigned_job
+from app.services.job_escalation import escalate_job_to_manual_review
 from app.services.offer_notification import send_job_offers_to_carriers
 from app.services.offer_notifications import build_client_notification_text
 from app.services.offer_notifications import build_carrier_notification_text
@@ -149,16 +149,10 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
                             carrier_repository=carrier_repository,
                         )
                     else:
-                        offers = await job_repository.list_offers_by_job(job.id)
-                        await job_repository.update_job_status(
-                            job_id=job.id,
-                            status=JobStatus.MANUAL_REVIEW_REQUIRED,
-                            updated_at=job.updated_at,
-                        )
-                        await notify_admins_about_unassigned_job(
+                        await escalate_job_to_manual_review(
                             bot=callback.bot,
                             job=job,
-                            offers=offers,
+                            job_repository=job_repository,
                         )
 
         await session.commit()
