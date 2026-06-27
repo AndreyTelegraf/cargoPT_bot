@@ -26,7 +26,7 @@ async def job_dropoff_address(
         longitude = message.location.longitude
         raw_text = f"Telegram location: {latitude}, {longitude}"
 
-    if not raw_text:
+    if not raw_text or raw_text.startswith("/"):
         await message.answer("Укажите адрес, ссылку на Google Maps или отправьте геолокацию Telegram.")
         return
 
