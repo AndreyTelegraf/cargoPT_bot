@@ -5,6 +5,7 @@ import subprocess
 import sys
 from datetime import UTC
 from datetime import datetime
+from datetime import timedelta
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -42,7 +43,7 @@ def reset_db() -> None:
     DATA_DIR.mkdir(exist_ok=True)
 
 
-def build_job(now, *, payload: int, volume: float) -> Job:
+def build_job(now, *, payload: int, volume: float, required_loaders: int = 2) -> Job:
     return Job(
         client_telegram_user_id=9001,
         status=JobStatus.READY_FOR_MATCHING,
@@ -56,7 +57,7 @@ def build_job(now, *, payload: int, volume: float) -> Job:
         needs_tail_lift=True,
         needs_crane=False,
         needs_mobile_lift=False,
-        required_loaders=2,
+        required_loaders=required_loaders,
         estimated_payload_kg=payload,
         estimated_volume_m3=volume,
         comment=None,
@@ -83,7 +84,7 @@ async def exercise_offer_distribution() -> None:
                     phone=None,
                     telegram_user_id=4000 + idx,
                     status=CarrierStatus.ACTIVE,
-                    paid_until=None,
+                    paid_until=now + timedelta(days=30),
                     assembly_required=True,
                     packing_required=True,
                     operating_regions="Lisboa" if idx < 2 else "Porto",
@@ -164,7 +165,7 @@ async def exercise_offer_distribution() -> None:
             raise SystemExit(f"expected offered status, got {loaded_offered_job.status}")
 
         unmatched_job = await job_repo.create_job(
-            build_job(now, payload=999999, volume=999999.0)
+            build_job(now, payload=999999, volume=999999.0, required_loaders=999)
         )
         await job_repo.add_address(
             JobAddress(
