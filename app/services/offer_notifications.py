@@ -25,7 +25,8 @@ def build_client_notification_text(job, carrier) -> str:
         f"Контакт: {_safe(carrier.contact_name or 'не указано')}\n"
         f"Telegram: {_telegram_user_link(carrier.telegram_user_id, carrier_name)}\n"
         f"Телефон: {_safe(carrier.phone or 'не указан')}\n\n"
-        "Теперь вы можете связаться напрямую."
+        "Свяжитесь напрямую и согласуйте детали перевозки.\n\n"
+        "После разговора вернитесь в этот чат и подтвердите, состоялась ли сделка."
     )
 
 
@@ -37,6 +38,7 @@ def build_carrier_notification_text(job, carrier) -> str:
         f"Username: {_format_telegram_username(job.client_telegram_username)}\n"
         f"Телефон: {_safe(job.client_phone or 'не указан')}\n"
         f"WhatsApp: {_safe(job.client_whatsapp or 'не указан')}\n\n"
-        "Свяжитесь с клиентом для уточнения деталей."
+        "Свяжитесь с клиентом и согласуйте детали перевозки.\n\n"
+        "После разговора вернитесь в этот чат и подтвердите, состоялась ли сделка."
     )
 
