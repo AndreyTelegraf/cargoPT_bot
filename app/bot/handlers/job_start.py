@@ -25,6 +25,20 @@ USERNAME_TEXT = (
 )
 
 
+def _draft_has_no_progress(job, addresses, items) -> bool:
+    return (
+        not addresses
+        and not items
+        and job.requested_date is None
+        and job.estimated_payload_kg is None
+        and job.estimated_volume_m3 is None
+        and job.required_loaders is None
+        and job.client_phone is None
+        and job.client_whatsapp is None
+        and job.comment is None
+    )
+
+
 async def _create_job_and_ask_pickup(
     message: Message,
     state: FSMContext,
@@ -40,10 +54,24 @@ async def _create_job_and_ask_pickup(
             return
         service = JobService(repository)
 
-        job = await service.create_draft_job(
-            client_telegram_user_id=message.from_user.id,
-            client_telegram_username=message.from_user.username,
+        latest_draft = await repository.get_latest_draft_job_by_client_id(
+            message.from_user.id
         )
+
+        if latest_draft is not None:
+            addresses = await repository.list_addresses_by_job(latest_draft.id)
+            items = await repository.list_items_by_job(latest_draft.id)
+        else:
+            addresses = []
+            items = []
+
+        if latest_draft is not None and _draft_has_no_progress(latest_draft, addresses, items):
+            job = latest_draft
+        else:
+            job = await service.create_draft_job(
+                client_telegram_user_id=message.from_user.id,
+                client_telegram_username=message.from_user.username,
+            )
 
         await session.commit()
 

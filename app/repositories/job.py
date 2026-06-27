@@ -97,6 +97,19 @@ class JobRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def get_latest_draft_job_by_client_id(
+        self,
+        telegram_user_id: int,
+    ) -> Job | None:
+        stmt = (
+            select(Job)
+            .where(Job.client_telegram_user_id == telegram_user_id)
+            .where(Job.status == "draft")
+            .order_by(Job.id.desc())
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().first()
+
     async def list_recent_jobs(self, limit: int = 20) -> list[Job]:
         stmt = select(Job).order_by(Job.id.desc()).limit(limit)
         result = await self.session.execute(stmt)
