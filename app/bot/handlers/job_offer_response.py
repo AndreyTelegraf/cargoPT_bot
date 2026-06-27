@@ -14,6 +14,10 @@ from app.services.job_offer import JobAlreadyAssignedError
 from app.services.job_offer import JobOfferService
 from app.services.job_offer import OfferAlreadyResolvedError
 from app.services.job_offer import parse_offer_callback
+from app.services.carrier_search import CarrierSearchService
+from app.services.job_matching import JobMatchingService
+from app.services.offer_distribution import OfferDistributionService
+from app.services.offer_notification import send_job_offers_to_carriers
 from app.services.offer_notifications import build_client_notification_text
 from app.services.offer_notifications import build_carrier_notification_text
 
@@ -59,6 +63,7 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
 
     telegram_user_id = callback.from_user.id
     sibling_offer_message_refs: list[tuple[int | None, int | None]] = []
+    job = None
 
     async with async_session_maker() as session:
         carrier_repository = CarrierRepository(session)
@@ -109,8 +114,38 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
                     and sibling.carrier_message_id is not None
                 ]
         else:
-            await offer_service.decline_offer(offer_id)
+            declined_offer = await offer_service.decline_offer(offer_id)
             message_text = "Вы отказались от заказа."
+
+            job = await job_repository.get_job_by_id(declined_offer.job_id)
+            if job is not None and job.status == "offered":
+                sibling_offers = await job_repository.list_offers_by_job(job.id)
+                has_open_offer = any(
+                    sibling.status in {"pending", "accepted"}
+                    for sibling in sibling_offers
+                )
+
+                if not has_open_offer:
+                    distribution = OfferDistributionService(
+                        matching_service=JobMatchingService(
+                            CarrierSearchService(carrier_repository)
+                        ),
+                        offer_service=offer_service,
+                        job_repository=job_repository,
+                    )
+                    new_offers = await distribution.create_offers_for_job(
+                        job,
+                        limit=5,
+                        expires_in_minutes=60,
+                    )
+                    if new_offers:
+                        await send_job_offers_to_carriers(
+                            bot=callback.bot,
+                            job=job,
+                            offers=new_offers,
+                            job_repository=job_repository,
+                            carrier_repository=carrier_repository,
+                        )
 
         await session.commit()
 

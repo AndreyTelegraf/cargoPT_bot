@@ -1,0 +1,22 @@
+import inspect
+import os
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+os.environ["BOT_TOKEN"] = "123456:TESTTOKEN"
+os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///data/cargopt_dev.db"
+
+from app.bot.handlers import job_offer_response
+
+source = inspect.getsource(job_offer_response.handle_offer_response)
+
+assert "declined_offer = await offer_service.decline_offer(offer_id)" in source
+assert "has_open_offer = any(" in source
+assert "OfferDistributionService(" in source
+assert "send_job_offers_to_carriers(" in source
+assert "job = None" in inspect.getsource(job_offer_response)
+
+print("JOB_OFFER_DECLINE_EXHAUSTION_SMOKE_OK")
