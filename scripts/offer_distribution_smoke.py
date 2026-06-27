@@ -43,7 +43,7 @@ def reset_db() -> None:
     DATA_DIR.mkdir(exist_ok=True)
 
 
-def build_job(now, *, payload: int, volume: float, required_loaders: int = 2) -> Job:
+def build_job(now, *, payload: int, volume: float, required_loaders: int = 2, needs_crane: bool = False) -> Job:
     return Job(
         client_telegram_user_id=9001,
         status=JobStatus.READY_FOR_MATCHING,
@@ -55,7 +55,7 @@ def build_job(now, *, payload: int, volume: float, required_loaders: int = 2) ->
         needs_assembly=True,
         needs_packing=True,
         needs_tail_lift=True,
-        needs_crane=False,
+        needs_crane=needs_crane,
         needs_mobile_lift=False,
         required_loaders=required_loaders,
         estimated_payload_kg=payload,
@@ -165,7 +165,7 @@ async def exercise_offer_distribution() -> None:
             raise SystemExit(f"expected offered status, got {loaded_offered_job.status}")
 
         unmatched_job = await job_repo.create_job(
-            build_job(now, payload=999999, volume=999999.0, required_loaders=999)
+            build_job(now, payload=999999, volume=999999.0, needs_crane=True)
         )
         await job_repo.add_address(
             JobAddress(

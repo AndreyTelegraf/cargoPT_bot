@@ -107,7 +107,7 @@ class JobMatchingService:
         return await self.carrier_search.find_matching_vehicles(
             min_payload_kg=None,
             min_volume_m3=None,
-            min_loaders=job.required_loaders,
+            min_loaders=None,
             needs_tail_lift=job.needs_tail_lift,
             needs_crane=job.needs_crane,
             needs_mobile_lift=job.needs_mobile_lift,
