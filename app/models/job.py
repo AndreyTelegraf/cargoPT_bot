@@ -162,6 +162,7 @@ class JobOffer(Base):
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     carrier_note: Mapped[str | None] = mapped_column(Text)
+    decline_reason: Mapped[str | None] = mapped_column(String)
     price_cents: Mapped[int | None] = mapped_column(Integer)
 
     carrier_message_chat_id: Mapped[int | None] = mapped_column(Integer)
