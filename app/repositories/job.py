@@ -167,6 +167,13 @@ class JobRepository:
         return list(result.scalars().all())
 
     async def list_attention_jobs(self, limit: int = 20) -> list[Job]:
+        offer_count_subquery = (
+            select(func.count(JobOffer.id))
+            .where(JobOffer.job_id == Job.id)
+            .correlate(Job)
+            .scalar_subquery()
+        )
+
         stmt = (
             select(Job)
             .where(
@@ -179,7 +186,13 @@ class JobRepository:
                     )
                 )
             )
-            .order_by(Job.updated_at, Job.id)
+            .order_by(
+                Job.requested_date.is_(None),
+                Job.requested_date,
+                offer_count_subquery.desc(),
+                Job.updated_at,
+                Job.id,
+            )
             .limit(limit)
         )
         result = await self.session.execute(stmt)
