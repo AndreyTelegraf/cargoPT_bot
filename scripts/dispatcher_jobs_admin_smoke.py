@@ -11,6 +11,7 @@ os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///data/cargopt_dev.db"
 
 from app.bot.handlers.dispatcher_jobs_admin import _format_job_line
 from app.bot.handlers.dispatcher_jobs_admin import _format_status
+from app.bot.handlers.dispatcher_jobs_admin import _parse_jobs_report_period
 from app.bot.handlers.dispatcher_jobs_admin import dispatcher_jobs
 from app.bot.handlers.dispatcher_jobs_admin import dispatcher_jobs_attention
 from app.bot.handlers.dispatcher_jobs_admin import dispatcher_jobs_report
@@ -21,6 +22,10 @@ assert router is not None
 assert dispatcher_jobs is not None
 assert dispatcher_jobs_attention is not None
 assert dispatcher_jobs_report is not None
+assert _parse_jobs_report_period("/jobs_report") == ("2026-06-25 00:00:00", None)
+assert _parse_jobs_report_period("/jobs_report 2026-06-27") == ("2026-06-27 00:00:00", None)
+assert _parse_jobs_report_period("/jobs_report 2026-06-25 2026-06-28") == ("2026-06-25 00:00:00", "2026-06-28 23:59:59")
+assert _parse_jobs_report_period("/jobs_report 2026-06-25 12:00 2026-06-27 18:30") == ("2026-06-25 12:00:00", "2026-06-27 18:30:00")
 assert hasattr(JobRepository, "list_recent_jobs")
 assert hasattr(JobRepository, "list_attention_jobs")
 
@@ -65,6 +70,12 @@ assert "list_recent_jobs(limit=20)" in handler_source
 assert "list_attention_jobs(limit=20)" in handler_source
 assert 'Command("jobs_report")' in handler_source
 assert "CargoPT jobs report" in handler_source
+assert "2026-06-25 00:00:00" in handler_source
+assert "_parse_jobs_report_period" in handler_source
+assert "period_filter" in handler_source
+assert 'text(f"""' in handler_source
+assert handler_source.count('text(f"""') >= 3
+assert 'period_filter.replace("created_at", "j.created_at")' in handler_source
 assert "_format_report_job_rows" in handler_source
 assert "get_decline_reason_label" in handler_source
 assert "attention_reason" in handler_source

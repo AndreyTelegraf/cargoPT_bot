@@ -126,6 +126,39 @@ def _format_report_job_rows(rows) -> str:
     return "\n\n".join(lines)
 
 
+def _normalize_report_datetime(value: str, *, is_end: bool = False) -> str:
+    raw = value.strip()
+    if len(raw) == 10:
+        return raw + (" 23:59:59" if is_end else " 00:00:00")
+    if len(raw) == 16:
+        return raw + ":00"
+    return raw
+
+
+def _parse_jobs_report_period(text: str) -> tuple[str, str | None]:
+    parts = text.split()[1:]
+
+    if not parts:
+        return "2026-06-25 00:00:00", None
+
+    if len(parts) == 1:
+        return _normalize_report_datetime(parts[0]), None
+
+    if len(parts) == 2:
+        return (
+            _normalize_report_datetime(parts[0]),
+            _normalize_report_datetime(parts[1], is_end=True),
+        )
+
+    if len(parts) == 4:
+        return (
+            _normalize_report_datetime(parts[0] + " " + parts[1]),
+            _normalize_report_datetime(parts[2] + " " + parts[3], is_end=True),
+        )
+
+    raise ValueError("invalid jobs_report period")
+
+
 @router.message(Command("jobs"))
 async def dispatcher_jobs(message: Message) -> None:
     if message.from_user.id not in ADMIN_TELEGRAM_USER_IDS:
@@ -169,40 +202,53 @@ async def dispatcher_jobs_report(message: Message) -> None:
         await message.answer("Команда доступна только диспетчеру CargoPT.")
         return
 
-    since = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
-    since_text = since.strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        since_text, until_text = _parse_jobs_report_period(message.text or "")
+    except ValueError:
+        await message.answer(
+            "Формат: /jobs_report [YYYY-MM-DD] [YYYY-MM-DD]\n"
+            "Или: /jobs_report YYYY-MM-DD HH:MM YYYY-MM-DD HH:MM"
+        )
+        return
+
+    period_filter = "created_at >= :since"
+    params = {"since": since_text}
+
+    if until_text is not None:
+        period_filter += " AND created_at <= :until"
+        params["until"] = until_text
 
     async with async_session_maker() as session:
         job_rows = (
             await session.execute(
-                text("""
+                text(f"""
                     SELECT status, COUNT(*) AS count
                     FROM job
-                    WHERE created_at >= :since
+                    WHERE {period_filter}
                     GROUP BY status
                     ORDER BY count DESC, status
                 """),
-                {"since": since_text},
+                params,
             )
         ).mappings().all()
 
         offer_rows = (
             await session.execute(
-                text("""
+                text(f"""
                     SELECT o.status, COUNT(*) AS count
                     FROM job_offer o
                     JOIN job j ON j.id = o.job_id
-                    WHERE j.created_at >= :since
+                    WHERE {period_filter.replace("created_at", "j.created_at")}
                     GROUP BY o.status
                     ORDER BY count DESC, o.status
                 """),
-                {"since": since_text},
+                params,
             )
         ).mappings().all()
 
         job_detail_rows = (
             await session.execute(
-                text("""
+                text(f"""
                     SELECT
                         j.id,
                         j.status,
@@ -216,17 +262,19 @@ async def dispatcher_jobs_report(message: Message) -> None:
                         MAX(o.decline_reason) AS latest_reason
                     FROM job j
                     LEFT JOIN job_offer o ON o.job_id = j.id
-                    WHERE j.created_at >= :since
+                    WHERE {period_filter.replace("created_at", "j.created_at")}
                     GROUP BY j.id
                     ORDER BY j.id
                 """),
-                {"since": since_text},
+                params,
             )
         ).mappings().all()
 
     report = (
         "<b>CargoPT jobs report</b>\n"
-        f"Срез: с {_safe(since_text)} UTC\n\n"
+        f"Период: с {_safe(since_text)} UTC"
+        + (f" по {_safe(until_text)} UTC" if until_text else "")
+        + "\n\n"
         "<b>Заявки</b>\n"
         f"{_format_status_counts(job_rows)}\n\n"
         "<b>Офферы</b>\n"
