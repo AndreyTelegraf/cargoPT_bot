@@ -8,6 +8,7 @@ assert "count_sent_client_jobs_since" in repo
 assert "\"no_carriers_found\"" not in repo[repo.index("async def count_sent_client_jobs_since"):repo.index("async def list_recent_jobs")]
 assert "\"offers_exhausted\"" in repo
 assert "\"expired_without_response\"" in repo
+assert "\"manual_review_required\"" in repo
 
 assert "active_jobs >= 2" in handler
 assert "sent_jobs >= 3" in handler

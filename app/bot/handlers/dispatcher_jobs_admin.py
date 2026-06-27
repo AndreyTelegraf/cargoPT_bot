@@ -30,6 +30,7 @@ STATUS_LABELS = {
     "no_carriers_found": "нет подходящих перевозчиков",
     "offers_exhausted": "все перевозчики отказались",
     "expired_without_response": "нет ответов от перевозчиков",
+    "manual_review_required": "требует ручного контроля",
     "assigned_pending_confirmation": "ожидает подтверждения сделки",
     "assigned": "перевозчик назначен",
     "in_progress": "в работе",

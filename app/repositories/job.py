@@ -153,6 +153,7 @@ class JobRepository:
                         "cancelled",
                         "offers_exhausted",
                         "expired_without_response",
+                        "manual_review_required",
                     )
                 )
             )

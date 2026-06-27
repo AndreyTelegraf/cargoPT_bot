@@ -13,14 +13,15 @@ from app.domain.job_status import JobStatus
 assert JobStatus.NO_CARRIERS_FOUND == "no_carriers_found"
 assert JobStatus.OFFERS_EXHAUSTED == "offers_exhausted"
 assert JobStatus.EXPIRED_WITHOUT_RESPONSE == "expired_without_response"
+assert JobStatus.MANUAL_REVIEW_REQUIRED == "manual_review_required"
 
 offer_distribution = Path("app/services/offer_distribution.py").read_text()
 offer_expiry = Path("app/services/offer_expiry.py").read_text()
 offer_response = Path("app/bot/handlers/job_offer_response.py").read_text()
 
 assert "JobStatus.NO_CARRIERS_FOUND" in offer_distribution
-assert "JobStatus.EXPIRED_WITHOUT_RESPONSE" in offer_expiry
-assert "JobStatus.OFFERS_EXHAUSTED" in offer_expiry
+assert "JobStatus.MANUAL_REVIEW_REQUIRED" in offer_expiry
+assert "JobStatus.OFFERS_EXHAUSTED" not in offer_expiry
 assert "JobStatus.OFFERS_EXHAUSTED" in offer_response
 
 print("JOB_UNMATCHED_STATUS_SPLIT_SMOKE_OK")

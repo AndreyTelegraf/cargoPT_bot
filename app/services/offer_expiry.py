@@ -101,15 +101,9 @@ async def process_expired_pending_offers(
             )
         else:
             offers = await job_repository.list_offers_by_job(job.id)
-            has_declined = any(offer.status == "declined" for offer in offers)
-
             await job_repository.update_job_status(
                 job_id=job.id,
-                status=(
-                    JobStatus.OFFERS_EXHAUSTED
-                    if has_declined
-                    else JobStatus.EXPIRED_WITHOUT_RESPONSE
-                ),
+                status=JobStatus.MANUAL_REVIEW_REQUIRED,
                 updated_at=job.updated_at,
             )
             await notify_admins_about_unassigned_job(
