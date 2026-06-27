@@ -12,12 +12,15 @@ os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///data/cargopt_dev.db"
 from app.bot.handlers.dispatcher_jobs_admin import _format_job_line
 from app.bot.handlers.dispatcher_jobs_admin import _format_status
 from app.bot.handlers.dispatcher_jobs_admin import dispatcher_jobs
+from app.bot.handlers.dispatcher_jobs_admin import dispatcher_jobs_attention
 from app.bot.handlers.dispatcher_jobs_admin import router
 from app.repositories.job import JobRepository
 
 assert router is not None
 assert dispatcher_jobs is not None
+assert dispatcher_jobs_attention is not None
 assert hasattr(JobRepository, "list_recent_jobs")
+assert hasattr(JobRepository, "list_attention_jobs")
 
 job = SimpleNamespace(
     id=42,
@@ -50,7 +53,9 @@ assert "dispatcher_jobs_admin_router" in router_source
 
 handler_source = Path("app/bot/handlers/dispatcher_jobs_admin.py").read_text(encoding="utf-8")
 assert 'Command("jobs")' in handler_source
+assert 'Command("jobs_attention")' in handler_source
 assert "ADMIN_TELEGRAM_USER_IDS" in handler_source
 assert "list_recent_jobs(limit=20)" in handler_source
+assert "list_attention_jobs(limit=20)" in handler_source
 
 print("DISPATCHER_JOBS_ADMIN_SMOKE_OK")

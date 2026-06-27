@@ -55,6 +55,24 @@ def _format_job_line(job) -> str:
     )
 
 
+async def _send_jobs_list(
+    *,
+    message: Message,
+    title: str,
+    empty_text: str,
+    jobs,
+) -> None:
+    if not jobs:
+        await message.answer(empty_text)
+        return
+
+    text = title + "\n\n" + "\n\n".join(
+        _format_job_line(job) for job in jobs
+    )
+
+    await message.answer(text, parse_mode="HTML")
+
+
 @router.message(Command("jobs"))
 async def dispatcher_jobs(message: Message) -> None:
     if message.from_user.id not in ADMIN_TELEGRAM_USER_IDS:
@@ -65,12 +83,27 @@ async def dispatcher_jobs(message: Message) -> None:
         repository = JobRepository(session)
         jobs = await repository.list_recent_jobs(limit=20)
 
-    if not jobs:
-        await message.answer("Заявок пока нет.")
-        return
-
-    text = "<b>Последние заявки CargoPT</b>\n\n" + "\n\n".join(
-        _format_job_line(job) for job in jobs
+    await _send_jobs_list(
+        message=message,
+        title="<b>Последние заявки CargoPT</b>",
+        empty_text="Заявок пока нет.",
+        jobs=jobs,
     )
 
-    await message.answer(text, parse_mode="HTML")
+
+@router.message(Command("jobs_attention"))
+async def dispatcher_jobs_attention(message: Message) -> None:
+    if message.from_user.id not in ADMIN_TELEGRAM_USER_IDS:
+        await message.answer("Команда доступна только диспетчеру CargoPT.")
+        return
+
+    async with async_session_maker() as session:
+        repository = JobRepository(session)
+        jobs = await repository.list_attention_jobs(limit=20)
+
+    await _send_jobs_list(
+        message=message,
+        title="<b>Заявки CargoPT, требующие внимания</b>",
+        empty_text="Заявок, требующих внимания, нет.",
+        jobs=jobs,
+    )

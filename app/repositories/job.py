@@ -166,6 +166,25 @@ class JobRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
+    async def list_attention_jobs(self, limit: int = 20) -> list[Job]:
+        stmt = (
+            select(Job)
+            .where(
+                Job.status.in_(
+                    (
+                        "manual_review_required",
+                        "no_carriers_found",
+                        "offers_exhausted",
+                        "expired_without_response",
+                    )
+                )
+            )
+            .order_by(Job.updated_at, Job.id)
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
     async def add_address(self, address: JobAddress) -> JobAddress:
         self.session.add(address)
         await self.session.flush()
