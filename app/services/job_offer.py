@@ -103,11 +103,11 @@ class JobOfferService:
         if job is None:
             raise ValueError("job not found")
 
-        if job.status in {
-            JobStatus.ASSIGNED_PENDING_CONFIRMATION,
-            JobStatus.ASSIGNED,
+        if job.status not in {
+            JobStatus.MATCHING,
+            JobStatus.OFFERED,
         }:
-            raise JobAlreadyAssignedError("job already assigned")
+            raise JobAlreadyAssignedError("job is not accepting offers")
 
         offer.status = JobOfferStatus.ACCEPTED
         offer.responded_at = now
