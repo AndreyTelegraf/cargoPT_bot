@@ -55,6 +55,10 @@ def _format_job_line(job) -> str:
         f"Отменена: {_format_dt(job.cancelled_at)}"
     )
 
+    offers_count = getattr(job, "offers_count", None)
+    if offers_count is not None:
+        line += f"\nОфферов: {_safe(offers_count)}"
+
     attention_reason = getattr(job, "attention_reason", None)
     if attention_reason:
         line += f"\nПричина: {_safe(get_decline_reason_label(attention_reason))}"

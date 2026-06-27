@@ -201,8 +201,20 @@ class JobRepository:
             if job_id not in reasons_by_job_id:
                 reasons_by_job_id[job_id] = decline_reason
 
+        count_stmt = (
+            select(JobOffer.job_id, func.count(JobOffer.id))
+            .where(JobOffer.job_id.in_([job.id for job in jobs]))
+            .group_by(JobOffer.job_id)
+        )
+        count_result = await self.session.execute(count_stmt)
+        counts_by_job_id = {
+            job_id: int(offer_count)
+            for job_id, offer_count in count_result.all()
+        }
+
         for job in jobs:
             job.attention_reason = reasons_by_job_id.get(job.id)
+            job.offers_count = counts_by_job_id.get(job.id, 0)
 
         return jobs
 
