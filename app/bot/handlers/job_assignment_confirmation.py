@@ -3,7 +3,9 @@ from aiogram import Router
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery
 
+from app.bot.assignment_confirmation_keyboard import build_assignment_failure_reason_keyboard
 from app.db.session import async_session_maker
+from app.domain.job_decline_reason import is_valid_decline_reason
 from app.domain.job_status import JobStatus
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
@@ -71,10 +73,41 @@ async def _send_assignment_final_notifications(
 
 @router.callback_query(F.data.startswith("assignment:"))
 async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
-    try:
-        action, job_id = parse_assignment_callback(callback.data or "")
-    except ValueError:
-        await callback.answer("Некорректная кнопка", show_alert=True)
+    raw_data = callback.data or ""
+    failure_reason = None
+
+    if raw_data.startswith("assignment:fail_reason:"):
+        parts = raw_data.split(":")
+        if len(parts) != 4:
+            await callback.answer("Некорректная кнопка", show_alert=True)
+            return
+
+        try:
+            job_id = int(parts[2])
+        except ValueError:
+            await callback.answer("Некорректная кнопка", show_alert=True)
+            return
+
+        failure_reason = parts[3]
+        if not is_valid_decline_reason(failure_reason):
+            await callback.answer("Некорректная причина", show_alert=True)
+            return
+
+        action = "fail"
+    else:
+        try:
+            action, job_id = parse_assignment_callback(raw_data)
+        except ValueError:
+            await callback.answer("Некорректная кнопка", show_alert=True)
+            return
+
+    if action == "fail" and failure_reason is None:
+        if callback.message:
+            await callback.message.edit_text(
+                "Укажите причину, почему сделка не состоялась.",
+                reply_markup=build_assignment_failure_reason_keyboard(job_id),
+            )
+        await callback.answer()
         return
 
     telegram_user_id = callback.from_user.id
@@ -89,6 +122,10 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
 
         if job is None:
             await callback.answer("Заявка не найдена.", show_alert=True)
+            return
+
+        if failure_reason is not None and accepted_offer is None:
+            await callback.answer("Оффер не найден.", show_alert=True)
             return
 
         actor = await resolve_assignment_actor(
@@ -107,6 +144,9 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
             return
 
         confirmation_status = build_assignment_status_from_action(action)
+
+        if failure_reason is not None:
+            accepted_offer.decline_reason = failure_reason
 
         try:
             updated_job = await record_assignment_confirmation(
