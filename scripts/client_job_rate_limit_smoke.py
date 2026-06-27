@@ -14,5 +14,7 @@ assert "active_jobs >= 2" in handler
 assert "sent_jobs >= 3" in handler
 assert "timedelta(hours=24)" in handler
 assert "finalize_for_matching" in handler
+assert "escalate_job_to_manual_review" in handler
+assert "if not offers:" in handler
 
 print("CLIENT_JOB_RATE_LIMIT_SMOKE_OK")

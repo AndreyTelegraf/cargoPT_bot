@@ -13,6 +13,7 @@ from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
 from app.services.carrier_search import CarrierSearchService
 from app.services.job import JobService
+from app.services.job_escalation import escalate_job_to_manual_review
 from app.services.job_matching import JobMatchingService
 from app.services.job_offer import JobOfferService
 from app.services.offer_distribution import OfferDistributionService
@@ -87,6 +88,13 @@ async def job_comment(
             job_repository=job_repository,
             carrier_repository=carrier_repository,
         )
+
+        if not offers:
+            await escalate_job_to_manual_review(
+                bot=message.bot,
+                job=job,
+                job_repository=job_repository,
+            )
 
         await session.commit()
 

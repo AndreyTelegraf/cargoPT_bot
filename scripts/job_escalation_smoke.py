@@ -43,6 +43,10 @@ assert "JobStatus.MANUAL_REVIEW_REQUIRED" in source
 assert "list_offers_by_job(job.id)" in source
 assert "notify_admins_about_unassigned_job" in source
 
+comment_source = Path("app/bot/handlers/job_comment.py").read_text(encoding="utf-8")
+assert "escalate_job_to_manual_review" in comment_source
+assert "if not offers:" in comment_source
+
 expiry_source = Path("app/services/offer_expiry.py").read_text(encoding="utf-8")
 handler_source = Path("app/bot/handlers/job_offer_response.py").read_text(encoding="utf-8")
 
