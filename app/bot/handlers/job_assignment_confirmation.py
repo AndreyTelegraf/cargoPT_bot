@@ -61,8 +61,8 @@ async def _send_assignment_final_notifications(
             "Заявка возвращена в поиск. Мы уже ищем нового перевозчика."
         )
         carrier_text = (
-            f"По заявке №{job.id} сделка не состоялась.\n\n"
-            "Заявка возвращена в поиск для других перевозчиков."
+            "Спасибо.\n\n"
+            "Заявка возвращена в поиск."
         )
 
     await bot.send_message(chat_id=job.client_telegram_user_id, text=client_text)
