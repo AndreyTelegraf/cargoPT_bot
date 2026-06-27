@@ -32,6 +32,7 @@ job = SimpleNamespace(
     started_at=None,
     completed_at=None,
     cancelled_at=None,
+    attention_reason="price_not_agreed",
 )
 
 line = _format_job_line(job)
@@ -47,6 +48,7 @@ assert _format_status("unknown_status") == "unknown_status"
 assert "<b>#42</b> — перевозчик назначен — @client_user" in line
 assert "Дата: —" in line
 assert "Назначена: —" in line
+assert "Причина: Не договорились по цене" in line
 
 router_source = Path("app/bot/routers.py").read_text(encoding="utf-8")
 assert "dispatcher_jobs_admin_router" in router_source
@@ -57,5 +59,7 @@ assert 'Command("jobs_attention")' in handler_source
 assert "ADMIN_TELEGRAM_USER_IDS" in handler_source
 assert "list_recent_jobs(limit=20)" in handler_source
 assert "list_attention_jobs(limit=20)" in handler_source
+assert "get_decline_reason_label" in handler_source
+assert "attention_reason" in handler_source
 
 print("DISPATCHER_JOBS_ADMIN_SMOKE_OK")

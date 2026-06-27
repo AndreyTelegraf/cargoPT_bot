@@ -6,6 +6,7 @@ from aiogram.types import Message
 
 from app.bot.handlers.carrier_invite_admin import ADMIN_TELEGRAM_USER_IDS
 from app.db.session import async_session_maker
+from app.domain.job_decline_reason import get_decline_reason_label
 from app.repositories.job import JobRepository
 
 router = Router()
@@ -45,7 +46,7 @@ def _format_status(value: str) -> str:
 
 def _format_job_line(job) -> str:
     client = job.client_telegram_username or str(job.client_telegram_user_id)
-    return (
+    line = (
         f"<b>#{job.id}</b> — {_safe(_format_status(job.status))} — @{_safe(client)}\n"
         f"Дата: {_format_dt(job.requested_date)}\n"
         f"Назначена: {_format_dt(job.assigned_at)} | "
@@ -53,6 +54,12 @@ def _format_job_line(job) -> str:
         f"Завершена: {_format_dt(job.completed_at)} | "
         f"Отменена: {_format_dt(job.cancelled_at)}"
     )
+
+    attention_reason = getattr(job, "attention_reason", None)
+    if attention_reason:
+        line += f"\nПричина: {_safe(get_decline_reason_label(attention_reason))}"
+
+    return line
 
 
 async def _send_jobs_list(

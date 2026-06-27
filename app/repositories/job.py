@@ -183,7 +183,28 @@ class JobRepository:
             .limit(limit)
         )
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        jobs = list(result.scalars().all())
+
+        if not jobs:
+            return jobs
+
+        reason_stmt = (
+            select(JobOffer.job_id, JobOffer.decline_reason)
+            .where(JobOffer.job_id.in_([job.id for job in jobs]))
+            .where(JobOffer.decline_reason.is_not(None))
+            .order_by(JobOffer.id.desc())
+        )
+        reason_result = await self.session.execute(reason_stmt)
+
+        reasons_by_job_id: dict[int, str] = {}
+        for job_id, decline_reason in reason_result.all():
+            if job_id not in reasons_by_job_id:
+                reasons_by_job_id[job_id] = decline_reason
+
+        for job in jobs:
+            job.attention_reason = reasons_by_job_id.get(job.id)
+
+        return jobs
 
     async def add_address(self, address: JobAddress) -> JobAddress:
         self.session.add(address)
