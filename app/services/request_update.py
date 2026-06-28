@@ -1,13 +1,18 @@
+from datetime import UTC
+from datetime import datetime
+
 from app.models.job import Job
 from app.models.job import JobAddress
 from app.models.job import JobItem
+from app.models.job import JobMedia
 from app.repositories.job import JobRepository
-from app.services.job import JobService
+from app.services.location_normalization import build_google_maps_coordinate_url
+from app.services.location_normalization import normalize_text_location
 
 
 class RequestUpdateService:
     def __init__(self, *, job_repository: JobRepository) -> None:
-        self.job_service = JobService(job_repository)
+        self.job_repository = job_repository
 
     async def add_address(
         self,
@@ -18,13 +23,36 @@ class RequestUpdateService:
         latitude: float | None = None,
         longitude: float | None = None,
     ) -> JobAddress:
-        return await self.job_service.add_address(
+        if latitude is not None and longitude is not None:
+            normalized_location = {
+                "raw_text": raw_text.strip() or f"{latitude}, {longitude}",
+                "original_google_maps_url": None,
+                "normalized_address": raw_text.strip() or f"{latitude}, {longitude}",
+                "postal_code": None,
+                "latitude": latitude,
+                "longitude": longitude,
+                "map_url": build_google_maps_coordinate_url(latitude, longitude),
+            }
+        else:
+            normalized_location = normalize_text_location(raw_text)
+
+        address = JobAddress(
             job_id=job_id,
             kind=kind,
-            raw_text=raw_text,
-            latitude=latitude,
-            longitude=longitude,
+            raw_text=normalized_location["raw_text"],
+            original_google_maps_url=normalized_location["original_google_maps_url"],
+            normalized_address=normalized_location["normalized_address"],
+            city=None,
+            postal_code=normalized_location["postal_code"],
+            floor=None,
+            has_elevator=None,
+            latitude=normalized_location["latitude"],
+            longitude=normalized_location["longitude"],
+            map_url=normalized_location["map_url"],
+            created_at=datetime.now(UTC),
         )
+
+        return await self.job_repository.add_address(address)
 
     async def update_address_details(
         self,
@@ -33,7 +61,7 @@ class RequestUpdateService:
         floor: int | None,
         has_elevator: bool | None,
     ) -> JobAddress:
-        return await self.job_service.update_address_details(
+        return await self.job_repository.update_address_details(
             address_id=address_id,
             floor=floor,
             has_elevator=has_elevator,
@@ -46,11 +74,16 @@ class RequestUpdateService:
         description: str,
         quantity: int | None = None,
     ) -> JobItem:
-        return await self.job_service.add_item(
+        item = JobItem(
             job_id=job_id,
             description=description,
             quantity=quantity,
+            estimated_weight_kg=None,
+            estimated_volume_m3=None,
+            created_at=datetime.now(UTC),
         )
+
+        return await self.job_repository.add_item(item)
 
     async def update_estimated_payload(
         self,
@@ -58,9 +91,10 @@ class RequestUpdateService:
         job_id: int,
         estimated_payload_kg: int | None,
     ) -> Job:
-        return await self.job_service.update_estimated_payload(
+        return await self.job_repository.update_estimated_payload(
             job_id=job_id,
             estimated_payload_kg=estimated_payload_kg,
+            updated_at=datetime.now(UTC),
         )
 
     async def update_estimated_volume(
@@ -69,9 +103,10 @@ class RequestUpdateService:
         job_id: int,
         estimated_volume_m3: float | None,
     ) -> Job:
-        return await self.job_service.update_estimated_volume(
+        return await self.job_repository.update_estimated_volume(
             job_id=job_id,
             estimated_volume_m3=estimated_volume_m3,
+            updated_at=datetime.now(UTC),
         )
 
     async def update_required_loaders(
@@ -80,9 +115,10 @@ class RequestUpdateService:
         job_id: int,
         required_loaders: int | None,
     ) -> Job:
-        return await self.job_service.update_required_loaders(
+        return await self.job_repository.update_required_loaders(
             job_id=job_id,
             required_loaders=required_loaders,
+            updated_at=datetime.now(UTC),
         )
 
     async def update_needs_assembly(
@@ -91,9 +127,10 @@ class RequestUpdateService:
         job_id: int,
         needs_assembly: bool,
     ) -> Job:
-        return await self.job_service.update_needs_assembly(
+        return await self.job_repository.update_needs_assembly(
             job_id=job_id,
             needs_assembly=needs_assembly,
+            updated_at=datetime.now(UTC),
         )
 
     async def update_needs_packing(
@@ -102,9 +139,10 @@ class RequestUpdateService:
         job_id: int,
         needs_packing: bool,
     ) -> Job:
-        return await self.job_service.update_needs_packing(
+        return await self.job_repository.update_needs_packing(
             job_id=job_id,
             needs_packing=needs_packing,
+            updated_at=datetime.now(UTC),
         )
 
     async def update_needs_tail_lift(
@@ -113,9 +151,10 @@ class RequestUpdateService:
         job_id: int,
         needs_tail_lift: bool,
     ) -> Job:
-        return await self.job_service.update_needs_tail_lift(
+        return await self.job_repository.update_needs_tail_lift(
             job_id=job_id,
             needs_tail_lift=needs_tail_lift,
+            updated_at=datetime.now(UTC),
         )
 
     async def update_needs_crane(
@@ -124,9 +163,10 @@ class RequestUpdateService:
         job_id: int,
         needs_crane: bool,
     ) -> Job:
-        return await self.job_service.update_needs_crane(
+        return await self.job_repository.update_needs_crane(
             job_id=job_id,
             needs_crane=needs_crane,
+            updated_at=datetime.now(UTC),
         )
 
     async def update_needs_mobile_lift(
@@ -135,9 +175,10 @@ class RequestUpdateService:
         job_id: int,
         needs_mobile_lift: bool,
     ) -> Job:
-        return await self.job_service.update_needs_mobile_lift(
+        return await self.job_repository.update_needs_mobile_lift(
             job_id=job_id,
             needs_mobile_lift=needs_mobile_lift,
+            updated_at=datetime.now(UTC),
         )
 
     async def update_requested_date(
@@ -146,9 +187,10 @@ class RequestUpdateService:
         job_id: int,
         requested_date,
     ) -> Job:
-        return await self.job_service.update_requested_date(
+        return await self.job_repository.update_requested_date(
             job_id=job_id,
             requested_date=requested_date,
+            updated_at=datetime.now(UTC),
         )
 
     async def update_client_phone(
@@ -157,9 +199,10 @@ class RequestUpdateService:
         job_id: int,
         client_phone: str | None,
     ) -> Job:
-        return await self.job_service.update_client_phone(
+        return await self.job_repository.update_client_phone(
             job_id=job_id,
             client_phone=client_phone,
+            updated_at=datetime.now(UTC),
         )
 
     async def update_client_whatsapp(
@@ -168,9 +211,10 @@ class RequestUpdateService:
         job_id: int,
         client_whatsapp: str | None,
     ) -> Job:
-        return await self.job_service.update_client_whatsapp(
+        return await self.job_repository.update_client_whatsapp(
             job_id=job_id,
             client_whatsapp=client_whatsapp,
+            updated_at=datetime.now(UTC),
         )
 
     async def add_media(
@@ -180,10 +224,13 @@ class RequestUpdateService:
         telegram_file_id: str,
         media_type: str,
         caption: str | None = None,
-    ):
-        return await self.job_service.add_media(
+    ) -> JobMedia:
+        media = JobMedia(
             job_id=job_id,
-            telegram_file_id=telegram_file_id,
             media_type=media_type,
+            telegram_file_id=telegram_file_id,
             caption=caption,
+            created_at=datetime.now(UTC),
         )
+
+        return await self.job_repository.add_media(media)
