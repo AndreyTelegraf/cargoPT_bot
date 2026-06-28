@@ -107,6 +107,11 @@ class FakeJobRepository:
         job.client_phone = client_phone
         return job
 
+    async def add_media(self, media):
+        self.calls.append(("add_media", media.job_id, media.media_type))
+        media.id = 301
+        return media
+
     async def update_client_whatsapp(self, job_id, client_whatsapp, updated_at):
         self.calls.append(("update_client_whatsapp", job_id, client_whatsapp))
         job = make_job(job_id=job_id)
@@ -180,6 +185,11 @@ async def main():
     await service.update_requested_date(job_id=1, requested_date=datetime.now(UTC))
     await service.update_client_phone(job_id=1, client_phone="+351")
     await service.update_client_whatsapp(job_id=1, client_whatsapp="+351")
+    await service.add_media(
+        job_id=1,
+        telegram_file_id="file",
+        media_type="photo",
+    )
 
     names = [call[0] for call in repo.calls]
     expected = {
@@ -197,6 +207,7 @@ async def main():
         "update_requested_date",
         "update_client_phone",
         "update_client_whatsapp",
+        "add_media",
     }
     assert expected.issubset(set(names))
 

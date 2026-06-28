@@ -172,3 +172,18 @@ class RequestUpdateService:
             job_id=job_id,
             client_whatsapp=client_whatsapp,
         )
+
+    async def add_media(
+        self,
+        *,
+        job_id: int,
+        telegram_file_id: str,
+        media_type: str,
+        caption: str | None = None,
+    ):
+        return await self.job_service.add_media(
+            job_id=job_id,
+            telegram_file_id=telegram_file_id,
+            media_type=media_type,
+            caption=caption,
+        )
