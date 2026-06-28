@@ -4,6 +4,8 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from datetime import UTC
+from datetime import datetime
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -13,7 +15,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.domain.job_status import JobStatus
 from app.repositories.job import JobRepository
-from app.services.job import JobService
+from app.models.job import Job
 from app.services.job import InvalidJobStatusTransitionError
 from app.services.job import cancel_job
 from app.services.job import complete_job
@@ -25,6 +27,35 @@ DATABASE_URL = "sqlite+aiosqlite:///.tmp_job_lifecycle_smoke/cargopt_dev.db"
 
 def run(cmd: list[str]) -> None:
     subprocess.run(cmd, cwd=PROJECT_ROOT, check=True)
+
+
+async def create_draft_job(repo: JobRepository, *, client_telegram_user_id: int, client_telegram_username: str) -> Job:
+    now = datetime.now(UTC)
+    return await repo.create_job(
+        Job(
+            client_telegram_user_id=client_telegram_user_id,
+            client_telegram_username=client_telegram_username,
+            status=JobStatus.DRAFT,
+            requested_date=None,
+            assigned_at=None,
+            started_at=None,
+            completed_at=None,
+            cancelled_at=None,
+            client_confirmation_status=None,
+            carrier_confirmation_status=None,
+            needs_assembly=False,
+            needs_packing=False,
+            needs_tail_lift=False,
+            needs_crane=False,
+            needs_mobile_lift=False,
+            required_loaders=None,
+            estimated_payload_kg=None,
+            estimated_volume_m3=None,
+            comment=None,
+            created_at=now,
+            updated_at=now,
+        )
+    )
 
 
 def reset_db() -> None:
@@ -41,9 +72,8 @@ async def exercise_lifecycle() -> None:
 
     async with session_maker() as session:
         repo = JobRepository(session)
-        service = JobService(repo)
-
-        job = await service.create_draft_job(
+        job = await create_draft_job(
+            repo,
             client_telegram_user_id=9001,
             client_telegram_username="client_user",
         )
@@ -59,7 +89,7 @@ async def exercise_lifecycle() -> None:
         if assigned.assigned_at is None:
             raise SystemExit("assigned_at missing after assigned")
 
-        started = await start_job(service, job_id=job.id)
+        started = await start_job(repo, job_id=job.id)
         await session.commit()
 
         if started.status != JobStatus.IN_PROGRESS:
@@ -67,7 +97,7 @@ async def exercise_lifecycle() -> None:
         if started.started_at is None:
             raise SystemExit("started_at missing")
 
-        completed = await complete_job(service, job_id=job.id)
+        completed = await complete_job(repo, job_id=job.id)
         await session.commit()
 
         if completed.status != JobStatus.COMPLETED:
@@ -76,13 +106,14 @@ async def exercise_lifecycle() -> None:
             raise SystemExit("completed_at missing")
 
         try:
-            await start_job(service, job_id=job.id)
+            await start_job(repo, job_id=job.id)
         except InvalidJobStatusTransitionError:
             pass
         else:
             raise SystemExit("invalid restart unexpectedly succeeded")
 
-        cancel_target = await service.create_draft_job(
+        cancel_target = await create_draft_job(
+            repo,
             client_telegram_user_id=9002,
             client_telegram_username="cancel_user",
         )
@@ -91,7 +122,7 @@ async def exercise_lifecycle() -> None:
             status=JobStatus.ASSIGNED,
             updated_at=cancel_target.updated_at,
         )
-        cancelled = await cancel_job(service, job_id=cancel_target.id)
+        cancelled = await cancel_job(repo, job_id=cancel_target.id)
         await session.commit()
 
         if cancelled.status != JobStatus.CANCELLED:
