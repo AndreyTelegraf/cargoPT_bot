@@ -7,7 +7,6 @@ from app.models.job import Job
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
 from app.services.carrier_search import CarrierSearchService
-from app.services.job import JobService
 from app.services.job_escalation import escalate_job_to_manual_review
 from app.services.job_matching import JobMatchingService
 from app.services.job_offer import JobOfferService
@@ -64,10 +63,11 @@ class RequestSubmissionService:
             if sent_jobs >= 3:
                 raise ClientJobLimitError("daily_sent_job_limit_reached")
 
-        job_service = JobService(self.job_repository)
-        job = await job_service.finalize_for_matching(
+        job = await self.job_repository.update_comment_and_status(
             job_id=job_id,
             comment=comment,
+            status="ready_for_matching",
+            updated_at=datetime.now(UTC),
         )
 
         distribution = OfferDistributionService(
