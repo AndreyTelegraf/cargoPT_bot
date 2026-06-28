@@ -11,8 +11,14 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from datetime import UTC
+from datetime import datetime
+
+from app.domain.job_status import JobStatus
+from app.models.job import Job
+from app.models.job import JobAddress
+from app.models.job import JobItem
 from app.repositories.job import JobRepository
-from app.services.job import JobService
 
 DATA_DIR = PROJECT_ROOT / "data"
 DATABASE_URL = "sqlite+aiosqlite:///data/cargopt_dev.db"
@@ -34,32 +40,65 @@ async def exercise_job_domain() -> None:
 
     async with session_maker() as session:
         repo = JobRepository(session)
-        service = JobService(repo)
+        now = datetime.now(UTC)
 
-        job = await service.create_draft_job(
-            client_telegram_user_id=777000111,
-            comment="Need transport",
+        job = await repo.create_job(
+            Job(
+                client_telegram_user_id=777000111,
+                status=JobStatus.DRAFT,
+                requested_date=None,
+                assigned_at=None,
+                started_at=None,
+                completed_at=None,
+                cancelled_at=None,
+                client_confirmation_status=None,
+                carrier_confirmation_status=None,
+                needs_assembly=False,
+                needs_packing=False,
+                needs_tail_lift=False,
+                needs_crane=False,
+                needs_mobile_lift=False,
+                required_loaders=None,
+                estimated_payload_kg=None,
+                estimated_volume_m3=None,
+                comment="Need transport",
+                created_at=now,
+                updated_at=now,
+            )
         )
 
         if job.id is None:
             raise SystemExit("job id missing")
 
-        await service.add_address(
-            job_id=job.id,
-            kind="pickup",
-            raw_text="Lisboa",
+        await repo.add_address(
+            JobAddress(
+                job_id=job.id,
+                kind="pickup",
+                raw_text="Lisboa",
+                normalized_address="Lisboa",
+                created_at=now,
+            )
         )
 
-        await service.add_address(
-            job_id=job.id,
-            kind="dropoff",
-            raw_text="Porto",
+        await repo.add_address(
+            JobAddress(
+                job_id=job.id,
+                kind="dropoff",
+                raw_text="Porto",
+                normalized_address="Porto",
+                created_at=now,
+            )
         )
 
-        await service.add_item(
-            job_id=job.id,
-            description="Boxes",
-            quantity=10,
+        await repo.add_item(
+            JobItem(
+                job_id=job.id,
+                description="Boxes",
+                quantity=10,
+                estimated_weight_kg=None,
+                estimated_volume_m3=None,
+                created_at=now,
+            )
         )
 
         await session.commit()
