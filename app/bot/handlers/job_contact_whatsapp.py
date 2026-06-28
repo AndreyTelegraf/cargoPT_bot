@@ -6,7 +6,7 @@ from app.bot.job_request_keyboards import comment_skip_keyboard
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.job import JobRepository
-from app.services.job import JobService
+from app.services.request_update import RequestUpdateService
 
 router = Router()
 
@@ -31,7 +31,7 @@ async def job_contact_whatsapp(
 
     async with async_session_maker() as session:
         repository = JobRepository(session)
-        service = JobService(repository)
+        service = RequestUpdateService(job_repository=repository)
 
         await service.update_client_whatsapp(
             job_id=job_id,
