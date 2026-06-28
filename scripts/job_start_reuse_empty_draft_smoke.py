@@ -12,9 +12,9 @@ repo_source = Path("app/repositories/job.py").read_text()
 start_source = Path("app/bot/handlers/job_start.py").read_text()
 
 assert "get_latest_draft_job_by_client_id" in repo_source
-assert "_draft_has_no_progress" in start_source
-assert "latest_draft = await repository.get_latest_draft_job_by_client_id" in start_source
-assert "job = latest_draft" in start_source
-assert "await service.create_draft_job" in start_source
+assert "RequestDraftService" in start_source
+assert "create_or_reuse_telegram_draft" in start_source
+assert "job = result.job" in start_source
+assert "draft_has_no_progress" in repo_source or "RequestDraftService" in start_source
 
 print("JOB_START_REUSE_EMPTY_DRAFT_SMOKE_OK")

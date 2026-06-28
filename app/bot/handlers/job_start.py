@@ -8,7 +8,8 @@ from app.bot.job_request_keyboards import username_ready_keyboard
 from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.job import JobRepository
-from app.services.job import JobService
+from app.services.request_draft import ClientBannedError
+from app.services.request_draft import RequestDraftService
 
 router = Router()
 
@@ -25,54 +26,28 @@ USERNAME_TEXT = (
 )
 
 
-def _draft_has_no_progress(job, addresses, items) -> bool:
-    return (
-        not addresses
-        and not items
-        and job.requested_date is None
-        and job.estimated_payload_kg is None
-        and job.estimated_volume_m3 is None
-        and job.required_loaders is None
-        and job.client_phone is None
-        and job.client_whatsapp is None
-        and job.comment is None
-    )
-
-
 async def _create_job_and_ask_pickup(
     message: Message,
     state: FSMContext,
 ) -> None:
     async with async_session_maker() as session:
         repository = JobRepository(session)
-        ban = await repository.get_active_client_ban(message.from_user.id)
-        if ban is not None:
+        draft_service = RequestDraftService(job_repository=repository)
+
+        try:
+            result = await draft_service.create_or_reuse_telegram_draft(
+                client_telegram_user_id=message.from_user.id,
+                client_telegram_username=message.from_user.username,
+            )
+        except ClientBannedError:
             await message.answer(
                 "Вы временно отключены от создания заявок CargoPT. "
                 "По вопросам: https://t.me/andreytelegraf"
             )
+            await session.rollback()
             return
-        service = JobService(repository)
 
-        latest_draft = await repository.get_latest_draft_job_by_client_id(
-            message.from_user.id
-        )
-
-        if latest_draft is not None:
-            addresses = await repository.list_addresses_by_job(latest_draft.id)
-            items = await repository.list_items_by_job(latest_draft.id)
-        else:
-            addresses = []
-            items = []
-
-        if latest_draft is not None and _draft_has_no_progress(latest_draft, addresses, items):
-            job = latest_draft
-        else:
-            job = await service.create_draft_job(
-                client_telegram_user_id=message.from_user.id,
-                client_telegram_username=message.from_user.username,
-            )
-
+        job = result.job
         await session.commit()
 
     await state.set_state(JobRequestStates.pickup_address)
