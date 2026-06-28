@@ -4,9 +4,7 @@ from aiogram.types import Message
 
 from app.bot.job_request_keyboards import whatsapp_keyboard
 from app.bot.states.job_request import JobRequestStates
-from app.db.session import async_session_maker
-from app.repositories.job import JobRepository
-from app.services.request_update import RequestUpdateService
+from app.bot.handlers.job_request_persistence import run_request_update
 
 router = Router()
 
@@ -22,16 +20,12 @@ async def job_contact_phone(
     data = await state.get_data()
     job_id = data["job_id"]
 
-    async with async_session_maker() as session:
-        repository = JobRepository(session)
-        service = RequestUpdateService(job_repository=repository)
-
-        await service.update_client_phone(
+    await run_request_update(
+        lambda service: service.update_client_phone(
             job_id=job_id,
             client_phone=phone,
         )
-
-        await session.commit()
+    )
 
     await state.update_data(client_phone=phone)
     await state.set_state(JobRequestStates.contact_whatsapp)
