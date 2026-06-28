@@ -26,10 +26,23 @@ class Job(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    client_telegram_user_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    client_telegram_user_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     client_telegram_username: Mapped[str | None] = mapped_column(String)
+
+    source: Mapped[str | None] = mapped_column(String)
+    source_locale: Mapped[str | None] = mapped_column(String)
+
+    customer_name: Mapped[str | None] = mapped_column(String)
+    customer_email: Mapped[str | None] = mapped_column(String)
+    preferred_contact: Mapped[str | None] = mapped_column(String)
+
     client_phone: Mapped[str | None] = mapped_column(String)
     client_whatsapp: Mapped[str | None] = mapped_column(String)
+
+    utm_source: Mapped[str | None] = mapped_column(String)
+    utm_campaign: Mapped[str | None] = mapped_column(String)
+    landing_version: Mapped[str | None] = mapped_column(String)
+
     status: Mapped[str] = mapped_column(String, nullable=False)
 
     requested_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
