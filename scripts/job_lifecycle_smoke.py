@@ -16,10 +16,10 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from app.domain.job_status import JobStatus
 from app.repositories.job import JobRepository
 from app.models.job import Job
-from app.services.job import InvalidJobStatusTransitionError
-from app.services.job import cancel_job
-from app.services.job import complete_job
-from app.services.job import start_job
+from app.services.job_lifecycle import InvalidJobStatusTransitionError
+from app.services.job_lifecycle import cancel_job
+from app.services.job_lifecycle import complete_job
+from app.services.job_lifecycle import start_job
 
 DATA_DIR = PROJECT_ROOT / ".tmp_job_lifecycle_smoke"
 DATABASE_URL = "sqlite+aiosqlite:///.tmp_job_lifecycle_smoke/cargopt_dev.db"

@@ -4,7 +4,7 @@ from datetime import datetime
 from app.domain.job_status import JobStatus
 from app.models.job import Job
 from app.repositories.carrier import CarrierRepository
-from app.services.job import InvalidJobStatusTransitionError
+from app.services.job_lifecycle import InvalidJobStatusTransitionError
 
 
 ASSIGNMENT_CONFIRMATION_CONFIRMED = "confirmed"

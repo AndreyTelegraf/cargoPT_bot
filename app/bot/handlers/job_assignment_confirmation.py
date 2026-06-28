@@ -16,7 +16,7 @@ from app.services.assignment_confirmation import parse_assignment_callback
 from app.services.assignment_confirmation import process_assignment_failure_redispatch
 from app.services.assignment_confirmation import record_assignment_confirmation
 from app.services.assignment_confirmation import resolve_assignment_actor
-from app.services.job import InvalidJobStatusTransitionError
+from app.services.job_lifecycle import InvalidJobStatusTransitionError
 
 router = Router()
 
