@@ -5,8 +5,6 @@ from app.domain.job_status import JobStatus
 from app.models.job import Job
 from app.repositories.carrier import CarrierRepository
 from app.services.job import InvalidJobStatusTransitionError
-from app.services.job import JobService
-from app.services.job import _transition_job_status
 
 
 ASSIGNMENT_CONFIRMATION_CONFIRMED = "confirmed"
@@ -137,8 +135,8 @@ async def resolve_assignment_actor(
     return None
 
 
-async def evaluate_assignment_confirmation(service: JobService, *, job_id: int) -> Job:
-    job = await service.repository.get_job_by_id(job_id)
+async def evaluate_assignment_confirmation(job_repository, *, job_id: int) -> Job:
+    job = await job_repository.get_job_by_id(job_id)
 
     if job is None:
         raise ValueError("job not found")
@@ -156,37 +154,35 @@ async def evaluate_assignment_confirmation(service: JobService, *, job_id: int) 
 
     if ASSIGNMENT_CONFIRMATION_FAILED in votes:
         now = datetime.now(UTC)
-        await service.repository.cancel_accepted_offer_by_job(
+        await job_repository.cancel_accepted_offer_by_job(
             job_id=job_id,
             cancelled_at=now,
         )
-        await service.repository.clear_assignment_confirmation_statuses(
+        await job_repository.clear_assignment_confirmation_statuses(
             job_id=job_id,
             updated_at=now,
         )
-        return await _transition_job_status(
-            service,
+        return await job_repository.update_job_status(
             job_id=job_id,
-            allowed_from={JobStatus.ASSIGNED_PENDING_CONFIRMATION},
-            target_status=JobStatus.READY_FOR_MATCHING,
+            status=JobStatus.READY_FOR_MATCHING,
+            updated_at=datetime.now(UTC),
         )
 
     if (
         job.client_confirmation_status == ASSIGNMENT_CONFIRMATION_CONFIRMED
         and job.carrier_confirmation_status == ASSIGNMENT_CONFIRMATION_CONFIRMED
     ):
-        return await _transition_job_status(
-            service,
+        return await job_repository.update_job_status(
             job_id=job_id,
-            allowed_from={JobStatus.ASSIGNED_PENDING_CONFIRMATION},
-            target_status=JobStatus.ASSIGNED,
+            status=JobStatus.ASSIGNED,
+            updated_at=datetime.now(UTC),
         )
 
     return job
 
 
 async def record_assignment_confirmation(
-    service: JobService,
+    job_repository,
     *,
     job_id: int,
     actor: str,
@@ -201,7 +197,7 @@ async def record_assignment_confirmation(
     }:
         raise InvalidAssignmentConfirmationStatusError("invalid assignment confirmation status")
 
-    job = await service.repository.get_job_by_id(job_id)
+    job = await job_repository.get_job_by_id(job_id)
 
     if job is None:
         raise ValueError("job not found")
@@ -211,14 +207,14 @@ async def record_assignment_confirmation(
             f"cannot record assignment confirmation for job {job_id} from {job.status}"
         )
 
-    await service.repository.update_assignment_confirmation_status(
+    await job_repository.update_assignment_confirmation_status(
         job_id=job_id,
         actor=actor,
         status=status,
         updated_at=datetime.now(UTC),
     )
 
-    return await evaluate_assignment_confirmation(service, job_id=job_id)
+    return await evaluate_assignment_confirmation(job_repository, job_id=job_id)
 
 
 def build_assignment_result_text(*, job_id: int, action: str, job_status: str) -> str:

@@ -17,7 +17,6 @@ from app.services.assignment_confirmation import process_assignment_failure_redi
 from app.services.assignment_confirmation import record_assignment_confirmation
 from app.services.assignment_confirmation import resolve_assignment_actor
 from app.services.job import InvalidJobStatusTransitionError
-from app.services.job import JobService
 
 router = Router()
 
@@ -115,8 +114,6 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
     async with async_session_maker() as session:
         job_repository = JobRepository(session)
         carrier_repository = CarrierRepository(session)
-        job_service = JobService(job_repository)
-
         job = await job_repository.get_job_by_id(job_id)
         accepted_offer = await job_repository.get_accepted_offer_by_job_id(job_id)
 
@@ -150,7 +147,7 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
 
         try:
             updated_job = await record_assignment_confirmation(
-                job_service,
+                job_repository,
                 job_id=job_id,
                 actor=actor,
                 status=confirmation_status,

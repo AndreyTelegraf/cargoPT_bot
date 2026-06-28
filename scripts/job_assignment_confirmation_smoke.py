@@ -27,7 +27,6 @@ from app.repositories.job import JobRepository
 from app.services.assignment_confirmation import ASSIGNMENT_CONFIRMATION_CONFIRMED
 from app.services.assignment_confirmation import ASSIGNMENT_CONFIRMATION_FAILED
 from app.services.assignment_confirmation import record_assignment_confirmation
-from app.services.job import JobService
 from app.services.job_offer import JobOfferService
 
 DATA_DIR = PROJECT_ROOT / ".tmp_job_assignment_confirmation_smoke"
@@ -133,10 +132,8 @@ async def exercise_assignment_confirmation() -> None:
             session,
             carrier_telegram_user_id=6001,
         )
-        service = JobService(job_repo)
-
         after_client = await record_assignment_confirmation(
-            service,
+            job_repo,
             job_id=job_id,
             actor="client",
             status=ASSIGNMENT_CONFIRMATION_CONFIRMED,
@@ -148,7 +145,7 @@ async def exercise_assignment_confirmation() -> None:
             raise SystemExit("client vote was not stored")
 
         after_carrier = await record_assignment_confirmation(
-            service,
+            job_repo,
             job_id=job_id,
             actor="carrier",
             status=ASSIGNMENT_CONFIRMATION_CONFIRMED,
@@ -166,10 +163,8 @@ async def exercise_assignment_confirmation() -> None:
             session,
             carrier_telegram_user_id=6002,
         )
-        service = JobService(job_repo)
-
         after_fail = await record_assignment_confirmation(
-            service,
+            job_repo,
             job_id=job_id,
             actor="carrier",
             status=ASSIGNMENT_CONFIRMATION_FAILED,
