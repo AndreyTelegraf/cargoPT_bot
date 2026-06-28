@@ -1,7 +1,3 @@
-from datetime import UTC
-from datetime import datetime
-from datetime import timedelta
-
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
@@ -11,13 +7,8 @@ from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
-from app.services.carrier_search import CarrierSearchService
-from app.services.job import JobService
-from app.services.job_escalation import escalate_job_to_manual_review
-from app.services.job_matching import JobMatchingService
-from app.services.job_offer import JobOfferService
-from app.services.offer_distribution import OfferDistributionService
-from app.services.offer_notification import send_job_offers_to_carriers
+from app.services.request_submission import ClientJobLimitError
+from app.services.request_submission import RequestSubmissionService
 
 router = Router()
 
@@ -36,66 +27,37 @@ async def job_comment(
     async with async_session_maker() as session:
         job_repository = JobRepository(session)
         carrier_repository = CarrierRepository(session)
-        job_service = JobService(job_repository)
-
-        active_jobs = await job_repository.count_active_client_jobs(
-            message.from_user.id
-        )
-        if active_jobs >= 2:
-            await message.answer(
-                "У вас уже есть 2 активные заявки. "
-                "Дождитесь ответа по одной из них или отмените лишнюю через диспетчера: https://t.me/andreytelegraf"
-            )
-            await session.rollback()
-            return
-
-        sent_since = datetime.now(UTC) - timedelta(hours=24)
-        sent_jobs = await job_repository.count_sent_client_jobs_since(
-            message.from_user.id,
-            sent_since,
-        )
-        if sent_jobs >= 3:
-            await message.answer(
-                "Лимит CargoPT: не больше 3 отправленных заявок за 24 часа. "
-                "Попробуйте позже или напишите диспетчеру: https://t.me/andreytelegraf"
-            )
-            await session.rollback()
-            return
-
-        job = await job_service.finalize_for_matching(
-            job_id=job_id,
-            comment=comment,
-        )
-
-        distribution = OfferDistributionService(
-            matching_service=JobMatchingService(
-                CarrierSearchService(carrier_repository)
-            ),
-            offer_service=JobOfferService(job_repository),
-            job_repository=job_repository,
-        )
-
-        offers = await distribution.create_offers_for_job(
-            job,
-            limit=5,
-            expires_in_minutes=60,
-        )
-
-        sent_count = await send_job_offers_to_carriers(
-            bot=message.bot,
-            job=job,
-            offers=offers,
+        submission = RequestSubmissionService(
             job_repository=job_repository,
             carrier_repository=carrier_repository,
+            bot=message.bot,
         )
 
-        if not offers:
-            await escalate_job_to_manual_review(
-                bot=message.bot,
-                job=job,
-                job_repository=job_repository,
+        try:
+            result = await submission.submit_existing_job(
+                job_id=job_id,
+                comment=comment,
+                client_telegram_user_id=message.from_user.id,
+                enforce_telegram_client_limits=True,
             )
+        except ClientJobLimitError as exc:
+            if str(exc) == "active_job_limit_reached":
+                await message.answer(
+                    "У вас уже есть 2 активные заявки. "
+                    "Дождитесь ответа по одной из них или отмените лишнюю через диспетчера: https://t.me/andreytelegraf"
+                )
+            elif str(exc) == "daily_sent_job_limit_reached":
+                await message.answer(
+                    "Лимит CargoPT: не больше 3 отправленных заявок за 24 часа. "
+                    "Попробуйте позже или напишите диспетчеру: https://t.me/andreytelegraf"
+                )
+            else:
+                raise
 
+            await session.rollback()
+            return
+
+        sent_count = result.sent_count
         await session.commit()
 
     await state.clear()
