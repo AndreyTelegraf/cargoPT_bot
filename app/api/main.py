@@ -1,4 +1,7 @@
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app.api.web_requests import router as web_requests_router
 
@@ -10,3 +13,7 @@ app.include_router(web_requests_router, prefix="/api/v1")
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+STATIC_DIR = Path(__file__).resolve().parents[1] / "static"
+app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
