@@ -21,36 +21,127 @@
       <div class="hero-copy">
         <p class="eyebrow">Перевозки и переезды по Португалии</p>
         <h1>Переезд без десятков звонков перевозчикам</h1>
-        <p class="hero-text">Опишите задачу один раз. CargoPT передаст её подходящим перевозчикам, и вы сможете выбрать лучшее предложение.</p>
-        <div class="hero-actions">
-          <a class="button" href="#request">Получить предложения</a>
-          <a class="button button-secondary" href="#how">Как это работает</a>
-        </div>
-        <div class="trust-row" aria-label="Преимущества">
+        <p class="hero-text">Опишите перевозку один раз. CargoPT передаст заявку подходящим перевозчикам, и вы сможете выбрать лучшее предложение.</p>
+
+        <div class="trust-list" aria-label="Преимущества">
           <span>Бесплатная заявка</span>
           <span>Несколько предложений</span>
           <span>Проверенные перевозчики</span>
         </div>
       </div>
-      <div class="hero-visual" aria-label="Иллюстрация переезда">
-        <div class="van-card">
-          <div class="van-box">
-            <span class="van-body"></span>
-            <span class="van-cabin"></span>
-            <span class="wheel wheel-left"></span>
-            <span class="wheel wheel-right"></span>
-          </div>
-          <p>Фургон, коробки, грузчики — без лишней координации вручную.</p>
-        </div>
-      </div>
-    </section>
 
-    <section class="section problem">
-      <div class="section-heading">
-        <p class="eyebrow">Проблема</p>
-        <h2>Обычно поиск перевозчика занимает слишком много времени</h2>
-      </div>
-      <p class="wide-text">Нужно искать компании, писать или звонить каждой отдельно, заново объяснять маршрут, этажи, лифт, объём вещей и дату. CargoPT заменяет это одной заявкой.</p>
+      <form id="requestForm" class="request-form hero-form" novalidate>
+        <div class="progress">
+          <span id="stepLabel">Шаг 1 из 2</span>
+          <div class="progress-bar"><span id="progressFill"></span></div>
+        </div>
+
+        <fieldset class="form-step is-active" data-step="1">
+          <legend>Получить предложения</legend>
+          <p class="form-intro">Начните с трёх простых вопросов.</p>
+
+          <label>Откуда
+            <input name="pickup" autocomplete="street-address" required placeholder="Например: Lisboa">
+          </label>
+
+          <label>Куда
+            <input name="dropoff" autocomplete="street-address" required placeholder="Например: Cascais">
+          </label>
+
+          <label>Что перевозим
+            <textarea name="items" required placeholder="Например: диван, 20 коробок, стиральная машина"></textarea>
+          </label>
+
+          <div class="form-actions">
+            <button class="button" type="button" data-next>Продолжить</button>
+          </div>
+        </fieldset>
+
+        <fieldset class="form-step" data-step="2">
+          <legend>Детали и контакты</legend>
+          <p class="form-intro">Осталось добавить детали, чтобы перевозчики могли оценить заявку.</p>
+
+          <div class="form-grid">
+            <label>Имя
+              <input name="customer_name" autocomplete="name" placeholder="Ваше имя">
+            </label>
+
+            <label>Дата перевозки
+              <input name="requested_date" type="date">
+            </label>
+          </div>
+
+          <div class="form-grid">
+            <label>Телефон
+              <input name="client_phone" autocomplete="tel" placeholder="+351...">
+            </label>
+
+            <label>WhatsApp
+              <input name="client_whatsapp" autocomplete="tel" placeholder="+351...">
+            </label>
+          </div>
+
+          <label>Email
+            <input name="customer_email" type="email" autocomplete="email" placeholder="name@example.com">
+          </label>
+
+          <div class="form-grid">
+            <label>Этаж отправления
+              <input name="pickup_floor" type="number" min="-1" max="24" placeholder="Например: 3">
+            </label>
+
+            <label>Лифт на отправлении
+              <select name="pickup_elevator">
+                <option value="">Не знаю / не важно</option>
+                <option value="true">Да</option>
+                <option value="false">Нет</option>
+              </select>
+            </label>
+
+            <label>Этаж доставки
+              <input name="dropoff_floor" type="number" min="-1" max="24" placeholder="Например: 1">
+            </label>
+
+            <label>Лифт на доставке
+              <select name="dropoff_elevator">
+                <option value="">Не знаю / не важно</option>
+                <option value="true">Да</option>
+                <option value="false">Нет</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="form-grid">
+            <label>Нужны грузчики
+              <select name="required_loaders">
+                <option value="">Не знаю</option>
+                <option value="0">Нет</option>
+                <option value="1">1 грузчик</option>
+                <option value="2">2 грузчика</option>
+                <option value="3">3 грузчика</option>
+                <option value="4">4 грузчика</option>
+              </select>
+            </label>
+
+            <label>Примерный объём, м³
+              <input name="estimated_volume_m3" type="number" min="0" step="0.5" placeholder="Например: 6">
+            </label>
+          </div>
+
+          <label>Комментарий
+            <textarea name="comment" placeholder="Дополнительные детали"></textarea>
+          </label>
+
+          <p class="form-note">Нужен хотя бы один контакт: телефон, WhatsApp или email.</p>
+
+          <div class="form-actions">
+            <button class="button button-secondary" type="button" data-prev>Назад</button>
+            <button class="button" type="submit">Получить предложения</button>
+          </div>
+        </fieldset>
+
+        <p id="formMessage" class="form-message" role="status" aria-live="polite"></p>
+      </form>
     </section>
 
     <section id="how" class="section">
@@ -75,6 +166,14 @@
           <p>Сравните ответы и выберите подходящее предложение.</p>
         </article>
       </div>
+    </section>
+
+    <section class="section problem">
+      <div class="section-heading">
+        <p class="eyebrow">Проблема</p>
+        <h2>Обычно поиск перевозчика занимает слишком много времени</h2>
+      </div>
+      <p class="wide-text">Нужно искать компании, писать или звонить каждой отдельно, заново объяснять маршрут, этажи, лифт, объём вещей и дату. CargoPT заменяет это одной заявкой.</p>
     </section>
 
     <section class="section">
@@ -108,111 +207,6 @@
         <p>Заявка бесплатна для клиента.</p>
         <p>Подходит для перевозок по городу и между городами.</p>
       </div>
-    </section>
-
-    <section id="request" class="section request-section">
-      <div class="section-heading">
-        <p class="eyebrow">Заявка</p>
-        <h2>Получить предложения</h2>
-        <p>Заполните короткую форму. Контакты спрашиваем в конце.</p>
-      </div>
-
-      <form id="requestForm" class="request-form" novalidate>
-        <div class="progress">
-          <span id="stepLabel">Шаг 1 из 3</span>
-          <div class="progress-bar"><span id="progressFill"></span></div>
-        </div>
-
-        <fieldset class="form-step is-active" data-step="1">
-          <legend>Основное</legend>
-          <label>Откуда
-            <input name="pickup" autocomplete="street-address" required placeholder="Например: Lisboa">
-          </label>
-          <label>Куда
-            <input name="dropoff" autocomplete="street-address" required placeholder="Например: Cascais">
-          </label>
-          <label>Что перевозим
-            <textarea name="items" required placeholder="Например: диван, 20 коробок, стиральная машина"></textarea>
-          </label>
-          <div class="form-actions">
-            <button class="button" type="button" data-next>Продолжить</button>
-          </div>
-        </fieldset>
-
-        <fieldset class="form-step" data-step="2">
-          <legend>Детали перевозки</legend>
-          <label>Дата перевозки
-            <input name="requested_date" type="date">
-          </label>
-          <div class="form-grid">
-            <label>Этаж отправления
-              <input name="pickup_floor" type="number" min="-1" max="24" placeholder="Например: 3">
-            </label>
-            <label>Лифт на отправлении
-              <select name="pickup_elevator">
-                <option value="">Не знаю / не важно</option>
-                <option value="true">Да</option>
-                <option value="false">Нет</option>
-              </select>
-            </label>
-            <label>Этаж доставки
-              <input name="dropoff_floor" type="number" min="-1" max="24" placeholder="Например: 1">
-            </label>
-            <label>Лифт на доставке
-              <select name="dropoff_elevator">
-                <option value="">Не знаю / не важно</option>
-                <option value="true">Да</option>
-                <option value="false">Нет</option>
-              </select>
-            </label>
-          </div>
-          <label>Нужны грузчики
-            <select name="required_loaders">
-              <option value="">Не знаю</option>
-              <option value="0">Нет</option>
-              <option value="1">1 грузчик</option>
-              <option value="2">2 грузчика</option>
-              <option value="3">3 грузчика</option>
-              <option value="4">4 грузчика</option>
-            </select>
-          </label>
-          <label>Примерный объём, м³
-            <input name="estimated_volume_m3" type="number" min="0" step="0.5" placeholder="Например: 6">
-          </label>
-          <div class="form-actions">
-            <button class="button button-secondary" type="button" data-prev>Назад</button>
-            <button class="button" type="button" data-next>Продолжить</button>
-          </div>
-        </fieldset>
-
-        <fieldset class="form-step" data-step="3">
-          <legend>Контакты</legend>
-          <label>Имя
-            <input name="customer_name" autocomplete="name" placeholder="Ваше имя">
-          </label>
-          <div class="form-grid">
-            <label>Телефон
-              <input name="client_phone" autocomplete="tel" placeholder="+351...">
-            </label>
-            <label>WhatsApp
-              <input name="client_whatsapp" autocomplete="tel" placeholder="+351...">
-            </label>
-          </div>
-          <label>Email
-            <input name="customer_email" type="email" autocomplete="email" placeholder="name@example.com">
-          </label>
-          <label>Комментарий
-            <textarea name="comment" placeholder="Дополнительные детали"></textarea>
-          </label>
-          <p class="form-note">Нужен хотя бы один контакт: телефон, WhatsApp или email.</p>
-          <div class="form-actions">
-            <button class="button button-secondary" type="button" data-prev>Назад</button>
-            <button class="button" type="submit">Получить предложения</button>
-          </div>
-        </fieldset>
-
-        <p id="formMessage" class="form-message" role="status" aria-live="polite"></p>
-      </form>
     </section>
 
     <section class="section faq">

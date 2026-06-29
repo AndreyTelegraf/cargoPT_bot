@@ -1,4 +1,4 @@
-const STORAGE_KEY = "cargopt_landing_request_v1";
+const STORAGE_KEY = "cargopt_landing_request_v2";
 const form = document.querySelector("#requestForm");
 const steps = Array.from(document.querySelectorAll(".form-step"));
 const stepLabel = document.querySelector("#stepLabel");
@@ -73,7 +73,7 @@ function validateStep(step) {
     }
   }
 
-  if (step === 3) {
+  if (step === 2) {
     const data = getFormData();
     if (!data.client_phone.trim() && !data.client_whatsapp.trim() && !data.customer_email.trim()) {
       setMessage("Укажите хотя бы один контакт: телефон, WhatsApp или email.", "error");
@@ -97,7 +97,7 @@ function buildPayload() {
     client_whatsapp: data.client_whatsapp || null,
     utm_source: new URLSearchParams(window.location.search).get("utm_source"),
     utm_campaign: new URLSearchParams(window.location.search).get("utm_campaign"),
-    landing_version: "landing_static_v1",
+    landing_version: "landing_static_v2",
     requested_date: requestedDate,
     addresses: [
       {
@@ -126,7 +126,7 @@ function buildPayload() {
 }
 
 async function submitRequest() {
-  if (!validateStep(3)) return;
+  if (!validateStep(2)) return;
 
   setMessage("Отправляем заявку...", "");
   const submitButton = form.querySelector("button[type=\"submit\"]");

@@ -12,9 +12,9 @@ from app.api.main import app
 def main() -> None:
     with TestClient(app) as client:
         checks = {
-            "/": "Переезд без десятков звонков перевозчикам",
-            "/assets/css/landing.css": "--bg",
-            "/assets/js/landing.js": "buildPayload",
+            "/": "Начните с трёх простых вопросов.",
+            "/assets/css/landing.css": "hero-form",
+            "/assets/js/landing.js": "landing_static_v2",
             "/health": "ok",
         }
 
