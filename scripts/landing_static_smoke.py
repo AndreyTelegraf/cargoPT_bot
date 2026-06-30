@@ -13,8 +13,14 @@ def main() -> None:
     with TestClient(app) as client:
         checks = {
             "/": "Начните с трёх простых вопросов.",
-            "/assets/css/landing.css": "hero-form",
-            "/assets/js/landing.js": "landing_static_v2",
+            "/en/": "Start with three simple questions.",
+            "/pt/": "Comece com três perguntas simples.",
+            "/assets/css/landing.css": "locale-switcher",
+            "/assets/js/landing.js": "pageLocale",
+            "/robots.txt": "Sitemap: https://cargopt.pt/sitemap.xml",
+            "/sitemap.xml": "https://cargopt.pt/pt/",
+            "/llms.txt": "CargoPT is a request service",
+            "/ai.txt": "CargoPT summary for AI assistants",
             "/health": "ok",
         }
 

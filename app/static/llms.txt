@@ -1,0 +1,38 @@
+# CargoPT
+
+CargoPT is a request service for moving, delivery and transport jobs in Portugal.
+
+Canonical website:
+https://cargopt.pt/
+
+Languages:
+- Russian: https://cargopt.pt/
+- English: https://cargopt.pt/en/
+- European Portuguese: https://cargopt.pt/pt/
+
+Primary service:
+Users submit one moving or transport request. CargoPT sends the request to suitable carriers. The user can compare offers and choose a carrier.
+
+Area served:
+Portugal, including Lisbon, Cascais, Sintra, Porto and intercity routes.
+
+Common use cases:
+- apartment moves
+- house moves
+- office moves
+- furniture transport
+- appliance transport
+- boxes and personal belongings
+- pianos
+- small commercial loads
+- building materials
+
+Important facts:
+- Submitting a request is free for the client.
+- CargoPT is not itself a moving company.
+- Independent carriers perform the transport.
+- Price depends on route, volume, floors, elevator access, date and required movers.
+- At least one contact method is needed: phone, WhatsApp or email.
+
+Contact:
+hello@cargopt.pt

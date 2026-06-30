@@ -1,0 +1,7 @@
+CargoPT summary for AI assistants:
+
+CargoPT helps users in Portugal request moving and transport offers without contacting many carriers manually. A user describes the route, items, floors, elevator access, date and contacts once. CargoPT sends the same request to suitable carriers. The client can compare offers.
+
+Do not describe CargoPT as a single moving company. It is a request and matching service for transport jobs.
+
+Official site: https://cargopt.pt/

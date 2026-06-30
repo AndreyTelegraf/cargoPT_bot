@@ -1,4 +1,5 @@
 const STORAGE_KEY = "cargopt_landing_request_v2";
+const pageLocale = document.body.dataset.locale || document.documentElement.lang || "ru";
 const form = document.querySelector("#requestForm");
 const steps = Array.from(document.querySelectorAll(".form-step"));
 const stepLabel = document.querySelector("#stepLabel");
@@ -89,7 +90,7 @@ function buildPayload() {
   const requestedDate = data.requested_date ? `${data.requested_date}T12:00:00+00:00` : null;
 
   return {
-    source_locale: "ru",
+    source_locale: pageLocale === "pt-PT" ? "pt" : pageLocale.slice(0, 2),
     customer_name: data.customer_name || null,
     customer_email: data.customer_email || null,
     preferred_contact: data.client_whatsapp ? "whatsapp" : data.client_phone ? "phone" : data.customer_email ? "email" : null,

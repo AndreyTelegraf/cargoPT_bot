@@ -5,13 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CargoPT — перевозки и переезды по Португалии</title>
   <meta name="description" content="Одна заявка на перевозку или переезд по Португалии — несколько предложений от перевозчиков.">
+  <link rel="canonical" href="https://cargopt.pt/">
+  <link rel="alternate" hreflang="ru" href="https://cargopt.pt/">
+  <link rel="alternate" hreflang="en" href="https://cargopt.pt/en/">
+  <link rel="alternate" hreflang="pt-PT" href="https://cargopt.pt/pt/">
+  <link rel="alternate" hreflang="x-default" href="https://cargopt.pt/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CargoPT">
+  <meta property="og:title" content="CargoPT — перевозки и переезды по Португалии">
+  <meta property="og:description" content="Одна заявка на перевозку или переезд по Португалии — несколько предложений от перевозчиков.">
+  <meta property="og:url" content="https://cargopt.pt/">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"CargoPT","url":"https://cargopt.pt/","email":"hello@cargopt.pt"}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Service","name":"CargoPT — перевозки и переезды по Португалии","serviceType":"Moving and transport request service","areaServed":{"@type":"Country","name":"Portugal"},"provider":{"@type":"Organization","name":"CargoPT","url":"https://cargopt.pt/"},"url":"https://cargopt.pt/","description":"Одна заявка на перевозку или переезд по Португалии — несколько предложений от перевозчиков."}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+    {"@type":"Question","name":"Сколько стоит перевозка?","acceptedAnswer":{"@type":"Answer","text":"Цена зависит от маршрута, объёма вещей, этажей, лифта, даты и необходимости грузчиков."}},
+    {"@type":"Question","name":"Нужно ли платить за заявку?","acceptedAnswer":{"@type":"Answer","text":"Нет, заявка бесплатна для клиента."}},
+    {"@type":"Question","name":"Можно ли заказать перевозку одной вещи?","acceptedAnswer":{"@type":"Answer","text":"Да, можно отправить заявку на перевозку мебели, техники, пианино, коробок или других отдельных вещей."}},
+    {"@type":"Question","name":"Можно ли перевозить между городами?","acceptedAnswer":{"@type":"Answer","text":"Да, CargoPT подходит для перевозок внутри города и между городами по Португалии."}}
+  ]}</script>
   <link rel="stylesheet" href="/assets/css/landing.css">
 </head>
-<body>
+<body data-locale="ru">
   <header class="site-header">
     <a class="logo" href="#top" aria-label="CargoPT">CargoPT</a>
-    <nav class="header-actions" aria-label="Основная навигация">
+    <nav class="header-actions" aria-label="Navigation">
       <a class="nav-link" href="#how">Как это работает</a>
+      <span class="locale-switcher"><a href="/">RU</a> / <a href="/en/">EN</a> / <a href="/pt/">PT</a></span>
       <a class="button button-small" href="#request">Получить предложения</a>
     </nav>
   </header>
@@ -22,8 +42,7 @@
         <p class="eyebrow">Перевозки и переезды по Португалии</p>
         <h1>Переезд без десятков звонков перевозчикам</h1>
         <p class="hero-text">Опишите перевозку один раз. CargoPT передаст заявку подходящим перевозчикам, и вы сможете выбрать лучшее предложение.</p>
-
-        <div class="trust-list" aria-label="Преимущества">
+        <div class="trust-list" aria-label="Benefits">
           <span>Бесплатная заявка</span>
           <span>Несколько предложений</span>
           <span>Проверенные перевозчики</span>
@@ -39,19 +58,15 @@
         <fieldset class="form-step is-active" data-step="1">
           <legend>Получить предложения</legend>
           <p class="form-intro">Начните с трёх простых вопросов.</p>
-
           <label>Откуда
             <input name="pickup" autocomplete="street-address" required placeholder="Например: Lisboa">
           </label>
-
           <label>Куда
             <input name="dropoff" autocomplete="street-address" required placeholder="Например: Cascais">
           </label>
-
           <label>Что перевозим
             <textarea name="items" required placeholder="Например: диван, 20 коробок, стиральная машина"></textarea>
           </label>
-
           <div class="form-actions">
             <button class="button" type="button" data-next>Продолжить</button>
           </div>
@@ -60,97 +75,37 @@
         <fieldset class="form-step" data-step="2">
           <legend>Детали и контакты</legend>
           <p class="form-intro">Осталось добавить детали, чтобы перевозчики могли оценить заявку.</p>
-
           <div class="form-grid">
-            <label>Имя
-              <input name="customer_name" autocomplete="name" placeholder="Ваше имя">
-            </label>
-
-            <label>Дата перевозки
-              <input name="requested_date" type="date">
-            </label>
+            <label>Имя<input name="customer_name" autocomplete="name"></label>
+            <label>Дата перевозки<input name="requested_date" type="date"></label>
           </div>
-
           <div class="form-grid">
-            <label>Телефон
-              <input name="client_phone" autocomplete="tel" placeholder="+351...">
-            </label>
-
-            <label>WhatsApp
-              <input name="client_whatsapp" autocomplete="tel" placeholder="+351...">
-            </label>
+            <label>Телефон<input name="client_phone" autocomplete="tel" placeholder="+351..."></label>
+            <label>WhatsApp<input name="client_whatsapp" autocomplete="tel" placeholder="+351..."></label>
           </div>
-
-          <label>Email
-            <input name="customer_email" type="email" autocomplete="email" placeholder="name@example.com">
-          </label>
-
+          <label>Email<input name="customer_email" type="email" autocomplete="email" placeholder="name@example.com"></label>
           <div class="form-grid">
-            <label>Этаж отправления
-              <input name="pickup_floor" type="number" min="-1" max="24" placeholder="Например: 3">
-            </label>
-
-            <label>Лифт на отправлении
-              <select name="pickup_elevator">
-                <option value="">Не знаю / не важно</option>
-                <option value="true">Да</option>
-                <option value="false">Нет</option>
-              </select>
-            </label>
-
-            <label>Этаж доставки
-              <input name="dropoff_floor" type="number" min="-1" max="24" placeholder="Например: 1">
-            </label>
-
-            <label>Лифт на доставке
-              <select name="dropoff_elevator">
-                <option value="">Не знаю / не важно</option>
-                <option value="true">Да</option>
-                <option value="false">Нет</option>
-              </select>
-            </label>
+            <label>Этаж отправления<input name="pickup_floor" type="number" min="-1" max="24"></label>
+            <label>Лифт на отправлении<select name="pickup_elevator"><option value="">Не знаю / не важно</option><option value="true">Да</option><option value="false">Нет</option></select></label>
+            <label>Этаж доставки<input name="dropoff_floor" type="number" min="-1" max="24"></label>
+            <label>Лифт на доставке<select name="dropoff_elevator"><option value="">Не знаю / не важно</option><option value="true">Да</option><option value="false">Нет</option></select></label>
           </div>
-
           <div class="form-grid">
-            <label>Нужны грузчики
-              <select name="required_loaders">
-                <option value="">Не знаю</option>
-                <option value="0">Нет</option>
-                <option value="1">1 грузчик</option>
-                <option value="2">2 грузчика</option>
-                <option value="3">3 грузчика</option>
-                <option value="4">4 грузчика</option>
-              </select>
-            </label>
-
-            <label>Примерный объём, м³
-              <input name="estimated_volume_m3" type="number" min="0" step="0.5" placeholder="Например: 6">
-            </label>
+            <label>Нужны грузчики<select name="required_loaders"><option value="">Не знаю / не важно</option><option value="0">Нет</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></label>
+            <label>Примерный объём, м³<input name="estimated_volume_m3" type="number" min="0" step="0.5"></label>
           </div>
-
-          <label>Комментарий
-            <textarea name="comment" placeholder="Дополнительные детали"></textarea>
-          </label>
-
+          <label>Комментарий<textarea name="comment" placeholder="Дополнительные детали"></textarea></label>
           <p class="form-note">Нужен хотя бы один контакт: телефон, WhatsApp или email.</p>
-
           <div class="form-actions">
             <button class="button button-secondary" type="button" data-prev>Назад</button>
             <button class="button" type="submit">Получить предложения</button>
           </div>
         </fieldset>
-
         <p id="formMessage" class="form-message" role="status" aria-live="polite"></p>
       </form>
     </section>
 
-    <section id="how" class="section">
-      <div class="section-heading">
-        <p class="eyebrow">Как это работает</p>
-        <h2>Три шага вместо ручного обзвона</h2>
-      </div>
-      <div class="cards three">
-        <article class="card">
+    <section id="how" class="section"><div class="section-heading"><p class="eyebrow">Как это работает</p><h2>Три шага вместо ручного обзвона</h2></div><div class="cards three">        <article class="card">
           <span class="step">1</span>
           <h3>Опишите перевозку</h3>
           <p>Укажите маршрут, вещи, этажи, лифт и желаемую дату.</p>
@@ -164,25 +119,9 @@
           <span class="step">3</span>
           <h3>Вы выбираете</h3>
           <p>Сравните ответы и выберите подходящее предложение.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="section problem">
-      <div class="section-heading">
-        <p class="eyebrow">Проблема</p>
-        <h2>Обычно поиск перевозчика занимает слишком много времени</h2>
-      </div>
-      <p class="wide-text">Нужно искать компании, писать или звонить каждой отдельно, заново объяснять маршрут, этажи, лифт, объём вещей и дату. CargoPT заменяет это одной заявкой.</p>
-    </section>
-
-    <section class="section">
-      <div class="section-heading">
-        <p class="eyebrow">Что перевозим</p>
-        <h2>Для квартир, офисов, мебели и отдельных вещей</h2>
-      </div>
-      <div class="chips">
-        <span>Квартиры</span>
+        </article></div></section>
+    <section class="section problem"><div class="section-heading"><p class="eyebrow">Problem</p><h2>Обычно поиск перевозчика занимает слишком много времени</h2></div><p class="wide-text">Нужно искать компании, писать или звонить каждой отдельно, заново объяснять маршрут, этажи, лифт, объём вещей и дату. CargoPT заменяет это одной заявкой.</p></section>
+    <section class="section"><div class="section-heading"><p class="eyebrow">Cargo</p><h2>Для квартир, офисов, мебели и отдельных вещей</h2></div><div class="chips">        <span>Квартиры</span>
         <span>Дома</span>
         <span>Офисы</span>
         <span>Мебель</span>
@@ -190,31 +129,14 @@
         <span>Коробки</span>
         <span>Пианино</span>
         <span>Стройматериалы</span>
-        <span>Коммерческие грузы</span>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section-heading">
-        <p class="eyebrow">Почему CargoPT</p>
-        <h2>Одинаковая информация для всех перевозчиков</h2>
-      </div>
-      <div class="benefits">
-        <p>Одна заявка вместо десятков звонков.</p>
+        <span>Коммерческие грузы</span></div></section>
+    <section class="section"><div class="section-heading"><p class="eyebrow">CargoPT</p><h2>Одинаковая информация для всех перевозчиков</h2></div><div class="benefits">        <p>Одна заявка вместо десятков звонков.</p>
         <p>Перевозчики получают одинаковое описание заказа.</p>
         <p>Учитываются этажи, лифты и особенности погрузки.</p>
         <p>Можно сравнить несколько предложений.</p>
         <p>Заявка бесплатна для клиента.</p>
-        <p>Подходит для перевозок по городу и между городами.</p>
-      </div>
-    </section>
-
-    <section class="section faq">
-      <div class="section-heading">
-        <p class="eyebrow">FAQ</p>
-        <h2>Частые вопросы</h2>
-      </div>
-      <details>
+        <p>Подходит для перевозок по городу и между городами.</p></div></section>
+    <section class="section faq"><div class="section-heading"><p class="eyebrow">FAQ</p><h2>Частые вопросы</h2></div>      <details>
         <summary>Сколько стоит перевозка?</summary>
         <p>Цена зависит от маршрута, объёма вещей, этажей, лифта, даты и необходимости грузчиков.</p>
       </details>
@@ -229,22 +151,11 @@
       <details>
         <summary>Можно ли перевозить между городами?</summary>
         <p>Да, CargoPT подходит для перевозок внутри города и между городами по Португалии.</p>
-      </details>
-    </section>
-
-    <section class="section final-cta">
-      <h2>Получите предложения для вашей перевозки</h2>
-      <p>Опишите задачу один раз — мы передадим её подходящим перевозчикам.</p>
-      <a class="button" href="#request">Получить предложения</a>
-    </section>
+      </details></section>
+    <section class="section final-cta"><h2>Получите предложения для вашей перевозки</h2><p>Опишите задачу один раз — мы передадим её подходящим перевозчикам.</p><a class="button" href="#request">Получить предложения</a></section>
   </main>
 
-  <footer class="site-footer">
-    <strong>CargoPT</strong>
-    <span>Сервис заявок на перевозки и переезды в Португалии.</span>
-    <a href="mailto:hello@cargopt.pt">hello@cargopt.pt</a>
-  </footer>
-
+  <footer class="site-footer"><strong>CargoPT</strong><span>Сервис заявок на перевозки и переезды в Португалии.</span><a href="mailto:hello@cargopt.pt">hello@cargopt.pt</a></footer>
   <script src="/assets/js/landing.js" defer></script>
 </body>
 </html>

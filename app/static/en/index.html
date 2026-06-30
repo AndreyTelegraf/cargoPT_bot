@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CargoPT — moving and transport services in Portugal</title>
+  <meta name="description" content="Submit one moving or transport request in Portugal and receive several offers from carriers.">
+  <link rel="canonical" href="https://cargopt.pt/en/">
+  <link rel="alternate" hreflang="ru" href="https://cargopt.pt/">
+  <link rel="alternate" hreflang="en" href="https://cargopt.pt/en/">
+  <link rel="alternate" hreflang="pt-PT" href="https://cargopt.pt/pt/">
+  <link rel="alternate" hreflang="x-default" href="https://cargopt.pt/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CargoPT">
+  <meta property="og:title" content="CargoPT — moving and transport services in Portugal">
+  <meta property="og:description" content="Submit one moving or transport request in Portugal and receive several offers from carriers.">
+  <meta property="og:url" content="https://cargopt.pt/en/">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"CargoPT","url":"https://cargopt.pt/","email":"hello@cargopt.pt"}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Service","name":"CargoPT — moving and transport services in Portugal","serviceType":"Moving and transport request service","areaServed":{"@type":"Country","name":"Portugal"},"provider":{"@type":"Organization","name":"CargoPT","url":"https://cargopt.pt/"},"url":"https://cargopt.pt/en/","description":"Submit one moving or transport request in Portugal and receive several offers from carriers."}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+    {"@type":"Question","name":"How much does transport cost?","acceptedAnswer":{"@type":"Answer","text":"The price depends on route, volume, floors, elevator access, date and whether movers are needed."}},
+    {"@type":"Question","name":"Do I pay to submit a request?","acceptedAnswer":{"@type":"Answer","text":"No. The request is free for clients."}},
+    {"@type":"Question","name":"Can I move one item only?","acceptedAnswer":{"@type":"Answer","text":"Yes. You can request transport for furniture, appliances, a piano, boxes or other single items."}},
+    {"@type":"Question","name":"Can I move between cities?","acceptedAnswer":{"@type":"Answer","text":"Yes. CargoPT works for local and intercity transport across Portugal."}}
+  ]}</script>
+  <link rel="stylesheet" href="/assets/css/landing.css">
+</head>
+<body data-locale="en">
+  <header class="site-header">
+    <a class="logo" href="#top" aria-label="CargoPT">CargoPT</a>
+    <nav class="header-actions" aria-label="Navigation">
+      <a class="nav-link" href="#how">How it works</a>
+      <span class="locale-switcher"><a href="/">RU</a> / <a href="/en/">EN</a> / <a href="/pt/">PT</a></span>
+      <a class="button button-small" href="#request">Get offers</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero section">
+      <div class="hero-copy">
+        <p class="eyebrow">Moving and transport in Portugal</p>
+        <h1>Move without calling dozens of carriers</h1>
+        <p class="hero-text">Describe your transport request once. CargoPT sends it to suitable carriers so you can choose the best offer.</p>
+        <div class="trust-list" aria-label="Benefits">
+          <span>Free request</span>
+          <span>Several offers</span>
+          <span>Verified carriers</span>
+        </div>
+      </div>
+
+      <form id="requestForm" class="request-form hero-form" novalidate>
+        <div class="progress">
+          <span id="stepLabel">Step 1 of 2</span>
+          <div class="progress-bar"><span id="progressFill"></span></div>
+        </div>
+
+        <fieldset class="form-step is-active" data-step="1">
+          <legend>Get offers</legend>
+          <p class="form-intro">Start with three simple questions.</p>
+          <label>From
+            <input name="pickup" autocomplete="street-address" required placeholder="Example: Lisbon">
+          </label>
+          <label>To
+            <input name="dropoff" autocomplete="street-address" required placeholder="Example: Cascais">
+          </label>
+          <label>What are you moving?
+            <textarea name="items" required placeholder="Example: sofa, 20 boxes, washing machine"></textarea>
+          </label>
+          <div class="form-actions">
+            <button class="button" type="button" data-next>Continue</button>
+          </div>
+        </fieldset>
+
+        <fieldset class="form-step" data-step="2">
+          <legend>Details and contacts</legend>
+          <p class="form-intro">Add the details carriers need to estimate the request.</p>
+          <div class="form-grid">
+            <label>Name<input name="customer_name" autocomplete="name"></label>
+            <label>Moving date<input name="requested_date" type="date"></label>
+          </div>
+          <div class="form-grid">
+            <label>Phone<input name="client_phone" autocomplete="tel" placeholder="+351..."></label>
+            <label>WhatsApp<input name="client_whatsapp" autocomplete="tel" placeholder="+351..."></label>
+          </div>
+          <label>Email<input name="customer_email" type="email" autocomplete="email" placeholder="name@example.com"></label>
+          <div class="form-grid">
+            <label>Pickup floor<input name="pickup_floor" type="number" min="-1" max="24"></label>
+            <label>Elevator at pickup<select name="pickup_elevator"><option value="">Not sure / not important</option><option value="true">Yes</option><option value="false">No</option></select></label>
+            <label>Drop-off floor<input name="dropoff_floor" type="number" min="-1" max="24"></label>
+            <label>Elevator at drop-off<select name="dropoff_elevator"><option value="">Not sure / not important</option><option value="true">Yes</option><option value="false">No</option></select></label>
+          </div>
+          <div class="form-grid">
+            <label>Need movers<select name="required_loaders"><option value="">Not sure / not important</option><option value="0">No</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></label>
+            <label>Approximate volume, m³<input name="estimated_volume_m3" type="number" min="0" step="0.5"></label>
+          </div>
+          <label>Comment<textarea name="comment" placeholder="Extra details"></textarea></label>
+          <p class="form-note">At least one contact is required: phone, WhatsApp or email.</p>
+          <div class="form-actions">
+            <button class="button button-secondary" type="button" data-prev>Back</button>
+            <button class="button" type="submit">Get offers</button>
+          </div>
+        </fieldset>
+        <p id="formMessage" class="form-message" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="how" class="section"><div class="section-heading"><p class="eyebrow">How it works</p><h2>Three steps instead of manual calls</h2></div><div class="cards three">        <article class="card">
+          <span class="step">1</span>
+          <h3>Describe the move</h3>
+          <p>Add the route, items, floors, elevator and preferred date.</p>
+        </article>
+        <article class="card">
+          <span class="step">2</span>
+          <h3>We send the request</h3>
+          <p>Suitable carriers receive the same request details.</p>
+        </article>
+        <article class="card">
+          <span class="step">3</span>
+          <h3>You choose</h3>
+          <p>Compare replies and choose the offer that fits.</p>
+        </article></div></section>
+    <section class="section problem"><div class="section-heading"><p class="eyebrow">Problem</p><h2>Finding a carrier usually takes too much time</h2></div><p class="wide-text">You need to search companies, message or call each one, repeat the route, floors, elevator, volume and date. CargoPT replaces this with one request.</p></section>
+    <section class="section"><div class="section-heading"><p class="eyebrow">Cargo</p><h2>For apartments, offices, furniture and single items</h2></div><div class="chips">        <span>Apartments</span>
+        <span>Houses</span>
+        <span>Offices</span>
+        <span>Furniture</span>
+        <span>Appliances</span>
+        <span>Boxes</span>
+        <span>Pianos</span>
+        <span>Building materials</span>
+        <span>Commercial loads</span></div></section>
+    <section class="section"><div class="section-heading"><p class="eyebrow">CargoPT</p><h2>The same information for every carrier</h2></div><div class="benefits">        <p>One request instead of dozens of calls.</p>
+        <p>Carriers receive the same job description.</p>
+        <p>Floors, elevators and loading details are included.</p>
+        <p>You can compare several offers.</p>
+        <p>The request is free for clients.</p>
+        <p>Works for city moves and intercity transport.</p></div></section>
+    <section class="section faq"><div class="section-heading"><p class="eyebrow">FAQ</p><h2>FAQ</h2></div>      <details>
+        <summary>How much does transport cost?</summary>
+        <p>The price depends on route, volume, floors, elevator access, date and whether movers are needed.</p>
+      </details>
+      <details>
+        <summary>Do I pay to submit a request?</summary>
+        <p>No. The request is free for clients.</p>
+      </details>
+      <details>
+        <summary>Can I move one item only?</summary>
+        <p>Yes. You can request transport for furniture, appliances, a piano, boxes or other single items.</p>
+      </details>
+      <details>
+        <summary>Can I move between cities?</summary>
+        <p>Yes. CargoPT works for local and intercity transport across Portugal.</p>
+      </details></section>
+    <section class="section final-cta"><h2>Get offers for your move</h2><p>Describe the task once — we send it to suitable carriers.</p><a class="button" href="#request">Get offers</a></section>
+  </main>
+
+  <footer class="site-footer"><strong>CargoPT</strong><span>Request service for moving and transport in Portugal.</span><a href="mailto:hello@cargopt.pt">hello@cargopt.pt</a></footer>
+  <script src="/assets/js/landing.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CargoPT — mudanças e transporte em Portugal</title>
+  <meta name="description" content="Um pedido para mudanças ou transporte em Portugal — várias propostas de transportadores.">
+  <link rel="canonical" href="https://cargopt.pt/pt/">
+  <link rel="alternate" hreflang="ru" href="https://cargopt.pt/">
+  <link rel="alternate" hreflang="en" href="https://cargopt.pt/en/">
+  <link rel="alternate" hreflang="pt-PT" href="https://cargopt.pt/pt/">
+  <link rel="alternate" hreflang="x-default" href="https://cargopt.pt/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CargoPT">
+  <meta property="og:title" content="CargoPT — mudanças e transporte em Portugal">
+  <meta property="og:description" content="Um pedido para mudanças ou transporte em Portugal — várias propostas de transportadores.">
+  <meta property="og:url" content="https://cargopt.pt/pt/">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"CargoPT","url":"https://cargopt.pt/","email":"hello@cargopt.pt"}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Service","name":"CargoPT — mudanças e transporte em Portugal","serviceType":"Moving and transport request service","areaServed":{"@type":"Country","name":"Portugal"},"provider":{"@type":"Organization","name":"CargoPT","url":"https://cargopt.pt/"},"url":"https://cargopt.pt/pt/","description":"Um pedido para mudanças ou transporte em Portugal — várias propostas de transportadores."}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+    {"@type":"Question","name":"Quanto custa o transporte?","acceptedAnswer":{"@type":"Answer","text":"O preço depende da rota, volume, andares, elevador, data e necessidade de ajudantes."}},
+    {"@type":"Question","name":"Tenho de pagar para enviar o pedido?","acceptedAnswer":{"@type":"Answer","text":"Não. O pedido é gratuito para o cliente."}},
+    {"@type":"Question","name":"Posso transportar apenas um objeto?","acceptedAnswer":{"@type":"Answer","text":"Sim. Pode pedir transporte de móveis, eletrodomésticos, piano, caixas ou outros objetos individuais."}},
+    {"@type":"Question","name":"É possível fazer transporte entre cidades?","acceptedAnswer":{"@type":"Answer","text":"Sim. A CargoPT serve transportes locais e entre cidades em Portugal."}}
+  ]}</script>
+  <link rel="stylesheet" href="/assets/css/landing.css">
+</head>
+<body data-locale="pt">
+  <header class="site-header">
+    <a class="logo" href="#top" aria-label="CargoPT">CargoPT</a>
+    <nav class="header-actions" aria-label="Navigation">
+      <a class="nav-link" href="#how">Como funciona</a>
+      <span class="locale-switcher"><a href="/">RU</a> / <a href="/en/">EN</a> / <a href="/pt/">PT</a></span>
+      <a class="button button-small" href="#request">Receber propostas</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero section">
+      <div class="hero-copy">
+        <p class="eyebrow">Mudanças e transporte em Portugal</p>
+        <h1>Mudanças sem ligar a dezenas de transportadores</h1>
+        <p class="hero-text">Descreva o transporte uma vez. A CargoPT envia o pedido a transportadores adequados para poder escolher a melhor proposta.</p>
+        <div class="trust-list" aria-label="Benefits">
+          <span>Pedido gratuito</span>
+          <span>Várias propostas</span>
+          <span>Transportadores verificados</span>
+        </div>
+      </div>
+
+      <form id="requestForm" class="request-form hero-form" novalidate>
+        <div class="progress">
+          <span id="stepLabel">Passo 1 de 2</span>
+          <div class="progress-bar"><span id="progressFill"></span></div>
+        </div>
+
+        <fieldset class="form-step is-active" data-step="1">
+          <legend>Receber propostas</legend>
+          <p class="form-intro">Comece com três perguntas simples.</p>
+          <label>De onde
+            <input name="pickup" autocomplete="street-address" required placeholder="Exemplo: Lisboa">
+          </label>
+          <label>Para onde
+            <input name="dropoff" autocomplete="street-address" required placeholder="Exemplo: Cascais">
+          </label>
+          <label>O que vai transportar?
+            <textarea name="items" required placeholder="Exemplo: sofá, 20 caixas, máquina de lavar"></textarea>
+          </label>
+          <div class="form-actions">
+            <button class="button" type="button" data-next>Continuar</button>
+          </div>
+        </fieldset>
+
+        <fieldset class="form-step" data-step="2">
+          <legend>Detalhes e contactos</legend>
+          <p class="form-intro">Adicione os detalhes necessários para os transportadores avaliarem o pedido.</p>
+          <div class="form-grid">
+            <label>Nome<input name="customer_name" autocomplete="name"></label>
+            <label>Data da mudança<input name="requested_date" type="date"></label>
+          </div>
+          <div class="form-grid">
+            <label>Telefone<input name="client_phone" autocomplete="tel" placeholder="+351..."></label>
+            <label>WhatsApp<input name="client_whatsapp" autocomplete="tel" placeholder="+351..."></label>
+          </div>
+          <label>Email<input name="customer_email" type="email" autocomplete="email" placeholder="name@example.com"></label>
+          <div class="form-grid">
+            <label>Andar de recolha<input name="pickup_floor" type="number" min="-1" max="24"></label>
+            <label>Elevador na recolha<select name="pickup_elevator"><option value="">Não sei / não é importante</option><option value="true">Sim</option><option value="false">Não</option></select></label>
+            <label>Andar de entrega<input name="dropoff_floor" type="number" min="-1" max="24"></label>
+            <label>Elevador na entrega<select name="dropoff_elevator"><option value="">Não sei / não é importante</option><option value="true">Sim</option><option value="false">Não</option></select></label>
+          </div>
+          <div class="form-grid">
+            <label>Precisa de ajudantes<select name="required_loaders"><option value="">Não sei / não é importante</option><option value="0">Não</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></label>
+            <label>Volume aproximado, m³<input name="estimated_volume_m3" type="number" min="0" step="0.5"></label>
+          </div>
+          <label>Comentário<textarea name="comment" placeholder="Detalhes adicionais"></textarea></label>
+          <p class="form-note">É necessário indicar pelo menos um contacto: telefone, WhatsApp ou email.</p>
+          <div class="form-actions">
+            <button class="button button-secondary" type="button" data-prev>Voltar</button>
+            <button class="button" type="submit">Receber propostas</button>
+          </div>
+        </fieldset>
+        <p id="formMessage" class="form-message" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="how" class="section"><div class="section-heading"><p class="eyebrow">Como funciona</p><h2>Três passos em vez de chamadas manuais</h2></div><div class="cards three">        <article class="card">
+          <span class="step">1</span>
+          <h3>Descreva o transporte</h3>
+          <p>Indique rota, objetos, andares, elevador e data pretendida.</p>
+        </article>
+        <article class="card">
+          <span class="step">2</span>
+          <h3>Enviamos o pedido</h3>
+          <p>Transportadores adequados recebem a mesma descrição do serviço.</p>
+        </article>
+        <article class="card">
+          <span class="step">3</span>
+          <h3>Escolhe a proposta</h3>
+          <p>Compare as respostas e escolha a opção adequada.</p>
+        </article></div></section>
+    <section class="section problem"><div class="section-heading"><p class="eyebrow">Problem</p><h2>Encontrar um transportador costuma demorar demasiado</h2></div><p class="wide-text">É preciso procurar empresas, escrever ou ligar a cada uma, repetir rota, andares, elevador, volume e data. A CargoPT substitui isto por um único pedido.</p></section>
+    <section class="section"><div class="section-heading"><p class="eyebrow">Cargo</p><h2>Apartamentos, escritórios, móveis e objetos individuais</h2></div><div class="chips">        <span>Apartamentos</span>
+        <span>Casas</span>
+        <span>Escritórios</span>
+        <span>Móveis</span>
+        <span>Eletrodomésticos</span>
+        <span>Caixas</span>
+        <span>Pianos</span>
+        <span>Materiais de construção</span>
+        <span>Cargas comerciais</span></div></section>
+    <section class="section"><div class="section-heading"><p class="eyebrow">CargoPT</p><h2>A mesma informação para todos os transportadores</h2></div><div class="benefits">        <p>Um pedido em vez de dezenas de chamadas.</p>
+        <p>Os transportadores recebem a mesma descrição.</p>
+        <p>Andares, elevadores e detalhes de carga são considerados.</p>
+        <p>Pode comparar várias propostas.</p>
+        <p>O pedido é gratuito para o cliente.</p>
+        <p>Serve para transporte local e entre cidades.</p></div></section>
+    <section class="section faq"><div class="section-heading"><p class="eyebrow">FAQ</p><h2>Perguntas frequentes</h2></div>      <details>
+        <summary>Quanto custa o transporte?</summary>
+        <p>O preço depende da rota, volume, andares, elevador, data e necessidade de ajudantes.</p>
+      </details>
+      <details>
+        <summary>Tenho de pagar para enviar o pedido?</summary>
+        <p>Não. O pedido é gratuito para o cliente.</p>
+      </details>
+      <details>
+        <summary>Posso transportar apenas um objeto?</summary>
+        <p>Sim. Pode pedir transporte de móveis, eletrodomésticos, piano, caixas ou outros objetos individuais.</p>
+      </details>
+      <details>
+        <summary>É possível fazer transporte entre cidades?</summary>
+        <p>Sim. A CargoPT serve transportes locais e entre cidades em Portugal.</p>
+      </details></section>
+    <section class="section final-cta"><h2>Receba propostas para o seu transporte</h2><p>Descreva a tarefa uma vez — enviamos o pedido a transportadores adequados.</p><a class="button" href="#request">Receber propostas</a></section>
+  </main>
+
+  <footer class="site-footer"><strong>CargoPT</strong><span>Serviço de pedidos para mudanças e transporte em Portugal.</span><a href="mailto:hello@cargopt.pt">hello@cargopt.pt</a></footer>
+  <script src="/assets/js/landing.js" defer></script>
+</body>
+</html>
