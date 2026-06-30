@@ -497,6 +497,32 @@ class JobRepository:
         await self.session.flush()
         return declined
 
+    async def close_unselected_offers_by_job_except(
+        self,
+        job_id: int,
+        selected_offer_id: int,
+        responded_at,
+    ) -> list[JobOffer]:
+        offers = await self.list_offers_by_job(job_id)
+        closed: list[JobOffer] = []
+
+        for offer in offers:
+            if offer.id == selected_offer_id:
+                continue
+            if offer.status == "pending":
+                offer.status = "declined"
+            elif offer.status == "accepted":
+                offer.status = "cancelled"
+            else:
+                continue
+
+            offer.responded_at = responded_at
+            offer.updated_at = responded_at
+            closed.append(offer)
+
+        await self.session.flush()
+        return closed
+
     async def update_job_status(
         self,
         job_id: int,

@@ -366,6 +366,14 @@ class CarrierRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
+    async def get_vehicle_by_id(
+        self,
+        vehicle_id: int,
+    ) -> CarrierVehicle | None:
+        stmt = select(CarrierVehicle).where(CarrierVehicle.id == vehicle_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def search_available_vehicles(
         self,
         *,

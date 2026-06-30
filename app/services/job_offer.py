@@ -31,6 +31,10 @@ class JobAlreadyAssignedError(ValueError):
     pass
 
 
+class ClientOfferSelectionError(ValueError):
+    pass
+
+
 class JobOfferService:
     def __init__(self, repository: JobRepository) -> None:
         self.repository = repository
@@ -120,6 +124,47 @@ class JobOfferService:
             status=JobOfferStatus.DECLINED,
             responded_at=now,
         )
+
+    async def select_accepted_offer_for_client(
+        self,
+        *,
+        job_id: int,
+        offer_id: int,
+    ) -> JobOffer:
+        now = datetime.now(UTC)
+
+        offer = await self.repository.get_offer_by_id(offer_id)
+
+        if offer is None:
+            raise ClientOfferSelectionError("offer not found")
+
+        if offer.job_id != job_id:
+            raise ClientOfferSelectionError("offer does not belong to job")
+
+        if offer.status != JobOfferStatus.ACCEPTED:
+            raise ClientOfferSelectionError("offer is not accepted by carrier")
+
+        job = await self.repository.get_job_by_id(job_id)
+
+        if job is None:
+            raise ClientOfferSelectionError("job not found")
+
+        if job.status != JobStatus.OFFERED:
+            raise ClientOfferSelectionError("job is not awaiting client offer selection")
+
+        await self.repository.update_job_status(
+            job_id=job_id,
+            status=JobStatus.ASSIGNED_PENDING_CONFIRMATION,
+            updated_at=now,
+        )
+
+        await self.repository.close_unselected_offers_by_job_except(
+            job_id=job_id,
+            selected_offer_id=offer.id,
+            responded_at=now,
+        )
+
+        return offer
 
     async def accept_offer_and_assign_job(
         self,
