@@ -1,13 +1,15 @@
 :root {
-  --bg: #f7f7f4;
+  --bg: #f6f5f1;
   --panel: #ffffff;
-  --text: #121417;
-  --muted: #636a73;
-  --line: #e5e2da;
+  --text: #111318;
+  --muted: #616975;
+  --line: #e3dfd6;
   --brand: #111827;
-  --brand-soft: #eef0f3;
+  --brand-soft: #f0f1f4;
+  --surface: #fbfaf7;
   --radius: 24px;
   --shadow: 0 24px 70px rgba(17, 24, 39, 0.08);
+  --shadow-strong: 0 34px 90px rgba(17, 24, 39, 0.16);
 }
 
 * {
@@ -20,7 +22,9 @@ html {
 
 body {
   margin: 0;
-  background: var(--bg);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255,255,255,0.92), transparent 32%),
+    linear-gradient(180deg, #fbfaf7 0%, var(--bg) 38%, var(--bg) 100%);
   color: var(--text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.5;
@@ -39,16 +43,16 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 14px clamp(18px, 4vw, 52px);
-  background: rgba(247, 247, 244, 0.86);
-  border-bottom: 1px solid rgba(229, 226, 218, 0.75);
-  backdrop-filter: blur(16px);
+  padding: 12px clamp(18px, 4vw, 52px);
+  background: rgba(251, 250, 247, 0.88);
+  border-bottom: 1px solid rgba(227, 223, 214, 0.78);
+  backdrop-filter: blur(18px);
 }
 
 .logo {
-  font-size: 22px;
-  font-weight: 850;
-  letter-spacing: -0.04em;
+  font-size: 23px;
+  font-weight: 900;
+  letter-spacing: -0.055em;
 }
 
 .header-actions,
@@ -61,6 +65,7 @@ a {
 .nav-link {
   color: var(--muted);
   font-size: 15px;
+  font-weight: 650;
 }
 
 .button {
@@ -74,14 +79,19 @@ a {
   background: var(--brand);
   color: #fff;
   font: inherit;
-  font-weight: 750;
+  font-weight: 800;
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
 }
 
 .button:hover {
   transform: translateY(-1px);
   box-shadow: 0 12px 28px rgba(17, 24, 39, 0.16);
+}
+
+.button:disabled {
+  opacity: 0.62;
+  cursor: wait;
 }
 
 .button-small {
@@ -98,25 +108,29 @@ a {
 .section {
   width: min(1160px, calc(100% - 40px));
   margin: 0 auto;
-  padding: 72px 0;
+  padding: 70px 0;
 }
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(380px, 1.1fr);
+  grid-template-columns: minmax(0, 0.88fr) minmax(400px, 1.12fr);
   align-items: center;
-  gap: 42px;
-  min-height: calc(100vh - 69px);
-  padding-top: 34px;
-  padding-bottom: 46px;
+  gap: clamp(32px, 5vw, 64px);
+  min-height: calc(100vh - 65px);
+  padding-top: 26px;
+  padding-bottom: 42px;
+}
+
+.hero-copy {
+  max-width: 610px;
 }
 
 .eyebrow {
   margin: 0 0 14px;
   color: var(--muted);
-  font-size: 14px;
-  font-weight: 850;
-  letter-spacing: 0.08em;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.095em;
   text-transform: uppercase;
 }
 
@@ -128,10 +142,10 @@ p {
 }
 
 h1 {
-  max-width: 700px;
-  margin-bottom: 22px;
-  font-size: clamp(42px, 7vw, 76px);
-  line-height: 0.94;
+  max-width: 640px;
+  margin-bottom: 20px;
+  font-size: clamp(42px, 5.8vw, 64px);
+  line-height: 0.95;
   letter-spacing: -0.07em;
 }
 
@@ -153,31 +167,42 @@ h3 {
 .wide-text,
 .section-heading p,
 .final-cta p {
-  max-width: 720px;
+  max-width: 700px;
   color: var(--muted);
-  font-size: 20px;
+  font-size: 19px;
+}
+
+.hero-text {
+  margin-bottom: 28px;
 }
 
 .trust-list {
   display: grid;
-  gap: 10px;
-  margin-top: 28px;
+  gap: 12px;
+  margin-top: 0;
 }
 
 .trust-list span {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: var(--muted);
-  font-weight: 700;
+  gap: 11px;
+  color: #303741;
+  font-size: 17px;
+  font-weight: 750;
 }
 
 .trust-list span::before {
-  content: "";
-  width: 9px;
-  height: 9px;
+  content: "✓";
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: var(--brand);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 900;
+  flex: 0 0 auto;
 }
 
 .section-heading {
@@ -260,15 +285,27 @@ details p {
 
 .request-form {
   scroll-margin-top: 92px;
-  padding: clamp(22px, 4vw, 36px);
+  padding: clamp(26px, 4vw, 40px);
 }
 
 .hero-form {
+  position: relative;
   align-self: center;
+  border-radius: 32px;
+  box-shadow: var(--shadow-strong);
+}
+
+.hero-form::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: 34px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.85), rgba(17,24,39,0.12));
 }
 
 .progress {
-  margin-bottom: 24px;
+  margin-bottom: 22px;
 }
 
 .progress span {
@@ -279,7 +316,7 @@ details p {
 }
 
 .progress-bar {
-  height: 10px;
+  height: 9px;
   overflow: hidden;
   border-radius: 999px;
   background: var(--brand-soft);
@@ -302,10 +339,10 @@ fieldset {
 }
 
 legend {
-  margin-bottom: 8px;
-  font-size: 28px;
-  font-weight: 850;
-  letter-spacing: -0.045em;
+  margin-bottom: 7px;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: -0.055em;
 }
 
 .form-intro,
@@ -315,7 +352,7 @@ legend {
 }
 
 .form-intro {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .form-step {
@@ -324,20 +361,20 @@ legend {
 
 .form-step.is-active {
   display: grid;
-  gap: 16px;
+  gap: 15px;
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 15px;
 }
 
 label {
   display: grid;
-  gap: 8px;
+  gap: 7px;
   color: var(--muted);
-  font-weight: 750;
+  font-weight: 760;
 }
 
 input,
@@ -347,14 +384,14 @@ textarea {
   min-height: 50px;
   padding: 12px 14px;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 15px;
   background: #fff;
   color: var(--text);
   font: inherit;
 }
 
 textarea {
-  min-height: 102px;
+  min-height: 96px;
   resize: vertical;
 }
 
@@ -426,6 +463,48 @@ details p {
   color: var(--text);
 }
 
+@media (max-height: 820px) and (min-width: 921px) {
+  .hero {
+    align-items: start;
+    padding-top: 22px;
+  }
+
+  h1 {
+    font-size: clamp(40px, 5vw, 58px);
+  }
+
+  .hero-text {
+    font-size: 18px;
+    margin-bottom: 22px;
+  }
+
+  .trust-list {
+    gap: 9px;
+  }
+
+  .request-form {
+    padding: 28px;
+  }
+
+  legend {
+    font-size: 27px;
+  }
+
+  .form-step.is-active {
+    gap: 13px;
+  }
+
+  input,
+  select,
+  textarea {
+    min-height: 47px;
+  }
+
+  textarea {
+    min-height: 84px;
+  }
+}
+
 @media (max-width: 920px) {
   .hero {
     grid-template-columns: 1fr;
@@ -453,11 +532,15 @@ details p {
   }
 
   .hero {
-    padding-top: 28px;
+    padding-top: 26px;
   }
 
   h1 {
-    font-size: clamp(38px, 14vw, 58px);
+    font-size: clamp(38px, 14vw, 56px);
+  }
+
+  .hero-text {
+    font-size: 18px;
   }
 
   .form-grid {
