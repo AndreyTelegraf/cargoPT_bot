@@ -157,7 +157,7 @@ def main() -> None:
     assert "await message.delete()" in offer_response_source
     assert "_delete_message_by_id_safely" in assignment_source
     assert "bot.delete_message" in assignment_source
-    assert "send_job_offers_to_carriers" in comment_source
+    assert "send_job_offers_to_carriers" in offer_response_source
     assert "update_offer_carrier_message" in notification_source
     assert "build_offer_text" in notification_source
 

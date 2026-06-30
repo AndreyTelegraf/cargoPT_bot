@@ -6,7 +6,6 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery
 from aiogram.types import Message
 
-from app.bot.assignment_confirmation_keyboard import build_assignment_confirmation_keyboard
 from app.domain.job_status import JobStatus
 from app.db.session import async_session_maker
 from app.repositories.carrier import CarrierRepository
@@ -20,8 +19,6 @@ from app.services.job_matching import JobMatchingService
 from app.services.offer_distribution import OfferDistributionService
 from app.services.job_escalation import escalate_job_to_manual_review
 from app.services.offer_notification import send_job_offers_to_carriers
-from app.services.offer_notifications import build_client_notification_text
-from app.services.offer_notifications import build_carrier_notification_text
 
 router = Router()
 
@@ -84,37 +81,21 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
 
         if action == "accept":
             try:
-                accepted_offer = await offer_service.accept_offer_and_assign_job(offer_id)
+                accepted_offer = await offer_service.accept_offer_without_assignment(offer_id)
             except OfferAlreadyResolvedError:
                 await callback.answer("Этот оффер уже обработан.", show_alert=True)
                 await session.rollback()
                 return
             except JobAlreadyAssignedError:
-                await callback.answer("Заказ уже закреплён за другим перевозчиком.", show_alert=True)
+                await callback.answer("Заявка уже не принимает предложения.", show_alert=True)
                 await session.rollback()
                 return
 
             job = await job_repository.get_job_by_id(accepted_offer.job_id)
-            message_text = "Вы приняли заказ. Мы закрепили заявку за вами."
-
-            if job is not None:
-                confirmation_keyboard = build_assignment_confirmation_keyboard(job.id)
-                await callback.bot.send_message(
-                    chat_id=job.client_telegram_user_id,
-                    text=build_client_notification_text(job, carrier),
-                    parse_mode="HTML",
-                    reply_markup=confirmation_keyboard,
-                )
-                message_text = build_carrier_notification_text(job, carrier)
-
-                sibling_offers = await job_repository.list_offers_by_job(job.id)
-                sibling_offer_message_refs = [
-                    (sibling.carrier_message_chat_id, sibling.carrier_message_id)
-                    for sibling in sibling_offers
-                    if sibling.id != accepted_offer.id
-                    and sibling.carrier_message_chat_id is not None
-                    and sibling.carrier_message_id is not None
-                ]
+            message_text = (
+                "Спасибо. Ваш отклик отправлен. "
+                "Клиент получит предложения от перевозчиков и выберет подходящее."
+            )
         else:
             declined_offer = await offer_service.decline_offer(offer_id)
             message_text = "Вы отказались от заказа."
@@ -158,11 +139,11 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
         await session.commit()
 
     if callback.message:
-        if action == "accept" and job is not None:
+        if action == "accept":
             await _finalize_offer_message(
                 callback.message,
                 message_text,
-                reply_markup=build_assignment_confirmation_keyboard(job.id),
+                reply_markup=None,
             )
         else:
             await _delete_message_safely(callback.message)
