@@ -121,30 +121,25 @@ async def send_client_offer_selection_message(
     return True
 
 
+def build_client_assignment_confirmation_text(job_id: int) -> str:
+    return (
+        f"Предложение по заявке №{job_id} выбрано.\n\n"
+        "Подтвердите сделку после того, как договоритесь с перевозчиком."
+    )
+
+
 async def send_assignment_confirmation_requests(
     *,
     bot,
     job_id: int,
-    client_telegram_user_id: int | None,
     carrier_telegram_user_id: int | None,
 ) -> None:
     keyboard = build_assignment_confirmation_keyboard(job_id)
 
-    client_text = (
-        f"Предложение по заявке №{job_id} выбрано.\n\n"
-        "Подтвердите сделку после того, как договоритесь с перевозчиком."
-    )
     carrier_text = (
         f"Клиент выбрал ваше предложение по заявке №{job_id}.\n\n"
         "Свяжитесь с клиентом и подтвердите сделку после согласования деталей."
     )
-
-    if client_telegram_user_id is not None:
-        await bot.send_message(
-            chat_id=client_telegram_user_id,
-            text=client_text,
-            reply_markup=keyboard,
-        )
 
     if carrier_telegram_user_id is not None:
         await bot.send_message(
@@ -281,7 +276,6 @@ async def handle_client_offer_selection(callback: CallbackQuery) -> None:
 
     telegram_user_id = callback.from_user.id
 
-    client_telegram_user_id = None
     carrier_telegram_user_id = None
 
     async with async_session_maker() as session:
@@ -313,23 +307,21 @@ async def handle_client_offer_selection(callback: CallbackQuery) -> None:
             selected_offer.carrier_id
         )
 
-        client_telegram_user_id = job.client_telegram_user_id
         if selected_carrier is not None:
             carrier_telegram_user_id = selected_carrier.telegram_user_id
 
         await session.commit()
 
+    if callback.message:
+        await callback.message.edit_text(
+            build_client_assignment_confirmation_text(job_id),
+            reply_markup=build_assignment_confirmation_keyboard(job_id),
+        )
+
     await send_assignment_confirmation_requests(
         bot=callback.bot,
         job_id=job_id,
-        client_telegram_user_id=client_telegram_user_id,
         carrier_telegram_user_id=carrier_telegram_user_id,
     )
-
-    if callback.message:
-        await callback.message.edit_text(
-            f"Предложение выбрано. Заявка №{job_id} отправлена на подтверждение сделки.",
-            reply_markup=None,
-        )
 
     await callback.answer()
