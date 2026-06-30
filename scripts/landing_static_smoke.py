@@ -19,8 +19,10 @@ def main() -> None:
             "/assets/js/landing.js": "pageLocale",
             "/robots.txt": "Sitemap: https://cargopt.pt/sitemap.xml",
             "/sitemap.xml": "https://cargopt.pt/ru/",
-            "/llms.txt": "Russian: https://cargopt.pt/ru/",
+            "/llms.txt": "https://cargopt.pt/aeo.md",
             "/ai.txt": "CargoPT summary for AI assistants",
+            "/aeo.md": "CargoPT positions itself as Portugal",
+            "/knowledge.md": "Primary keywords",
             "/health": "ok",
         }
 

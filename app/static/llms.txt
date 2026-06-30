@@ -36,3 +36,7 @@ Important facts:
 
 Contact:
 hello@cargopt.pt
+
+Additional AI-readable files:
+- https://cargopt.pt/aeo.md
+- https://cargopt.pt/knowledge.md
