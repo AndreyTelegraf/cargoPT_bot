@@ -16,10 +16,10 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from app.domain.job_status import JobStatus
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
-from app.services.web_intake import WebIntakeAddress
-from app.services.web_intake import WebIntakeItem
-from app.services.web_intake import WebIntakeRequest
-from app.services.web_intake import WebIntakeService
+from app.services.request_intake import RequestIntakeAddress
+from app.services.request_intake import RequestIntakeInput
+from app.services.request_intake import RequestIntakeItem
+from app.services.request_intake import RequestIntakeService
 
 DATA_DIR = PROJECT_ROOT / ".tmp_web_intake_service_smoke"
 DATABASE_URL = "sqlite+aiosqlite:///.tmp_web_intake_service_smoke/cargopt_dev.db"
@@ -53,14 +53,14 @@ async def exercise_web_intake() -> None:
         job_repository = JobRepository(session)
         carrier_repository = CarrierRepository(session)
         bot = FakeBot()
-        service = WebIntakeService(
+        service = RequestIntakeService(
             job_repository=job_repository,
             carrier_repository=carrier_repository,
             bot=bot,
         )
 
-        result = await service.submit_web_request(
-            WebIntakeRequest(
+        result = await service.submit_web_intake(
+            RequestIntakeInput(
                 source_locale="ru",
                 customer_name="Web Client",
                 customer_email="client@example.test",
@@ -72,10 +72,10 @@ async def exercise_web_intake() -> None:
                 landing_version="v1",
                 requested_date=datetime(2026, 7, 1, 10, 0, tzinfo=UTC),
                 addresses=(
-                    WebIntakeAddress(kind="pickup", raw_text="Lisboa", floor=2, has_elevator=True),
-                    WebIntakeAddress(kind="dropoff", raw_text="Porto", floor=0, has_elevator=False),
+                    RequestIntakeAddress(kind="pickup", raw_text="Lisboa", floor=2, has_elevator=True),
+                    RequestIntakeAddress(kind="dropoff", raw_text="Porto", floor=0, has_elevator=False),
                 ),
-                items=(WebIntakeItem(description="Boxes", quantity=10),),
+                items=(RequestIntakeItem(description="Boxes", quantity=10),),
                 needs_tail_lift=False,
                 estimated_payload_kg=500,
                 estimated_volume_m3=3.0,
