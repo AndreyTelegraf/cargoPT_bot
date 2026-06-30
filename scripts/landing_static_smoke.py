@@ -24,6 +24,9 @@ def main() -> None:
             "/aeo.md": "CargoPT positions itself as Portugal",
             "/knowledge.md": "Primary keywords",
             "/humans.txt": "CargoPT",
+            "/mudancas-lisboa/": "Mudanças em Lisboa",
+            "/transporte-moveis-lisboa/": "Transporte de móveis em Lisboa",
+            "/mudancas-lisboa-porto/": "Mudanças de Lisboa para o Porto",
             "/.well-known/security.txt": "Contact:",
             "/health": "ok",
         }

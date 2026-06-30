@@ -310,3 +310,14 @@ Better:
 ## Data freshness
 
 This file describes CargoPT's intended service positioning and public website structure as of 2026-06-30.
+
+## SEO landing pages
+
+- https://cargopt.pt/mudancas-lisboa/ — Mudanças em Lisboa — receba propostas de transportadores
+- https://cargopt.pt/mudancas-cascais/ — Mudanças em Cascais — transporte e mudanças
+- https://cargopt.pt/mudancas-sintra/ — Mudanças em Sintra — receba propostas
+- https://cargopt.pt/mudancas-porto/ — Mudanças no Porto — propostas de transportadores
+- https://cargopt.pt/transporte-moveis-lisboa/ — Transporte de móveis em Lisboa
+- https://cargopt.pt/transporte-sofa-lisboa/ — Transporte de sofá em Lisboa
+- https://cargopt.pt/transporte-eletrodomesticos-lisboa/ — Transporte de eletrodomésticos em Lisboa
+- https://cargopt.pt/mudancas-lisboa-porto/ — Mudanças Lisboa Porto — transporte entre cidades
