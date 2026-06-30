@@ -18,7 +18,7 @@ def main() -> None:
             "/assets/css/landing.css": "locale-switcher",
             "/assets/js/landing.js": "pageLocale",
             "/robots.txt": "Sitemap: https://cargopt.pt/sitemap.xml",
-            "/sitemap.xml": "https://cargopt.pt/ru/",
+            "/sitemap.xml": "https://cargopt.pt/humans.txt",
             "/llms.txt": "https://cargopt.pt/aeo.md",
             "/ai.txt": "CargoPT summary for AI assistants",
             "/aeo.md": "CargoPT positions itself as Portugal",
