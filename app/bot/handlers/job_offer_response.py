@@ -10,6 +10,7 @@ from app.domain.job_status import JobStatus
 from app.db.session import async_session_maker
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
+from app.services.job_offer import ClientOfferSelectionError
 from app.services.job_offer import JobAlreadyAssignedError
 from app.services.job_offer import JobOfferService
 from app.services.job_offer import OfferAlreadyResolvedError
@@ -19,6 +20,9 @@ from app.services.job_matching import JobMatchingService
 from app.services.offer_distribution import OfferDistributionService
 from app.services.job_escalation import escalate_job_to_manual_review
 from app.services.offer_notification import send_job_offers_to_carriers
+from app.services.client_offer_presentation import ClientOfferPresentationService
+from app.bot.offer_keyboard import build_client_offer_selection_keyboard
+from app.bot.offer_keyboard import parse_client_offer_selection_callback
 
 router = Router()
 
@@ -51,6 +55,70 @@ async def _finalize_offer_message(message: Message, text: str, reply_markup=None
         return
 
     await message.edit_reply_markup(reply_markup=reply_markup)
+
+def _format_client_offer_value(value, suffix: str = "") -> str:
+    if value is None:
+        return "не указано"
+    return html.escape(f"{value}{suffix}", quote=False)
+
+
+def build_client_offer_selection_text(job_id: int, offers) -> str:
+    lines = [
+        f"<b>Перевозчики откликнулись на заявку №{job_id}</b>",
+        "",
+        "Выберите подходящее предложение:",
+    ]
+
+    for index, offer in enumerate(offers, start=1):
+        lines.extend(
+            [
+                "",
+                f"<b>Предложение {index}</b>",
+                f"Компания: {html.escape(offer.company_name, quote=False)}",
+                f"Машина: {html.escape(offer.vehicle_type, quote=False)}",
+                f"Грузоподъёмность: {_format_client_offer_value(offer.payload_kg, ' кг')}",
+                f"Объём: {_format_client_offer_value(offer.volume_m3, ' м³')}",
+                f"Грузчики: {_format_client_offer_value(offer.max_loaders)}",
+            ]
+        )
+
+        if offer.price_cents is not None:
+            lines.append(f"Цена: {offer.price_cents / 100:.2f} €")
+
+        if offer.carrier_note:
+            lines.append(f"Комментарий: {html.escape(offer.carrier_note, quote=False)}")
+
+    return "\n".join(lines)
+
+
+async def send_client_offer_selection_message(
+    *,
+    bot,
+    job,
+    job_repository: JobRepository,
+    carrier_repository: CarrierRepository,
+) -> bool:
+    if job is None or job.client_telegram_user_id is None:
+        return False
+
+    presentation = ClientOfferPresentationService(
+        job_repository=job_repository,
+        carrier_repository=carrier_repository,
+    )
+    views = await presentation.list_accepted_offer_views(job.id)
+
+    if not views:
+        return False
+
+    await bot.send_message(
+        chat_id=job.client_telegram_user_id,
+        text=build_client_offer_selection_text(job.id, views),
+        reply_markup=build_client_offer_selection_keyboard(views),
+        parse_mode="HTML",
+    )
+
+    return True
+
 
 @router.callback_query(F.data.startswith("offer:"))
 async def handle_offer_response(callback: CallbackQuery) -> None:
@@ -92,6 +160,13 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
                 return
 
             job = await job_repository.get_job_by_id(accepted_offer.job_id)
+            if job is not None:
+                await send_client_offer_selection_message(
+                    bot=callback.bot,
+                    job=job,
+                    job_repository=job_repository,
+                    carrier_repository=carrier_repository,
+                )
             message_text = (
                 "Спасибо. Ваш отклик отправлен. "
                 "Клиент получит предложения от перевозчиков и выберет подходящее."
@@ -153,6 +228,49 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
             callback.bot,
             chat_id=chat_id,
             message_id=message_id,
+        )
+
+    await callback.answer()
+
+@router.callback_query(F.data.startswith("client_offer:"))
+async def handle_client_offer_selection(callback: CallbackQuery) -> None:
+    try:
+        job_id, offer_id = parse_client_offer_selection_callback(callback.data or "")
+    except ValueError:
+        await callback.answer("Некорректная кнопка", show_alert=True)
+        return
+
+    telegram_user_id = callback.from_user.id
+
+    async with async_session_maker() as session:
+        job_repository = JobRepository(session)
+        offer_service = JobOfferService(job_repository)
+
+        job = await job_repository.get_job_by_id(job_id)
+
+        if job is None:
+            await callback.answer("Заявка не найдена.", show_alert=True)
+            return
+
+        if job.client_telegram_user_id != telegram_user_id:
+            await callback.answer("Эта кнопка не для вас.", show_alert=True)
+            return
+
+        try:
+            await offer_service.select_accepted_offer_for_client(
+                job_id=job_id,
+                offer_id=offer_id,
+            )
+        except ClientOfferSelectionError:
+            await session.rollback()
+            await callback.answer("Предложение уже недоступно.", show_alert=True)
+            return
+
+        await session.commit()
+
+    if callback.message:
+        await callback.message.edit_text(
+            f"Предложение выбрано. Заявка №{job_id} отправлена на подтверждение сделки.",
         )
 
     await callback.answer()
