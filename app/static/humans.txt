@@ -1,0 +1,23 @@
+CargoPT
+
+Project:
+CargoPT — Moving and transport request aggregator for Portugal.
+
+Website:
+https://cargopt.pt/
+
+Primary locale:
+European Portuguese
+
+Other locales:
+https://cargopt.pt/en/
+https://cargopt.pt/ru/
+
+Machine-readable resources:
+https://cargopt.pt/llms.txt
+https://cargopt.pt/ai.txt
+https://cargopt.pt/aeo.md
+https://cargopt.pt/knowledge.md
+
+Generated:
+2026-06-30

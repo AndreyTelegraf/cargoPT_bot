@@ -1,0 +1,5 @@
+Contact: mailto:hello@cargopt.pt
+Preferred-Languages: en, pt-PT
+Canonical: https://cargopt.pt/.well-known/security.txt
+Policy: https://cargopt.pt/
+Expires: 2027-12-31T23:59:59Z

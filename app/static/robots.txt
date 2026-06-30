@@ -2,3 +2,11 @@ User-agent: *
 Allow: /
 
 Sitemap: https://cargopt.pt/sitemap.xml
+
+# AI-readable resources
+Allow: /llms.txt
+Allow: /ai.txt
+Allow: /aeo.md
+Allow: /knowledge.md
+Allow: /humans.txt
+Allow: /.well-known/security.txt

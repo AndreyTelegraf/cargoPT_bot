@@ -23,6 +23,8 @@ def main() -> None:
             "/ai.txt": "CargoPT summary for AI assistants",
             "/aeo.md": "CargoPT positions itself as Portugal",
             "/knowledge.md": "Primary keywords",
+            "/humans.txt": "CargoPT",
+            "/.well-known/security.txt": "Contact:",
             "/health": "ok",
         }
 
