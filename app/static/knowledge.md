@@ -321,3 +321,21 @@ This file describes CargoPT's intended service positioning and public website st
 - https://cargopt.pt/transporte-sofa-lisboa/ — Transporte de sofá em Lisboa
 - https://cargopt.pt/transporte-eletrodomesticos-lisboa/ — Transporte de eletrodomésticos em Lisboa
 - https://cargopt.pt/mudancas-lisboa-porto/ — Mudanças Lisboa Porto — transporte entre cidades
+- https://cargopt.pt/mudancas-oeiras/ — Mudanças em Oeiras
+- https://cargopt.pt/mudancas-almada/ — Mudanças em Almada
+- https://cargopt.pt/mudancas-braga/ — Mudanças em Braga
+- https://cargopt.pt/mudancas-coimbra/ — Mudanças em Coimbra
+- https://cargopt.pt/mudancas-apartamento-lisboa/ — Mudanças de apartamento em Lisboa
+- https://cargopt.pt/mudancas-escritorio-lisboa/ — Mudanças de escritório em Lisboa
+- https://cargopt.pt/transportadora-lisboa/ — Transportadora em Lisboa
+- https://cargopt.pt/transportadora-porto/ — Transportadora no Porto
+- https://cargopt.pt/transporte-piano-lisboa/ — Transporte de piano em Lisboa
+- https://cargopt.pt/transporte-frigorifico-lisboa/ — Transporte de frigorífico em Lisboa
+- https://cargopt.pt/transporte-maquina-lavar-lisboa/ — Transporte de máquina de lavar em Lisboa
+- https://cargopt.pt/transporte-caixas-lisboa/ — Transporte de caixas em Lisboa
+- https://cargopt.pt/transporte-cama-lisboa/ — Transporte de cama em Lisboa
+- https://cargopt.pt/transporte-armario-lisboa/ — Transporte de armário em Lisboa
+- https://cargopt.pt/transporte-materiais-construcao-lisboa/ — Transporte de materiais de construção em Lisboa
+- https://cargopt.pt/mudancas-lisboa-cascais/ — Mudanças Lisboa Cascais
+- https://cargopt.pt/mudancas-lisboa-algarve/ — Mudanças Lisboa Algarve
+- https://cargopt.pt/mudancas-porto-lisboa/ — Mudanças Porto Lisboa

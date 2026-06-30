@@ -574,3 +574,20 @@ details p {
 .locale-switcher a:hover {
   color: var(--text);
 }
+
+.chips a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.chips a:hover {
+  color: var(--text);
+  border-color: var(--text);
+}

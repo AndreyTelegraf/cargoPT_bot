@@ -27,6 +27,9 @@ def main() -> None:
             "/mudancas-lisboa/": "Mudanças em Lisboa",
             "/transporte-moveis-lisboa/": "Transporte de móveis em Lisboa",
             "/mudancas-lisboa-porto/": "Mudanças de Lisboa para o Porto",
+            "/mudancas-oeiras/": "Mudanças em Oeiras",
+            "/transporte-piano-lisboa/": "Transporte de piano em Lisboa",
+            "/": "popular-services",
             "/.well-known/security.txt": "Contact:",
             "/health": "ok",
         }
