@@ -192,8 +192,11 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
 
     if callback.message:
         try:
-            await callback.message.edit_reply_markup(reply_markup=None)
+            await callback.message.edit_text(result_text, reply_markup=None)
         except TelegramBadRequest:
-            pass
+            try:
+                await callback.message.edit_reply_markup(reply_markup=None)
+            except TelegramBadRequest:
+                pass
 
     await callback.answer(result_text, show_alert=True)
