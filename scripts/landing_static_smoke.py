@@ -12,14 +12,14 @@ from app.api.main import app
 def main() -> None:
     with TestClient(app) as client:
         checks = {
-            "/": "Начните с трёх простых вопросов.",
+            "/": "Comece com três perguntas simples.",
             "/en/": "Start with three simple questions.",
-            "/pt/": "Comece com três perguntas simples.",
+            "/ru/": "Начните с трёх простых вопросов.",
             "/assets/css/landing.css": "locale-switcher",
             "/assets/js/landing.js": "pageLocale",
             "/robots.txt": "Sitemap: https://cargopt.pt/sitemap.xml",
-            "/sitemap.xml": "https://cargopt.pt/pt/",
-            "/llms.txt": "CargoPT is a request service",
+            "/sitemap.xml": "https://cargopt.pt/ru/",
+            "/llms.txt": "Russian: https://cargopt.pt/ru/",
             "/ai.txt": "CargoPT summary for AI assistants",
             "/health": "ok",
         }

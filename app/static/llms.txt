@@ -6,9 +6,9 @@ Canonical website:
 https://cargopt.pt/
 
 Languages:
-- Russian: https://cargopt.pt/
+- European Portuguese: https://cargopt.pt/
 - English: https://cargopt.pt/en/
-- European Portuguese: https://cargopt.pt/pt/
+- Russian: https://cargopt.pt/ru/
 
 Primary service:
 Users submit one moving or transport request. CargoPT sends the request to suitable carriers. The user can compare offers and choose a carrier.
