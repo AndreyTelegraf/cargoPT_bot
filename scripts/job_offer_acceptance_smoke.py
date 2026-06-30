@@ -141,3 +141,8 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+source = Path("app/services/job_offer.py").read_text(encoding="utf-8")
+assert "accept_offer_without_assignment" in source
+assert "decline_pending_offers_by_job_except" not in source[source.index("async def accept_offer_without_assignment"):source.index("async def accept_offer_and_assign_job")]
+assert "status=JobStatus.OFFERED" in source[source.index("async def accept_offer_without_assignment"):source.index("async def accept_offer_and_assign_job")]

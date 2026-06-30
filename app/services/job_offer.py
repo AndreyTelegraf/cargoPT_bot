@@ -73,6 +73,43 @@ class JobOfferService:
             responded_at=now,
         )
 
+    async def accept_offer_without_assignment(
+        self,
+        offer_id: int,
+    ) -> JobOffer:
+        now = datetime.now(UTC)
+
+        offer = await self.repository.get_offer_by_id(offer_id)
+
+        if offer is None:
+            raise ValueError("offer not found")
+
+        if offer.status != JobOfferStatus.PENDING:
+            raise OfferAlreadyResolvedError("offer already resolved")
+
+        job = await self.repository.get_job_by_id(offer.job_id)
+
+        if job is None:
+            raise ValueError("job not found")
+
+        if job.status not in {
+            JobStatus.MATCHING,
+            JobStatus.OFFERED,
+        }:
+            raise JobAlreadyAssignedError("job is not accepting offers")
+
+        offer.status = JobOfferStatus.ACCEPTED
+        offer.responded_at = now
+        offer.updated_at = now
+
+        await self.repository.update_job_status(
+            job_id=offer.job_id,
+            status=JobStatus.OFFERED,
+            updated_at=now,
+        )
+
+        return offer
+
     async def decline_offer(
         self,
         offer_id: int,
