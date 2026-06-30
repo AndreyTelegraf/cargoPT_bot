@@ -6,6 +6,8 @@ from app.domain.job_status import JobStatus
 from app.models.job import Job
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
+from app.services.request_creation import RequestCreationService
+from app.services.request_creation import WebDraftInput
 from app.services.request_submission import RequestSubmissionResult
 from app.services.request_submission import RequestSubmissionService
 from app.services.request_update import RequestUpdateService
@@ -63,41 +65,29 @@ class WebIntakeService:
         self.bot = bot
 
     async def submit_web_request(self, request: WebIntakeRequest) -> RequestSubmissionResult:
-        now = datetime.now(UTC)
-        job = Job(
-            client_telegram_user_id=None,
-            client_telegram_username=None,
-            source="web_form",
-            source_locale=request.source_locale,
-            customer_name=request.customer_name,
-            customer_email=request.customer_email,
-            preferred_contact=request.preferred_contact,
-            client_phone=request.client_phone,
-            client_whatsapp=request.client_whatsapp,
-            utm_source=request.utm_source,
-            utm_campaign=request.utm_campaign,
-            landing_version=request.landing_version,
-            status=JobStatus.DRAFT,
-            requested_date=request.requested_date,
-            assigned_at=None,
-            started_at=None,
-            completed_at=None,
-            cancelled_at=None,
-            client_confirmation_status=None,
-            carrier_confirmation_status=None,
-            needs_assembly=request.needs_assembly,
-            needs_packing=request.needs_packing,
-            needs_tail_lift=request.needs_tail_lift,
-            needs_crane=request.needs_crane,
-            needs_mobile_lift=request.needs_mobile_lift,
-            required_loaders=request.required_loaders,
-            estimated_payload_kg=request.estimated_payload_kg,
-            estimated_volume_m3=request.estimated_volume_m3,
-            comment=None,
-            created_at=now,
-            updated_at=now,
+        creation = RequestCreationService(job_repository=self.job_repository)
+        job = await creation.create_web_draft(
+            WebDraftInput(
+                source_locale=request.source_locale,
+                customer_name=request.customer_name,
+                customer_email=request.customer_email,
+                preferred_contact=request.preferred_contact,
+                client_phone=request.client_phone,
+                client_whatsapp=request.client_whatsapp,
+                utm_source=request.utm_source,
+                utm_campaign=request.utm_campaign,
+                landing_version=request.landing_version,
+                requested_date=request.requested_date,
+                needs_assembly=request.needs_assembly,
+                needs_packing=request.needs_packing,
+                needs_tail_lift=request.needs_tail_lift,
+                needs_crane=request.needs_crane,
+                needs_mobile_lift=request.needs_mobile_lift,
+                required_loaders=request.required_loaders,
+                estimated_payload_kg=request.estimated_payload_kg,
+                estimated_volume_m3=request.estimated_volume_m3,
+            )
         )
-        job = await self.job_repository.create_job(job)
 
         update_service = RequestUpdateService(job_repository=self.job_repository)
         for address_payload in request.addresses:

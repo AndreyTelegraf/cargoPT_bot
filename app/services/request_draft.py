@@ -5,6 +5,8 @@ from datetime import datetime
 from app.domain.job_status import JobStatus
 from app.models.job import Job
 from app.repositories.job import JobRepository
+from app.services.request_creation import RequestCreationService
+from app.services.request_creation import TelegramDraftInput
 
 
 class ClientBannedError(ValueError):
@@ -62,33 +64,13 @@ class RequestDraftService:
                 reused_existing_draft=True,
             )
 
-        now = datetime.now(UTC)
-        job = Job(
-            client_telegram_user_id=client_telegram_user_id,
-            client_telegram_username=client_telegram_username,
-            client_phone=None,
-            client_whatsapp=None,
-            status=JobStatus.DRAFT,
-            requested_date=None,
-            assigned_at=None,
-            started_at=None,
-            completed_at=None,
-            cancelled_at=None,
-            client_confirmation_status=None,
-            carrier_confirmation_status=None,
-            needs_assembly=False,
-            needs_packing=False,
-            needs_tail_lift=False,
-            needs_crane=False,
-            needs_mobile_lift=False,
-            required_loaders=None,
-            estimated_payload_kg=None,
-            estimated_volume_m3=None,
-            comment=None,
-            created_at=now,
-            updated_at=now,
+        creation = RequestCreationService(job_repository=self.job_repository)
+        job = await creation.create_telegram_draft(
+            TelegramDraftInput(
+                client_telegram_user_id=client_telegram_user_id,
+                client_telegram_username=client_telegram_username,
+            )
         )
-        job = await self.job_repository.create_job(job)
 
         return RequestDraftResult(
             job=job,
