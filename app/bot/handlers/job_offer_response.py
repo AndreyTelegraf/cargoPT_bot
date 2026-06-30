@@ -329,6 +329,7 @@ async def handle_client_offer_selection(callback: CallbackQuery) -> None:
     if callback.message:
         await callback.message.edit_text(
             f"Предложение выбрано. Заявка №{job_id} отправлена на подтверждение сделки.",
+            reply_markup=None,
         )
 
     await callback.answer()
