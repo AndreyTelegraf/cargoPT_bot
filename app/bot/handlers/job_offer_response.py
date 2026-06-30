@@ -23,6 +23,7 @@ from app.services.offer_notification import send_job_offers_to_carriers
 from app.services.client_offer_presentation import ClientOfferPresentationService
 from app.bot.offer_keyboard import build_client_offer_selection_keyboard
 from app.bot.offer_keyboard import parse_client_offer_selection_callback
+from app.bot.assignment_confirmation_keyboard import build_assignment_confirmation_keyboard
 
 router = Router()
 
@@ -118,6 +119,39 @@ async def send_client_offer_selection_message(
     )
 
     return True
+
+
+async def send_assignment_confirmation_requests(
+    *,
+    bot,
+    job_id: int,
+    client_telegram_user_id: int | None,
+    carrier_telegram_user_id: int | None,
+) -> None:
+    keyboard = build_assignment_confirmation_keyboard(job_id)
+
+    client_text = (
+        f"Предложение по заявке №{job_id} выбрано.\n\n"
+        "Подтвердите сделку после того, как договоритесь с перевозчиком."
+    )
+    carrier_text = (
+        f"Клиент выбрал ваше предложение по заявке №{job_id}.\n\n"
+        "Свяжитесь с клиентом и подтвердите сделку после согласования деталей."
+    )
+
+    if client_telegram_user_id is not None:
+        await bot.send_message(
+            chat_id=client_telegram_user_id,
+            text=client_text,
+            reply_markup=keyboard,
+        )
+
+    if carrier_telegram_user_id is not None:
+        await bot.send_message(
+            chat_id=carrier_telegram_user_id,
+            text=carrier_text,
+            reply_markup=keyboard,
+        )
 
 
 @router.callback_query(F.data.startswith("offer:"))
@@ -242,8 +276,12 @@ async def handle_client_offer_selection(callback: CallbackQuery) -> None:
 
     telegram_user_id = callback.from_user.id
 
+    client_telegram_user_id = None
+    carrier_telegram_user_id = None
+
     async with async_session_maker() as session:
         job_repository = JobRepository(session)
+        carrier_repository = CarrierRepository(session)
         offer_service = JobOfferService(job_repository)
 
         job = await job_repository.get_job_by_id(job_id)
@@ -257,7 +295,7 @@ async def handle_client_offer_selection(callback: CallbackQuery) -> None:
             return
 
         try:
-            await offer_service.select_accepted_offer_for_client(
+            selected_offer = await offer_service.select_accepted_offer_for_client(
                 job_id=job_id,
                 offer_id=offer_id,
             )
@@ -266,7 +304,22 @@ async def handle_client_offer_selection(callback: CallbackQuery) -> None:
             await callback.answer("Предложение уже недоступно.", show_alert=True)
             return
 
+        selected_carrier = await carrier_repository.get_carrier_by_id(
+            selected_offer.carrier_id
+        )
+
+        client_telegram_user_id = job.client_telegram_user_id
+        if selected_carrier is not None:
+            carrier_telegram_user_id = selected_carrier.telegram_user_id
+
         await session.commit()
+
+    await send_assignment_confirmation_requests(
+        bot=callback.bot,
+        job_id=job_id,
+        client_telegram_user_id=client_telegram_user_id,
+        carrier_telegram_user_id=carrier_telegram_user_id,
+    )
 
     if callback.message:
         await callback.message.edit_text(
