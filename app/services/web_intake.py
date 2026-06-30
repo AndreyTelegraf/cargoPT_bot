@@ -1,17 +1,5 @@
 from dataclasses import dataclass
-from datetime import UTC
 from datetime import datetime
-
-from app.domain.job_status import JobStatus
-from app.models.job import Job
-from app.repositories.carrier import CarrierRepository
-from app.repositories.job import JobRepository
-from app.services.request_intake import RequestIntakeAddress
-from app.services.request_intake import RequestIntakeInput
-from app.services.request_intake import RequestIntakeItem
-from app.services.request_intake import RequestIntakeService
-from app.services.request_submission import RequestSubmissionResult
-
 
 @dataclass(frozen=True)
 class WebIntakeAddress:
@@ -20,12 +8,10 @@ class WebIntakeAddress:
     floor: int | None = None
     has_elevator: bool | None = None
 
-
 @dataclass(frozen=True)
 class WebIntakeItem:
     description: str
     quantity: int | None = None
-
 
 @dataclass(frozen=True)
 class WebIntakeRequest:
