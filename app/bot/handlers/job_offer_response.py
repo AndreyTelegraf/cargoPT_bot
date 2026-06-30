@@ -194,7 +194,12 @@ async def handle_offer_response(callback: CallbackQuery) -> None:
                 return
 
             job = await job_repository.get_job_by_id(accepted_offer.job_id)
-            if job is not None:
+            accepted_offers = await job_repository.list_offers_by_job(accepted_offer.job_id)
+            accepted_offer_count = sum(
+                1 for sibling in accepted_offers
+                if sibling.status == "accepted"
+            )
+            if job is not None and accepted_offer_count == 1:
                 await send_client_offer_selection_message(
                     bot=callback.bot,
                     job=job,
