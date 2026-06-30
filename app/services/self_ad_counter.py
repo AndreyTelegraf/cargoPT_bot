@@ -1,4 +1,5 @@
 import json
+import logging
 from asyncio import Lock
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,7 @@ SELF_AD_TARGETS = {
 }
 
 _lock = Lock()
+logger = logging.getLogger(__name__)
 
 
 def _state_path() -> Path:
@@ -62,7 +64,9 @@ def _message_target_key(message: Any) -> str | None:
     if not settings.self_ad_enabled:
         return None
 
-    text = getattr(message, "text", None)
+    raw_text = getattr(message, "text", None)
+    raw_caption = getattr(message, "caption", None)
+    text = raw_text if isinstance(raw_text, str) else raw_caption
     if not isinstance(text, str) or not text.strip():
         return None
 
@@ -99,6 +103,13 @@ async def process_self_ad_message(message: Any) -> bool:
         count = counts.get(target_key, 0) + 1
         counts[target_key] = count
         should_post = count % settings.self_ad_every_n == 0
+        logger.info(
+            "SELF_AD_COUNT target=%s count=%s every_n=%s should_post=%s",
+            target_key,
+            count,
+            settings.self_ad_every_n,
+            should_post,
+        )
         _save_counts(counts)
 
     if should_post:

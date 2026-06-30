@@ -11,8 +11,16 @@ from app.services import self_ad_counter
 
 
 class FakeMessage:
-    def __init__(self, *, text="hello", topic_id=429, username="baraholka_pt"):
+    def __init__(
+        self,
+        *,
+        text="hello",
+        caption=None,
+        topic_id=429,
+        username="baraholka_pt",
+    ):
         self.text = text
+        self.caption = caption
         self.message_thread_id = topic_id
         self.chat = SimpleNamespace(username=username)
         self.from_user = SimpleNamespace(is_bot=False)
@@ -53,6 +61,18 @@ async def main():
             posted = await self_ad_counter.process_self_ad_message(msg)
             assert posted is True
             assert len(msg.sent) == 1
+
+            for _ in range(8):
+                msg = FakeMessage(text=None, caption="captioned media")
+                posted = await self_ad_counter.process_self_ad_message(msg)
+                assert posted is False
+                assert msg.sent == []
+
+            msg = FakeMessage(text=None, caption="captioned media")
+            posted = await self_ad_counter.process_self_ad_message(msg)
+            assert posted is True
+            assert len(msg.sent) == 1
+
 
             wrong_topic = FakeMessage(topic_id=430)
             posted = await self_ad_counter.process_self_ad_message(wrong_topic)
