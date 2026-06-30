@@ -8,13 +8,21 @@ from aiogram.types import CallbackQuery
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.types import Message
 from aiogram.types import ReplyKeyboardRemove
+from sqlalchemy import select
 
 from app.bot.handlers.carrier_invite_admin import ADMIN_TELEGRAM_USER_IDS
 from app.bot.states.carrier_onboarding import CarrierOnboardingStates
 from app.db.session import async_session_maker
 from app.domain.carrier_status import CarrierStatus
 from app.repositories.carrier import CarrierRepository
+from app.repositories.job import JobRepository
+from app.models.job import Job
 from app.services.carrier_onboarding import CarrierOnboardingService
+from app.services.carrier_search import CarrierSearchService
+from app.services.job_matching import JobMatchingService
+from app.services.job_offer import JobOfferService
+from app.services.offer_distribution import OfferDistributionService
+from app.services.offer_notification import send_job_offers_to_carriers
 
 router = Router()
 
@@ -133,6 +141,75 @@ async def submit_carrier_to_moderation(
     )
 
 
+async def redispatch_open_jobs_to_new_carrier(
+    *,
+    bot,
+    session,
+) -> tuple[int, int]:
+    job_repository = JobRepository(session)
+    carrier_repository = CarrierRepository(session)
+
+    distribution = OfferDistributionService(
+        matching_service=JobMatchingService(
+            CarrierSearchService(carrier_repository)
+        ),
+        offer_service=JobOfferService(job_repository),
+        job_repository=job_repository,
+    )
+
+    stmt = (
+        select(Job)
+        .where(
+            Job.status.in_(
+                (
+                    "ready_for_matching",
+                    "matching",
+                    "offered",
+                    "manual_review_required",
+                    "offers_exhausted",
+                    "expired_without_response",
+                    "no_carriers_found",
+                )
+            )
+        )
+        .order_by(Job.requested_date.is_(None), Job.requested_date, Job.id)
+    )
+    result = await session.execute(stmt)
+    jobs = list(result.scalars().all())
+
+    created_total = 0
+    sent_total = 0
+
+    for job in jobs:
+        previous_status = job.status
+
+        offers = await distribution.create_offers_for_job(
+            job,
+            limit=None,
+            expires_in_minutes=60,
+        )
+
+        if not offers:
+            await job_repository.update_job_status(
+                job_id=job.id,
+                status=previous_status,
+                updated_at=job.updated_at,
+            )
+            continue
+
+        created_total += len(offers)
+
+        sent_total += await send_job_offers_to_carriers(
+            bot=bot,
+            job=job,
+            offers=offers,
+            job_repository=job_repository,
+            carrier_repository=carrier_repository,
+        )
+
+    return created_total, sent_total
+
+
 def build_carrier_decision_notification(*, approved: bool) -> str:
     if approved:
         return (
@@ -214,9 +291,16 @@ async def carrier_moderation_action(callback: CallbackQuery) -> None:
             )
             return
 
+        redispatch_created = 0
+        redispatch_sent = 0
+
         if action == "approve":
             carrier = await service.approve_carrier(carrier_id)
             approved = True
+            redispatch_created, redispatch_sent = await redispatch_open_jobs_to_new_carrier(
+                bot=callback.bot,
+                session=session,
+            )
         else:
             carrier = await service.reject_carrier(carrier_id)
             approved = False
@@ -242,6 +326,11 @@ async def carrier_moderation_action(callback: CallbackQuery) -> None:
             parse_mode="HTML",
         )
 
-    await callback.answer(
-        "Анкета одобрена." if approved else "Анкета отклонена."
-    )
+    if approved and redispatch_created:
+        await callback.answer(
+            f"Анкета одобрена. Новые офферы: {redispatch_created}, отправлено: {redispatch_sent}."
+        )
+    else:
+        await callback.answer(
+            "Анкета одобрена." if approved else "Анкета отклонена."
+        )

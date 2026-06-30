@@ -6,7 +6,10 @@ repo_source = Path("app/repositories/job.py").read_text(encoding="utf-8")
 
 assert "list_offer_carrier_ids_by_job" in repo_source
 assert "existing_carrier_ids = await self.job_repository.list_offer_carrier_ids_by_job(job.id)" in distribution_source
-assert "if vehicle.carrier_id not in existing_carrier_ids" in distribution_source
+assert "selected_carrier_ids = set(existing_carrier_ids)" in distribution_source
+assert "if vehicle.carrier_id in selected_carrier_ids:" in distribution_source
+assert "continue" in distribution_source
+assert "selected_carrier_ids.add(vehicle.carrier_id)" in distribution_source
 
 assert "process_assignment_failure_redispatch" in assignment_source
 assert "send_job_offers_to_carriers" in assignment_source
