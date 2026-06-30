@@ -8,9 +8,11 @@ from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
 from app.services.request_creation import RequestCreationService
 from app.services.request_creation import WebDraftInput
+from app.services.request_population import RequestPopulationAddress
+from app.services.request_population import RequestPopulationItem
+from app.services.request_population import RequestPopulationService
 from app.services.request_submission import RequestSubmissionResult
 from app.services.request_submission import RequestSubmissionService
-from app.services.request_update import RequestUpdateService
 
 
 @dataclass(frozen=True)
@@ -89,26 +91,26 @@ class WebIntakeService:
             )
         )
 
-        update_service = RequestUpdateService(job_repository=self.job_repository)
-        for address_payload in request.addresses:
-            address = await update_service.add_address(
-                job_id=job.id,
-                kind=address_payload.kind,
-                raw_text=address_payload.raw_text,
-            )
-            if address_payload.floor is not None or address_payload.has_elevator is not None:
-                await update_service.update_address_details(
-                    address_id=address.id,
-                    floor=address_payload.floor,
-                    has_elevator=address_payload.has_elevator,
+        population = RequestPopulationService(job_repository=self.job_repository)
+        await population.populate(
+            job_id=job.id,
+            addresses=tuple(
+                RequestPopulationAddress(
+                    kind=address.kind,
+                    raw_text=address.raw_text,
+                    floor=address.floor,
+                    has_elevator=address.has_elevator,
                 )
-
-        for item_payload in request.items:
-            await update_service.add_item(
-                job_id=job.id,
-                description=item_payload.description,
-                quantity=item_payload.quantity,
-            )
+                for address in request.addresses
+            ),
+            items=tuple(
+                RequestPopulationItem(
+                    description=item.description,
+                    quantity=item.quantity,
+                )
+                for item in request.items
+            ),
+        )
 
         submission_service = RequestSubmissionService(
             job_repository=self.job_repository,
