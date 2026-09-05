@@ -16,16 +16,16 @@
   "eyebrow": "Refrigerator transport",
   "hero_description": "Transport requires preparation, adequate protection, tilt control and a route compatible with the dimensions of the refrigerator.",
   "date_published": "2026-07-24",
-  "date_modified": "2026-07-24",
-  "review_owner": "CargoPT",
+  "date_modified": "2026-09-05",
+  "review_owner": "CargoPT Editorial Team",
   "direct_answer_heading": "Transport the refrigerator empty, protected and as vertical as possible",
   "key_points_heading": "Main care",
   "faq_heading": "Refrigerator Transport Questions",
   "related_links_heading": "Guides and related services",
-  "direct_answer": "To transport a refrigerator, empty, defrost and dry the equipment. Remove or secure moving components, protect doors and surfaces, and plan the route to the vehicle. The device must remain as vertical as possible and be immobilized in the vehicle. After a significant tilt, follow the manufacturer's instructions before turning it back on.",
+  "direct_answer": "To transport a refrigerator, empty it, switch it off, defrost it and dry it completely. Remove or secure shelves, drawers, cables and other moving parts. Measure the appliance, doors, lifts, corridors and stairs before the job; protect its surfaces and plan the route to the vehicle. Keep the refrigerator as upright as possible while moving it and secure it so it cannot shift. If it was tilted significantly, check the model manual and follow the manufacturer's stated waiting time before switching it on again.",
   "key_points": [
     "Prepare and completely dry equipment.",
-    "Measure the refrigerator and all points along the route.",
+    "Measure the refrigerator and every point along the route; also send access photos.",
     "Use helpers and means appropriate to the weight.",
     "Keep the device as vertical as possible.",
     "Attach it to the vehicle and follow the manual before starting it."
@@ -104,11 +104,26 @@
         "Place the refrigerator in its final location, check that it is stable and confirm that cables and tubes have not been trapped or damaged.",
         "Do not automatically turn it on right after arrival if it has been tilted. Consult the manufacturer's instructions and respect the period indicated for the model."
       ]
+    },
+    {
+      "id": "comparable-request",
+      "heading": "How to prepare a comparable request",
+      "paragraphs": [
+        "To help carriers assess the same job, provide the route, refrigerator model and dimensions, photos, floors, lifts, stairs, parking distance and whether you need helpers, packing or installation.",
+        "In an anonymised internal review of 77 requests submitted through the CargoPT form from 28 June to 2 September 2026, 102 pickup or delivery addresses were above ground level and 27 were marked as having no lift. The sample covers several transport types: it illustrates why access details matter, but does not predict price or guarantee offers."
+      ],
+      "checklist": [
+        "Addresses and preferred date or time window.",
+        "Refrigerator make, model and dimensions.",
+        "Photos of the appliance and access points.",
+        "Floors, lifts, stairs and parking distance.",
+        "Required helpers and additional tasks."
+      ]
     }
   ],
   "mid_cta": {
     "heading": "Plan the transport of the refrigerator",
-    "text": "Send dimensions, photographs, route and access to receive quotes prepared for the service.",
+    "text": "Send dimensions, photos, route and access. If suitable carriers are available, you can compare any offers received.",
     "label": "Describe transportation",
     "href": "/#request"
   },
@@ -157,9 +172,9 @@
     }
   ],
   "final_cta": {
-    "heading": "Compare offers for transporting the refrigerator",
-    "text": "Describe the equipment and access to find conveyors suitable for the job.",
-    "label": "Get quotes",
+    "heading": "Request refrigerator transport",
+    "text": "Describe the appliance and access. CargoPT may share the request with suitable independent carriers; availability and offers are not guaranteed.",
+    "label": "Send request",
     "href": "/#request"
   },
   "translation_group": "transport-refrigerator",

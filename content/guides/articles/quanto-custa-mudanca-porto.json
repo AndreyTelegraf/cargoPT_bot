@@ -17,13 +17,13 @@
   "eyebrow": "Preços de mudanças no Porto",
   "hero_description": "Carga, acessos, rota, equipa e serviços adicionais determinam o trabalho necessário e devem ser descritos antes da proposta.",
   "date_published": "2026-07-12",
-  "date_modified": "2026-07-12",
-  "review_owner": "CargoPT",
+  "date_modified": "2026-09-05",
+  "review_owner": "Redação CargoPT",
   "direct_answer_heading": "O custo depende das características concretas do serviço",
   "key_points_heading": "Pontos essenciais",
   "faq_heading": "Perguntas frequentes",
   "related_links_heading": "Guias e serviços relacionados",
-  "direct_answer": "Uma mudança no Porto não tem um valor único. O preço depende do inventário, da distância, dos andares, dos elevadores, das escadas, da zona de carga, do número de ajudantes e de tarefas como embalagem, desmontagem ou montagem. A melhor forma de comparar propostas é fornecer a mesma informação a todos os transportadores.",
+  "direct_answer": "Uma mudança no Porto não tem um preço único nem uma média útil para todos os casos. O valor depende do inventário e do volume, da distância, dos andares, do elevador, das escadas, da zona de carga, do número de ajudantes e de tarefas como embalagem, desmontagem ou montagem. Para obter propostas comparáveis, envie a todos os transportadores a mesma rota, lista de objetos, fotografias e condições de acesso. Confirme por escrito o veículo, a equipa, as tarefas incluídas e a forma de tratar alterações antes de escolher.",
   "key_points": [
     "Liste os principais móveis, eletrodomésticos e caixas.",
     "Informe os acessos na recolha e na entrega.",
@@ -101,8 +101,16 @@
       "id": "cargopt",
       "heading": "Receber propostas através da CargoPT",
       "paragraphs": [
-        "A CargoPT permite descrever o pedido uma vez e encaminhá-lo para transportadores adequados.",
-        "O cliente mantém uma descrição comum e compara as propostas disponíveis."
+        "A CargoPT permite descrever o pedido uma vez e pode encaminhá-lo para transportadores independentes adequados.",
+        "Se houver transportadores disponíveis e forem enviadas propostas, o cliente mantém uma descrição comum para as comparar."
+      ]
+    },
+    {
+      "id": "amostra-porto",
+      "heading": "O que mostram os pedidos reais sobre o Porto",
+      "paragraphs": [
+        "Numa análise interna e anonimizada de 77 pedidos enviados pelo formulário CargoPT entre 28 de junho e 2 de setembro de 2026, 15 incluíam pelo menos uma morada no Porto. Os serviços eram demasiado diferentes e a amostra demasiado pequena para publicar uma média responsável.",
+        "Por isso, uma estimativa útil deve partir do percurso, inventário, volume, acessos e tarefas concretas. Estes dados descrevem a amostra analisada; não preveem o preço de uma nova mudança nem garantem propostas."
       ]
     }
   ],
@@ -132,6 +140,10 @@
     {
       "question": "O que fazer se o inventário mudar?",
       "answer": "Comunique a alteração antes do serviço e peça confirmação do novo âmbito e valor."
+    },
+    {
+      "question": "Existe um preço médio representativo para uma mudança no Porto?",
+      "answer": "Não existe uma média responsável para todos os casos: rota, volume, acessos, equipa e serviços variam muito. Peça uma estimativa para o inventário e as condições concretas."
     }
   ],
   "related_links": [
@@ -157,9 +169,9 @@
     }
   ],
   "final_cta": {
-    "heading": "Compare propostas para a sua mudança no Porto",
-    "text": "Envie uma descrição completa e compare propostas preparadas para o mesmo inventário e as mesmas condições.",
-    "label": "Receber propostas",
+    "heading": "Peça propostas para a sua mudança no Porto",
+    "text": "Envie uma descrição completa. Se houver transportadores disponíveis, poderá comparar propostas para o mesmo inventário e as mesmas condições.",
+    "label": "Enviar pedido",
     "href": "/#request"
   },
   "translation_group": "moving-cost-porto",

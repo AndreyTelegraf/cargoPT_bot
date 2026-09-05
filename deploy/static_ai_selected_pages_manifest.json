@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "mode": "applied",
+  "static_root": "/opt/bots/cargoPT_bot/app/static",
+  "static_files": [
+    "/opt/bots/cargoPT_bot/app/static/index.html",
+    "/opt/bots/cargoPT_bot/app/static/en/index.html",
+    "/opt/bots/cargoPT_bot/app/static/ru/index.html",
+    "/opt/bots/cargoPT_bot/app/static/guias/objetos/como-transportar-frigorifico/index.html",
+    "/opt/bots/cargoPT_bot/app/static/en/guides/how-to-transport-a-refrigerator/index.html",
+    "/opt/bots/cargoPT_bot/app/static/ru/guides/kak-perevezti-holodilnik/index.html",
+    "/opt/bots/cargoPT_bot/app/static/guias/precos/quanto-custa-mudanca-porto/index.html",
+    "/opt/bots/cargoPT_bot/app/static/en/guides/moving-cost-porto/index.html",
+    "/opt/bots/cargoPT_bot/app/static/ru/guides/stoimost-pereezda-portu/index.html",
+    "/opt/bots/cargoPT_bot/app/static/transporte-eletrodomesticos-lisboa/index.html",
+    "/opt/bots/cargoPT_bot/app/static/sitemap.xml"
+  ]
+}

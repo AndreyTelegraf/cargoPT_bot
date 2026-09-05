@@ -639,7 +639,12 @@ def validate_article_structure(
             f"content_mode={content_mode!r}",
         )
 
-    if article.get("review_owner") != "CargoPT":
+    if article.get("review_owner") not in {
+        "CargoPT",
+        "Redação CargoPT",
+        "CargoPT Editorial Team",
+        "Редакция CargoPT",
+    }:
         audit.error(
             "INVALID_REVIEW_OWNER",
             article_id,

@@ -6,9 +6,9 @@ from xml.etree import ElementTree
 
 EXPECTED_DATE = "2026-09-05"
 EXPECTED_SITEMAP_DATES = {
-    "https://cargopt.pt/": "2026-09-02",
-    "https://cargopt.pt/en/": "2026-09-02",
-    "https://cargopt.pt/ru/": "2026-09-02",
+    "https://cargopt.pt/": EXPECTED_DATE,
+    "https://cargopt.pt/en/": EXPECTED_DATE,
+    "https://cargopt.pt/ru/": EXPECTED_DATE,
     "https://cargopt.pt/aeo.md": EXPECTED_DATE,
     "https://cargopt.pt/knowledge.md": EXPECTED_DATE,
     "https://cargopt.pt/privacy/": "2026-09-02",

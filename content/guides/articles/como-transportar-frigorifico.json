@@ -16,16 +16,16 @@
   "eyebrow": "Transporte de frigorífico",
   "hero_description": "O transporte exige preparação, proteção adequada, controlo da inclinação e uma rota compatível com as dimensões do frigorífico.",
   "date_published": "2026-07-12",
-  "date_modified": "2026-07-12",
-  "review_owner": "CargoPT",
+  "date_modified": "2026-09-05",
+  "review_owner": "Redação CargoPT",
   "direct_answer_heading": "Transporte o frigorífico vazio, protegido e tão vertical quanto possível",
   "key_points_heading": "Cuidados principais",
   "faq_heading": "Perguntas sobre transporte de frigoríficos",
   "related_links_heading": "Guias e serviços relacionados",
-  "direct_answer": "Para transportar um frigorífico, esvazie, descongele e seque o equipamento. Retire ou fixe componentes móveis, proteja portas e superfícies e planeie o percurso até ao veículo. O aparelho deve permanecer tão vertical quanto possível e ser imobilizado no veículo. Após uma inclinação significativa, siga as instruções do fabricante antes de voltar a ligá-lo.",
+  "direct_answer": "Para transportar um frigorífico, esvazie-o, desligue-o, descongele-o e seque-o por completo. Retire ou fixe prateleiras, gavetas, cabos e outros componentes móveis. Meça o aparelho, portas, elevadores, corredores e escadas antes do serviço; proteja as superfícies e planeie o percurso até ao veículo. Durante a deslocação, mantenha o frigorífico tão vertical quanto possível e fixe-o para que não se mova. Se o aparelho tiver sido muito inclinado, consulte o manual do modelo e respeite o tempo de espera indicado pelo fabricante antes de o voltar a ligar.",
   "key_points": [
     "Prepare e seque completamente o equipamento.",
-    "Meça o frigorífico e todos os pontos do percurso.",
+    "Meça o frigorífico e todos os pontos do percurso; envie também fotografias dos acessos.",
     "Utilize ajudantes e meios adequados ao peso.",
     "Mantenha o aparelho tão vertical quanto possível.",
     "Fixe-o no veículo e siga o manual antes de o ligar."
@@ -104,11 +104,26 @@
         "Coloque o frigorífico no local definitivo, verifique se está estável e confirme que cabos e tubos não ficaram presos ou danificados.",
         "Não o ligue automaticamente logo após a chegada se tiver sido inclinado. Consulte as instruções do fabricante e respeite o período indicado para o modelo."
       ]
+    },
+    {
+      "id": "pedido-comparavel",
+      "heading": "Como preparar um pedido comparável",
+      "paragraphs": [
+        "Para que os transportadores avaliem o mesmo serviço, indique a rota, as dimensões e o modelo do frigorífico, fotografias, pisos, elevadores, escadas, distância até ao estacionamento e se precisa de ajudantes, embalagem ou instalação.",
+        "Numa análise interna e anonimizada de 77 pedidos enviados pelo formulário CargoPT entre 28 de junho e 2 de setembro de 2026, 102 moradas de recolha ou entrega ficavam acima do rés do chão e 27 estavam assinaladas como sem elevador. A amostra inclui vários tipos de transporte: serve para mostrar a importância dos acessos, não para prever preço nem garantir propostas."
+      ],
+      "checklist": [
+        "Moradas e data ou janela pretendida.",
+        "Marca, modelo e dimensões do frigorífico.",
+        "Fotografias do aparelho e dos acessos.",
+        "Pisos, elevadores, escadas e estacionamento.",
+        "Ajudantes e tarefas adicionais necessárias."
+      ]
     }
   ],
   "mid_cta": {
     "heading": "Planeie o transporte do frigorífico",
-    "text": "Envie dimensões, fotografias, rota e acessos para receber propostas preparadas para o serviço.",
+    "text": "Envie dimensões, fotografias, rota e acessos. Se houver transportadores disponíveis, poderá comparar as propostas recebidas.",
     "label": "Descrever o transporte",
     "href": "/#request"
   },
@@ -157,9 +172,9 @@
     }
   ],
   "final_cta": {
-    "heading": "Compare propostas para transportar o frigorífico",
-    "text": "Descreva o equipamento e os acessos para encontrar transportadores adequados ao serviço.",
-    "label": "Receber propostas",
+    "heading": "Peça transporte para o frigorífico",
+    "text": "Descreva o equipamento e os acessos. A CargoPT pode encaminhar o pedido a transportadores independentes adequados; a disponibilidade e as propostas não são garantidas.",
+    "label": "Enviar pedido",
     "href": "/#request"
   },
   "translation_group": "transport-refrigerator",

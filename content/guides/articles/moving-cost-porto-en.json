@@ -17,13 +17,13 @@
   "eyebrow": "Moving costs in Porto",
   "hero_description": "The load, access, route, team and additional services determine the work required and should be described before an offer is prepared.",
   "date_published": "2026-07-24",
-  "date_modified": "2026-07-24",
-  "review_owner": "CargoPT",
+  "date_modified": "2026-09-05",
+  "review_owner": "CargoPT Editorial Team",
   "direct_answer_heading": "The cost depends on the specific service conditions",
   "key_points_heading": "Key points",
   "faq_heading": "Frequently asked questions",
   "related_links_heading": "Related guides and services",
-  "direct_answer": "A move in Porto does not have a single price. The cost depends on the inventory, distance, floors, lifts, stairs, loading area, number of movers and tasks such as packing, dismantling or assembly. The best way to compare offers is to provide the same information to every carrier.",
+  "direct_answer": "A move in Porto has no single price or useful average for every job. Cost depends on the inventory and volume, distance, floors, lift, stairs, loading area, number of movers and tasks such as packing, dismantling or assembly. To receive comparable estimates, give every carrier the same route, item list, photos and access conditions. Before choosing, confirm the vehicle, team, included tasks and how changes will be handled in writing.",
   "key_points": [
     "List the main furniture, appliances and boxes.",
     "Describe access at pickup and delivery.",
@@ -107,8 +107,16 @@
       "id": "cargopt",
       "heading": "Receiving offers through CargoPT",
       "paragraphs": [
-        "CargoPT lets you describe the request once and send it to suitable carriers.",
-        "You keep one common description and compare the available offers."
+        "CargoPT lets you describe the request once and may share it with suitable independent carriers.",
+        "If carriers are available and send offers, you keep one common description for comparison."
+      ]
+    },
+    {
+      "id": "porto-sample",
+      "heading": "What real requests show about Porto",
+      "paragraphs": [
+        "In an anonymised internal review of 77 requests submitted through the CargoPT form from 28 June to 2 September 2026, 15 involved at least one Porto address. The jobs were too varied and the sample too small for a responsible average price.",
+        "A useful estimate should therefore start from the exact route, inventory, volume, access and required tasks. These figures describe the reviewed sample; they do not predict a new move's price or guarantee offers."
       ]
     }
   ],
@@ -138,6 +146,10 @@
     {
       "question": "What should I do if the inventory changes?",
       "answer": "Report the change before the service and request confirmation of the new scope and price."
+    },
+    {
+      "question": "Is there a representative average price for a move in Porto?",
+      "answer": "There is no responsible average for every job: route, volume, access, team and services vary widely. Request an estimate for your exact inventory and conditions."
     }
   ],
   "related_links": [
@@ -163,9 +175,9 @@
     }
   ],
   "final_cta": {
-    "heading": "Compare offers for your move in Porto",
-    "text": "Send a complete description and compare offers prepared for the same inventory and conditions.",
-    "label": "Get offers",
+    "heading": "Request offers for your move in Porto",
+    "text": "Send a complete description. If carriers are available, you can compare offers for the same inventory and conditions.",
+    "label": "Send request",
     "href": "/#request"
   }
 }
