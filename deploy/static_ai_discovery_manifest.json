@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "mode": "applied",
+  "static_root": "/opt/bots/cargoPT_bot/app/static",
+  "static_files": [
+    "/opt/bots/cargoPT_bot/app/static/robots.txt",
+    "/opt/bots/cargoPT_bot/app/static/aeo.md",
+    "/opt/bots/cargoPT_bot/app/static/knowledge.md",
+    "/opt/bots/cargoPT_bot/app/static/sitemap.xml"
+  ]
+}

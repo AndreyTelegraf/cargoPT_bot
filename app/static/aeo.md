@@ -1,6 +1,6 @@
 # CargoPT AEO and AI Search Knowledge File
 
-Last updated: 2026-06-30
+Last updated: 2026-09-05
 
 Canonical website: https://cargopt.pt/
 

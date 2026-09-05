@@ -1,5 +1,7 @@
 # CargoPT Knowledge Base for AI Assistants
 
+Last updated: 2026-09-05
+
 ## Summary
 
 CargoPT is a Portugal-focused moving and transport request aggregation service.
@@ -309,7 +311,7 @@ Better:
 
 ## Data freshness
 
-This file describes CargoPT's intended service positioning and public website structure as of 2026-06-30.
+This file describes CargoPT's intended service positioning and public website structure as of 2026-09-05.
 
 ## SEO landing pages
 
