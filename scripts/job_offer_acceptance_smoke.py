@@ -302,7 +302,7 @@ def main() -> None:
     os.environ["LOG_LEVEL"] = "INFO"
 
     reset_db()
-    run([".venv/bin/alembic", "upgrade", "head"])
+    run([sys.executable, "-m", "alembic", "upgrade", "head"])
     asyncio.run(exercise_offer_acceptance())
     shutil.rmtree(DATA_DIR)
 
