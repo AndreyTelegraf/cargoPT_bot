@@ -1185,6 +1185,11 @@ function buildPayload() {
     ],
     required_loaders: parseOptionalInt(data.required_loaders),
     estimated_volume_m3: parseOptionalFloat(data.estimated_volume_m3),
+    needs_assembly: data.needs_assembly === "true",
+    needs_packing: data.needs_packing === "true",
+    needs_tail_lift: data.needs_tail_lift === "true",
+    needs_crane: data.needs_crane === "true",
+    needs_mobile_lift: data.needs_mobile_lift === "true",
     comment: data.comment || null
   };
 }

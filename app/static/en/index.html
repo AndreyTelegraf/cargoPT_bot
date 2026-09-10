@@ -189,6 +189,14 @@
             <label><span class="field-label">Need movers</span><select name="required_loaders"><option value="">Not sure / not important</option><option value="0">No</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></label>
             <label><span class="field-label">Approximate volume, m³</span><input name="estimated_volume_m3" type="number" min="0" step="any" inputmode="decimal" placeholder="0.25"></label>
           </div>
+          <div class="form-grid">
+            <label><span class="field-label">Assembly / dismantling</span><select name="needs_assembly"><option value="">Not sure / not required</option><option value="true">Required</option></select></label>
+            <label><span class="field-label">Packing / unpacking</span><select name="needs_packing"><option value="">Not sure / not required</option><option value="true">Required</option></select></label>
+            <label><span class="field-label">Tail lift</span><select name="needs_tail_lift"><option value="">Not sure / not required</option><option value="true">Required</option></select></label>
+            <label><span class="field-label">Crane</span><select name="needs_crane"><option value="">Not sure / not required</option><option value="true">Required</option></select></label>
+            <label><span class="field-label">Exterior furniture lift</span><select name="needs_mobile_lift"><option value="">Not sure / not required</option><option value="true">Required</option></select></label>
+          </div>
+          <p class="form-note">Photos are not uploaded in this form. After submitting the request, you can send them to <a href="mailto:support@cargopt.pt?subject=CargoPT%20request%20photos">support@cargopt.pt</a> and include the name or contact used in the request.</p>
           <label><span class="field-label">Comment</span><textarea name="comment" maxlength="2000" placeholder="Extra details"></textarea></label>
           <p class="form-note">At least one contact is required: phone, WhatsApp or email.</p>
           <p class="privacy-notice">By submitting this request, your data will be used to manage it and shared with suitable carriers. See our <a href="/en/privacy/">Privacy Policy</a>.</p>
@@ -306,6 +314,6 @@
     </nav>
   </footer>
   <script src="/assets/js/meta-consent.js?v=meta-pixel-v1" defer></script>
-  <script src="/assets/js/landing.js?v=acquisition-funnel-v1-lead-time-v1" defer></script>
+  <script src="/assets/js/landing.js?v=intake-services-v1" defer></script>
 </body>
 </html>

@@ -292,6 +292,14 @@
                 <input name="estimated_volume_m3" type="number" min="0" step="any" inputmode="decimal" placeholder="0,25">
               </label>
             </div>
+            <div class="form-grid">
+              <label><span class="field-label">Montagem / desmontagem</span><select name="needs_assembly"><option value="">Não sei / não necessário</option><option value="true">Necessário</option></select></label>
+              <label><span class="field-label">Embalagem / desembalagem</span><select name="needs_packing"><option value="">Não sei / não necessário</option><option value="true">Necessário</option></select></label>
+              <label><span class="field-label">Plataforma elevatória traseira</span><select name="needs_tail_lift"><option value="">Não sei / não necessário</option><option value="true">Necessária</option></select></label>
+              <label><span class="field-label">Grua</span><select name="needs_crane"><option value="">Não sei / não necessário</option><option value="true">Necessária</option></select></label>
+              <label><span class="field-label">Elevador exterior</span><select name="needs_mobile_lift"><option value="">Não sei / não necessário</option><option value="true">Necessário</option></select></label>
+            </div>
+            <p class="form-note">As fotografias não são carregadas neste formulário. Depois de enviar o pedido, pode enviá-las para <a href="mailto:support@cargopt.pt?subject=Fotografias%20do%20pedido%20CargoPT">support@cargopt.pt</a>, indicando o nome ou contacto usado no pedido.</p>
           </div>
 
           <div class="form-section" aria-labelledby="additionalDetailsTitle">
@@ -421,6 +429,6 @@
     </nav>
   </footer>
   <script src="/assets/js/meta-consent.js?v=meta-pixel-v1" defer></script>
-  <script src="/assets/js/landing.js?v=acquisition-funnel-v1-lead-time-v1" defer></script>
+  <script src="/assets/js/landing.js?v=intake-services-v1" defer></script>
 </body>
 </html>

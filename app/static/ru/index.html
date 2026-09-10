@@ -189,6 +189,14 @@
             <label><span class="field-label">Нужны грузчики</span><select name="required_loaders"><option value="">Не знаю / не важно</option><option value="0">Нет</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></label>
             <label><span class="field-label">Примерный объём, м³</span><input name="estimated_volume_m3" type="number" min="0" step="any" inputmode="decimal" placeholder="0,25"></label>
           </div>
+          <div class="form-grid">
+            <label><span class="field-label">Сборка / разборка</span><select name="needs_assembly"><option value="">Не знаю / не требуется</option><option value="true">Требуется</option></select></label>
+            <label><span class="field-label">Упаковка / распаковка</span><select name="needs_packing"><option value="">Не знаю / не требуется</option><option value="true">Требуется</option></select></label>
+            <label><span class="field-label">Гидроборт</span><select name="needs_tail_lift"><option value="">Не знаю / не требуется</option><option value="true">Требуется</option></select></label>
+            <label><span class="field-label">Кран</span><select name="needs_crane"><option value="">Не знаю / не требуется</option><option value="true">Требуется</option></select></label>
+            <label><span class="field-label">Внешний мебельный подъёмник</span><select name="needs_mobile_lift"><option value="">Не знаю / не требуется</option><option value="true">Требуется</option></select></label>
+          </div>
+          <p class="form-note">Фотографии в эту форму не загружаются. После отправки заявки их можно прислать на <a href="mailto:support@cargopt.pt?subject=Фотографии%20к%20заявке%20CargoPT">support@cargopt.pt</a>, указав имя или контакт из заявки.</p>
           <label><span class="field-label">Комментарий</span><textarea name="comment" maxlength="2000" placeholder="Дополнительные детали"></textarea></label>
           <p class="form-note">Нужен хотя бы один контакт: телефон, WhatsApp или email.</p>
           <p class="privacy-notice">Отправляя заявку, вы уведомлены, что указанные данные будут использованы для её обработки и переданы подходящим перевозчикам. Подробнее — в <a href="/ru/privacy/">Политике конфиденциальности</a>.</p>
@@ -306,6 +314,6 @@
     </nav>
   </footer>
   <script src="/assets/js/meta-consent.js?v=meta-pixel-v1" defer></script>
-  <script src="/assets/js/landing.js?v=acquisition-funnel-v1-lead-time-v1" defer></script>
+  <script src="/assets/js/landing.js?v=intake-services-v1" defer></script>
 </body>
 </html>
