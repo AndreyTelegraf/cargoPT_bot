@@ -9,13 +9,13 @@ BASE = {
 }
 
 
-disabled = Settings(**BASE)
+disabled = Settings(**BASE, _env_file=None)
 assert disabled.email_enabled is False
 assert disabled.email_transport == "smtp"
 assert disabled.email_smtp_host == ""
 
 try:
-    Settings(**BASE, email_enabled=True)
+    Settings(**BASE, email_enabled=True, _env_file=None)
 except ValidationError as exc:
     message = str(exc)
     assert "EMAIL_FROM_ADDRESS" in message
@@ -25,6 +25,7 @@ else:
 
 valid = Settings(
     **BASE,
+    _env_file=None,
     email_enabled=True,
     email_from_address="noreply@cargopt.pt",
     email_smtp_host="smtp-relay.brevo.com",
@@ -38,6 +39,7 @@ assert "smtp-secret-value" not in repr(valid)
 try:
     Settings(
         **BASE,
+        _env_file=None,
         email_smtp_starttls=True,
         email_smtp_use_tls=True,
     )

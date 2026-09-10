@@ -8,14 +8,18 @@ base = {
     "database_url": "sqlite+aiosqlite:///:memory:",
 }
 
-disabled = Settings(**base)
+disabled = Settings(**base, _env_file=None)
 assert disabled.partner_outreach_enabled is False
 assert disabled.partner_outreach_send_enabled is False
 assert disabled.partner_outreach_daily_limit == 50
 assert disabled.partner_outreach_min_interval_minutes == 1
 
 try:
-    Settings(**base, partner_outreach_send_enabled=True)
+    Settings(
+        **base,
+        partner_outreach_send_enabled=True,
+        _env_file=None,
+    )
 except ValidationError as exc:
     assert "EMAIL_ENABLED" in str(exc)
 else:
@@ -32,14 +36,22 @@ email = {
     "partner_outreach_send_enabled": True,
 }
 try:
-    Settings(**email, partner_outreach_legal_identity="CargoPT Test Lda")
+    Settings(
+        **email,
+        partner_outreach_legal_identity="CargoPT Test Lda",
+        _env_file=None,
+    )
 except ValidationError as exc:
     assert "EMAIL_REPLY_TO" in str(exc)
 else:
     raise AssertionError("outreach sending was accepted without reply-to")
 
 try:
-    Settings(**email, email_reply_to="hello@cargopt.pt")
+    Settings(
+        **email,
+        email_reply_to="hello@cargopt.pt",
+        _env_file=None,
+    )
 except ValidationError as exc:
     assert "PARTNER_OUTREACH_LEGAL_IDENTITY" in str(exc)
 else:
@@ -47,6 +59,7 @@ else:
 
 valid = Settings(
     **email,
+    _env_file=None,
     email_reply_to="hello@cargopt.pt",
     partner_outreach_legal_identity="CargoPT Test Lda",
 )
