@@ -274,6 +274,10 @@ class JobOffer(Base):
     carrier_note: Mapped[str | None] = mapped_column(Text)
     decline_reason: Mapped[str | None] = mapped_column(String)
     price_cents: Mapped[int | None] = mapped_column(Integer)
+    included_services: Mapped[str | None] = mapped_column(Text)
+    possible_surcharges: Mapped[str | None] = mapped_column(Text)
+    service_window: Mapped[str | None] = mapped_column(String(255))
+    estimate_status: Mapped[str | None] = mapped_column(String(32))
 
     carrier_message_chat_id: Mapped[int | None] = mapped_column(Integer)
     carrier_message_id: Mapped[int | None] = mapped_column(Integer)
