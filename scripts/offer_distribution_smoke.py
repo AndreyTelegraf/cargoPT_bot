@@ -216,16 +216,15 @@ async def exercise_offer_distribution() -> None:
 
         loaded_unmatched_job = await job_repo.get_job_by_id(unmatched_job.id)
 
-        if len(unmatched_offers) != 2:
+        if unmatched_offers:
             raise SystemExit(
-                "expected 2 region-only offers despite impossible "
-                "cargo constraints, "
+                "expected no offers for impossible mandatory cargo constraints, "
                 f"got {len(unmatched_offers)}"
             )
 
-        if loaded_unmatched_job.status != JobStatus.OFFERED:
+        if loaded_unmatched_job.status != JobStatus.NO_CARRIERS_FOUND:
             raise SystemExit(
-                "expected offered status for region-only matching, "
+                "expected no-carriers status for impossible mandatory constraints, "
                 f"got {loaded_unmatched_job.status}"
             )
 
