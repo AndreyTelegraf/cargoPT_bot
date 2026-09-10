@@ -388,6 +388,41 @@ class TrackingRequestCancelResponse(BaseModel):
     cancelled_from_status: str
 
 
+class TrackingRequestedDateChangePayload(BaseModel):
+    requested_date_local: date
+    requested_time_local: time
+
+    @model_validator(mode="after")
+    def validate_portugal_local_datetime(
+        self,
+    ) -> "TrackingRequestedDateChangePayload":
+        requested_date = portugal_local_datetime_to_utc(
+            self.requested_date_local,
+            self.requested_time_local,
+        )
+        try:
+            validate_requested_date_not_in_past(requested_date)
+        except RequestedDateInPastError as error:
+            raise ValueError(
+                "requested date must not be in the past"
+            ) from error
+        return self
+
+    def to_requested_date(self) -> datetime:
+        return portugal_local_datetime_to_utc(
+            self.requested_date_local,
+            self.requested_time_local,
+        )
+
+
+class TrackingRequestedDateChangeResponse(BaseModel):
+    job_id: int
+    status: str
+    previous_status: str
+    requested_date: datetime
+    repricing_required: bool
+
+
 class TrackingAssignmentActionResponse(BaseModel):
     job_id: int
     status: str

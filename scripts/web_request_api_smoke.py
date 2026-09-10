@@ -251,11 +251,30 @@ def main() -> None:
         tracking_response = client.get(
             f"/api/v1/track/{response.json()['tracking_token']}"
         )
+        date_change_response = client.post(
+            f"/api/v1/track/{response.json()['tracking_token']}"
+            "/requested-date",
+            json={
+                "requested_date_local": "2027-01-15",
+                "requested_time_local": "12:45",
+            },
+        )
+        changed_tracking_response = client.get(
+            f"/api/v1/track/{response.json()['tracking_token']}"
+        )
         cancel_response = client.post(
             f"/api/v1/track/{response.json()['tracking_token']}/cancel"
         )
         repeated_cancel_response = client.post(
             f"/api/v1/track/{response.json()['tracking_token']}/cancel"
+        )
+        cancelled_date_change_response = client.post(
+            f"/api/v1/track/{response.json()['tracking_token']}"
+            "/requested-date",
+            json={
+                "requested_date_local": "2027-01-16",
+                "requested_time_local": "13:15",
+            },
         )
 
     app.dependency_overrides.clear()
@@ -364,6 +383,25 @@ def main() -> None:
         raise SystemExit("tracking volume mismatch")
     if tracking_details["comment"] != payload["comment"]:
         raise SystemExit("tracking comment mismatch")
+    if date_change_response.status_code != 200:
+        raise SystemExit(
+            "tracking date change failed: "
+            f"{date_change_response.status_code} {date_change_response.text}"
+        )
+    changed_date = date_change_response.json()
+    if changed_date != {
+        "job_id": body["job_id"],
+        "status": "manual_review_required",
+        "previous_status": "manual_review_required",
+        "requested_date": "2027-01-15T12:45:00",
+        "repricing_required": False,
+    }:
+        raise SystemExit(f"unexpected tracking date change: {changed_date}")
+    if (
+        changed_tracking_response.json()["request_details"]["requested_date"]
+        not in {"2027-01-15T12:45:00", "2027-01-15T12:45:00Z"}
+    ):
+        raise SystemExit("changed date missing from tracking read model")
     if cancel_response.status_code != 200:
         raise SystemExit(
             "tracking cancellation failed: "
@@ -382,6 +420,12 @@ def main() -> None:
             "repeated tracking cancellation was not rejected: "
             f"{repeated_cancel_response.status_code} "
             f"{repeated_cancel_response.text}"
+        )
+    if cancelled_date_change_response.status_code != 409:
+        raise SystemExit(
+            "date change after cancellation was not rejected: "
+            f"{cancelled_date_change_response.status_code} "
+            f"{cancelled_date_change_response.text}"
         )
 
     connection = sqlite3.connect(DATA_DIR / "cargopt_dev.db")

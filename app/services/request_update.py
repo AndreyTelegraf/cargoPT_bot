@@ -6,10 +6,16 @@ from app.models.job import JobAddress
 from app.models.job import JobItem
 from app.models.job import JobMedia
 from app.domain.requested_date import validate_requested_date_not_in_past
+from app.domain.job_status import JobStatus
 from app.repositories.job import JobRepository
 from app.services.location_normalization import build_google_maps_coordinate_url
 from app.services.location_normalization import extract_postal_code
 from app.services.location_normalization import normalize_text_location_resolved
+from app.services.short_lead_time_warning import should_filter_short_lead_time
+
+
+class ClientRequestedDateChangeError(ValueError):
+    pass
 
 
 class RequestUpdateService:
@@ -205,6 +211,62 @@ class RequestUpdateService:
             requested_date=requested_date,
             updated_at=datetime.now(UTC),
         )
+
+    async def change_submitted_requested_date(
+        self,
+        *,
+        job_id: int,
+        requested_date: datetime,
+    ) -> tuple[Job, JobStatus, bool]:
+        validate_requested_date_not_in_past(requested_date)
+        job = await self.job_repository.get_job_by_id(job_id)
+        if job is None:
+            raise ValueError("job not found")
+
+        current_status = JobStatus(job.status)
+        allowed_from = {
+            JobStatus.READY_FOR_MATCHING,
+            JobStatus.MATCHING,
+            JobStatus.OFFERED,
+            JobStatus.UNMATCHED,
+            JobStatus.NO_CARRIERS_FOUND,
+            JobStatus.OFFERS_EXHAUSTED,
+            JobStatus.EXPIRED_WITHOUT_RESPONSE,
+            JobStatus.MANUAL_REVIEW_REQUIRED,
+        }
+        if current_status not in allowed_from:
+            raise ClientRequestedDateChangeError(
+                "requested date can only be changed before carrier assignment"
+            )
+
+        offers = await self.job_repository.list_offers_by_job(job_id)
+        repricing_required = any(
+            offer.status in {"pending", "accepted"}
+            for offer in offers
+        )
+        updated_at = datetime.now(UTC)
+        updated_job = (
+            await self.job_repository.claim_job_for_client_date_change(
+                job_id=job_id,
+                expected_status=str(current_status),
+                requested_date=requested_date,
+                short_lead_time_filtered=should_filter_short_lead_time(
+                    requested_date,
+                    now=updated_at,
+                ),
+                updated_at=updated_at,
+            )
+        )
+        if updated_job is None:
+            raise ClientRequestedDateChangeError(
+                "request changed before requested-date update"
+            )
+
+        await self.job_repository.cancel_open_offers_by_job(
+            job_id=job_id,
+            cancelled_at=updated_at,
+        )
+        return updated_job, current_status, repricing_required
 
     async def update_client_phone(
         self,

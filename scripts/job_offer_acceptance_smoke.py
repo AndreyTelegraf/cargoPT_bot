@@ -26,6 +26,7 @@ from app.services.job_offer import JobOfferService
 from app.services.job_offer import OfferAlreadyResolvedError
 from app.services.job_offer import OfferExpiredError
 from app.services.job_lifecycle import cancel_client_job
+from app.services.request_update import RequestUpdateService
 
 DATA_DIR = PROJECT_ROOT / ".tmp_job_offer_acceptance_smoke"
 DATABASE_URL = "sqlite+aiosqlite:///.tmp_job_offer_acceptance_smoke/cargopt_dev.db"
@@ -224,6 +225,72 @@ async def exercise_offer_acceptance() -> None:
             pass
         else:
             raise SystemExit("offer was accepted after client cancellation")
+
+        date_change_target = await job_repo.create_job(
+            Job(
+                client_telegram_user_id=9003,
+                status=JobStatus.MATCHING,
+                requested_date=now + timedelta(days=5),
+                needs_assembly=False,
+                needs_packing=False,
+                needs_tail_lift=True,
+                needs_crane=False,
+                needs_mobile_lift=False,
+                required_loaders=None,
+                estimated_payload_kg=1000,
+                estimated_volume_m3=12.0,
+                comment=None,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+        accepted_before_date_change = await service.create_offer(
+            job_id=date_change_target.id,
+            vehicle=vehicle,
+            expires_in_minutes=30,
+        )
+        await service.accept_offer_without_assignment(
+            accepted_before_date_change.id
+        )
+        await service.create_offer(
+            job_id=date_change_target.id,
+            vehicle=vehicle,
+            expires_in_minutes=30,
+        )
+        changed_date = now + timedelta(days=10)
+        changed_job, previous_status, repricing_required = (
+            await RequestUpdateService(
+                job_repository=job_repo
+            ).change_submitted_requested_date(
+                job_id=date_change_target.id,
+                requested_date=changed_date,
+            )
+        )
+        await session.commit()
+
+        if changed_job.status != JobStatus.MANUAL_REVIEW_REQUIRED:
+            raise SystemExit("date change did not enter manual repricing")
+        if previous_status != JobStatus.OFFERED:
+            raise SystemExit(
+                f"unexpected date change source: {previous_status}"
+            )
+        if not repricing_required:
+            raise SystemExit("date change did not report repricing")
+        if changed_job.requested_date.replace(
+            tzinfo=None
+        ) != changed_date.replace(tzinfo=None):
+            raise SystemExit("requested date was not updated")
+        date_change_offers = await job_repo.list_offers_by_job(
+            date_change_target.id
+        )
+        if [str(item.status) for item in date_change_offers] != [
+            "cancelled",
+            "cancelled",
+        ]:
+            raise SystemExit(
+                "date change left old prices open: "
+                f"{[str(item.status) for item in date_change_offers]}"
+            )
 
     await engine.dispose()
 

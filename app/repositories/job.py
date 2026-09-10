@@ -1080,6 +1080,51 @@ class JobRepository:
         await self.session.flush()
         return job
 
+    async def claim_job_for_client_date_change(
+        self,
+        *,
+        job_id: int,
+        expected_status: str,
+        requested_date,
+        short_lead_time_filtered: bool,
+        updated_at,
+    ) -> Job | None:
+        target_status = "manual_review_required"
+        result = await self.session.execute(
+            update(Job)
+            .where(Job.id == job_id)
+            .where(Job.status == expected_status)
+            .values(
+                status=target_status,
+                requested_date=requested_date,
+                short_lead_time_filtered=short_lead_time_filtered,
+                updated_at=updated_at,
+            )
+            .execution_options(synchronize_session=False)
+        )
+        if result.rowcount != 1:
+            return None
+
+        job = await self.session.get(
+            Job,
+            job_id,
+            populate_existing=True,
+        )
+        if job is None:
+            raise ValueError("job not found after requested-date change")
+
+        if expected_status != target_status:
+            self.session.add(
+                JobStatusEvent(
+                    job_id=job.id,
+                    from_status=expected_status,
+                    to_status=target_status,
+                    occurred_at=updated_at,
+                )
+            )
+        await self.session.flush()
+        return job
+
     async def update_estimated_payload(
         self,
         job_id: int,

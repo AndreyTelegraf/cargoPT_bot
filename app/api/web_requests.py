@@ -24,6 +24,8 @@ from app.api.web_request_schemas import TrackingItemResponse
 from app.api.web_request_schemas import TrackingJobResponse
 from app.api.web_request_schemas import TrackingRequestDetailsResponse
 from app.api.web_request_schemas import TrackingRequestCancelResponse
+from app.api.web_request_schemas import TrackingRequestedDateChangePayload
+from app.api.web_request_schemas import TrackingRequestedDateChangeResponse
 from app.api.web_request_schemas import TrackingAssignmentActionResponse
 from app.api.web_request_schemas import TrackingCompletionActionResponse
 from app.services.assignment_notifications import send_assignment_confirmation_requests
@@ -59,6 +61,8 @@ from app.services.request_intake import RequestIntakeItem
 from app.services.request_intake import RequestIntakeService
 from app.services.request_intake import WebRequestRateLimitError
 from app.services.request_intake import WebRequestIdempotencyConflictError
+from app.services.request_update import ClientRequestedDateChangeError
+from app.services.request_update import RequestUpdateService
 from app.services.location_normalization import search_location_suggestions
 from app.services.tracking_url import build_tracking_path
 
@@ -431,6 +435,41 @@ async def cancel_tracking_job(
         job_id=cancelled_job.id,
         status=str(cancelled_job.status),
         cancelled_from_status=str(previous_status),
+    )
+
+
+@router.post(
+    "/track/{tracking_token}/requested-date",
+    response_model=TrackingRequestedDateChangeResponse,
+)
+async def change_tracking_requested_date(
+    tracking_token: str,
+    payload: TrackingRequestedDateChangePayload,
+    session: AsyncSession = Depends(get_session),
+) -> TrackingRequestedDateChangeResponse:
+    job_repository = JobRepository(session)
+    job = await job_repository.get_job_by_tracking_token(tracking_token)
+    if job is None:
+        raise HTTPException(status_code=404, detail="tracking job not found")
+
+    try:
+        updated_job, previous_status, repricing_required = (
+            await RequestUpdateService(
+                job_repository=job_repository
+            ).change_submitted_requested_date(
+                job_id=job.id,
+                requested_date=payload.to_requested_date(),
+            )
+        )
+    except ClientRequestedDateChangeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    return TrackingRequestedDateChangeResponse(
+        job_id=updated_job.id,
+        status=str(updated_job.status),
+        previous_status=str(previous_status),
+        requested_date=updated_job.requested_date,
+        repricing_required=repricing_required,
     )
 
 
