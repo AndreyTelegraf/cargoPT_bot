@@ -398,10 +398,14 @@ function saveTrackingLink(entry) {
 
   links.unshift(current);
 
-  localStorage.setItem(
-    TRACKING_LINKS_KEY,
-    JSON.stringify(links.slice(0, 20))
-  );
+  try {
+    localStorage.setItem(
+      TRACKING_LINKS_KEY,
+      JSON.stringify(links.slice(0, 20))
+    );
+  } catch {
+    // Tracking navigation must survive unavailable or full local storage.
+  }
 }
 
 

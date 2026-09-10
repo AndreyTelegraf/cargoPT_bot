@@ -1,11 +1,12 @@
 import json
 from pathlib import Path
+import subprocess
 
 
 ROOT = Path(__file__).resolve().parents[1]
 STATIC = ROOT / "app/static"
 JS_PATH = STATIC / "assets/js/landing.js"
-ASSET_VERSION = "acquisition-funnel-v1-idempotency-v1"
+ASSET_VERSION = "acquisition-funnel-v1-storage-resilience-v1"
 
 
 def main() -> None:
@@ -36,6 +37,47 @@ def main() -> None:
         "clearActiveSubmission()",
         javascript.index("saveTrackingLink(trackingEntry)"),
     )
+    assert javascript.index(
+        "clearActiveSubmission()",
+        javascript.index("saveTrackingLink(trackingEntry)"),
+    ) < javascript.index(
+        "window.location.href = localizedTrackingPath(body.tracking_token)"
+    )
+
+    node_probe = r'''
+const fs = require("fs");
+const vm = require("vm");
+const source = fs.readFileSync(process.argv[2], "utf8");
+const start = source.indexOf("function normalizeTrackingLink");
+const end = source.indexOf("function formatOpenPedidosLabel", start);
+if (start < 0 || end < 0) throw new Error("tracking helper block not found");
+const context = {
+  TRACKING_LINKS_KEY: "cargopt_tracking_links",
+  localeKey: "en",
+  localStorage: {
+    getItem() { return null; },
+    setItem() { throw new Error("simulated localStorage quota denial"); }
+  },
+  JSON,
+  encodeURIComponent
+};
+vm.runInNewContext(
+  source.slice(start, end)
+    + "\nsaveTrackingLink({job_id: 501, token: \"tracking-token\"});",
+  context,
+  {filename: "landing.js"}
+);
+console.log("TRACKING_STORAGE_FAILURE_ISOLATED_OK");
+'''
+    probe = subprocess.run(
+        ["node", "-", str(JS_PATH)],
+        input=node_probe,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert probe.returncode == 0, probe.stderr
+    assert "TRACKING_STORAGE_FAILURE_ISOLATED_OK" in probe.stdout
 
     for locale_path in (
         STATIC / "index.html",
