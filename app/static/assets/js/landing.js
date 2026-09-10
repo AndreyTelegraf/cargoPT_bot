@@ -50,6 +50,8 @@ const MESSAGES = {
     locationLoading: "A procurar locais...",
     locationNoResults: "Nenhum local encontrado. Acrescente a cidade, a rua e o país.",
     locationSearchFailure: "Não foi possível procurar locais agora. Tente novamente.",
+    locationManualHelp: "Se a pesquisa continuar indisponível, envie os dois endereços para revisão manual.",
+    locationManualContact: "Pedir ajuda por email",
     locationSelectRequired: "Escolha um local específico da lista.",
     locationConfirmRequired: "Confirme que o ponto selecionado está correto."
   },
@@ -88,6 +90,8 @@ const MESSAGES = {
     locationLoading: "Searching for places...",
     locationNoResults: "No place found. Add the city, street and country.",
     locationSearchFailure: "Places could not be searched right now. Try again.",
+    locationManualHelp: "If search remains unavailable, send both addresses for manual review.",
+    locationManualContact: "Ask for help by email",
     locationSelectRequired: "Select a specific place from the list.",
     locationConfirmRequired: "Confirm that the selected point is correct."
   },
@@ -126,6 +130,8 @@ const MESSAGES = {
     locationLoading: "Ищем места...",
     locationNoResults: "Место не найдено. Добавьте город, улицу и страну.",
     locationSearchFailure: "Сейчас не удалось найти места. Попробуйте ещё раз.",
+    locationManualHelp: "Если поиск остаётся недоступен, отправьте оба адреса на ручную проверку.",
+    locationManualContact: "Запросить помощь по email",
     locationSelectRequired: "Выберите конкретное место из списка.",
     locationConfirmRequired: "Подтвердите, что выбранная точка правильная."
   }
@@ -588,6 +594,22 @@ function renderLocationStatus(state, message) {
   setLocationSuggestionsExpanded(state, true);
 }
 
+function renderLocationFallback(state, message) {
+  state.suggestions.replaceChildren();
+
+  const status = document.createElement("p");
+  status.className = "location-suggestions-status";
+  status.textContent = `${message} ${messages.locationManualHelp} `;
+
+  const contact = document.createElement("a");
+  contact.href = "mailto:hello@cargopt.pt";
+  contact.textContent = messages.locationManualContact;
+  status.append(contact);
+
+  state.suggestions.append(status);
+  setLocationSuggestionsExpanded(state, true);
+}
+
 function selectLocationSuggestion(state, suggestion, rawText) {
   state.selection = {
     rawText,
@@ -625,7 +647,7 @@ function renderLocationSuggestions(state, suggestions, rawText) {
   state.suggestions.replaceChildren();
 
   if (!suggestions.length) {
-    renderLocationStatus(state, messages.locationNoResults);
+    renderLocationFallback(state, messages.locationNoResults);
     return;
   }
 
@@ -675,7 +697,7 @@ async function searchLocations(state, rawText) {
     renderLocationSuggestions(state, suggestions, rawText);
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") return;
-    renderLocationStatus(state, messages.locationSearchFailure);
+    renderLocationFallback(state, messages.locationSearchFailure);
   } finally {
     if (state.controller === controller) {
       state.controller = null;
