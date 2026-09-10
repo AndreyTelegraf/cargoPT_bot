@@ -85,10 +85,7 @@ async def send_assignment_final_notifications(
             state="success",
         )
         carrier_text = format_telegram_status_block(
-            (
-                f"Сделка по заявке №{job.id} подтверждена обеими сторонами.\n\n"
-                "Свяжитесь с клиентом напрямую и согласуйте последние детали перевозки."
-            ),
+            "",
             state="success",
         )
     elif job.status == JobStatus.READY_FOR_MATCHING:
@@ -133,6 +130,26 @@ async def send_assignment_final_notifications(
         )
 
     if carrier is not None and carrier.telegram_user_id is not None:
+        carrier_locale = carrier.preferred_locale
+        if job.status == JobStatus.ASSIGNED:
+            carrier_text = format_telegram_status_block(
+                (
+                    f"{t(carrier_locale, 'assignment_both_confirmed', job_id=job.id)}\n\n"
+                    f"{t(carrier_locale, 'contact_customer')}"
+                ),
+                state="success",
+                locale=carrier_locale,
+            )
+        else:
+            carrier_text = format_telegram_status_block(
+                t(
+                    carrier_locale,
+                    "assignment_carrier_closed",
+                    job_id=job.id,
+                ),
+                state="failed",
+                locale=carrier_locale,
+            )
         await bot.send_message(
             chat_id=carrier.telegram_user_id,
             text=carrier_text,

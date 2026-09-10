@@ -4,6 +4,7 @@ from datetime import datetime
 from app.domain.job_status import JobStatus
 from app.models.job import Job
 from app.repositories.carrier import CarrierRepository
+from app.bot.offer_locale import offer_text as t
 from app.services.job_lifecycle import InvalidJobStatusTransitionError
 from app.services.job_escalation import hold_short_lead_job_for_manual_review
 
@@ -17,7 +18,12 @@ TELEGRAM_STATUS_DOT_SUCCESS = "🟢"
 TELEGRAM_STATUS_DOT_FAILED = "🔴"
 
 
-def format_telegram_status_block(text: str, *, state: str) -> str:
+def format_telegram_status_block(
+    text: str,
+    *,
+    state: str,
+    locale: str | None = None,
+) -> str:
     dots = {
         "searching": TELEGRAM_STATUS_DOT_SEARCHING,
         "pending": TELEGRAM_STATUS_DOT_PENDING,
@@ -26,7 +32,7 @@ def format_telegram_status_block(text: str, *, state: str) -> str:
         "cancelled": TELEGRAM_STATUS_DOT_FAILED,
     }
     dot = dots.get(state, TELEGRAM_STATUS_DOT_SEARCHING)
-    return f"{dot} Статус\n{text}"
+    return f"{dot} {t(locale, 'status')}\n{text}"
 
 
 def build_assignment_status_from_action(action: str) -> str:
@@ -246,48 +252,54 @@ async def record_assignment_confirmation(
     return await evaluate_assignment_confirmation(job_repository, job_id=job_id)
 
 
-def build_assignment_result_text(*, job_id: int, action: str, job_status: str) -> str:
+def build_assignment_result_text(
+    *,
+    job_id: int,
+    action: str,
+    job_status: str,
+    locale: str | None = None,
+    actor: str = "client",
+) -> str:
     if job_status == JobStatus.ASSIGNED:
         return format_telegram_status_block(
-            f"Сделка по заявке №{job_id} подтверждена обеими сторонами.",
+            t(locale, "assignment_both_confirmed", job_id=job_id),
             state="success",
+            locale=locale,
         )
 
     if job_status == JobStatus.READY_FOR_MATCHING:
+        key = (
+            "assignment_carrier_closed"
+            if actor == "carrier"
+            else "assignment_client_redispatch"
+        )
         return format_telegram_status_block(
-            (
-                f"По заявке №{job_id} договориться с перевозчиком не удалось.\n\n"
-                "Заявка снова в поиске. "
-                "Мы отправляем её другим подходящим перевозчикам."
-            ),
+            t(locale, key, job_id=job_id),
             state="searching",
+            locale=locale,
         )
 
     if job_status == JobStatus.MANUAL_REVIEW_REQUIRED:
+        key = (
+            "assignment_carrier_closed"
+            if actor == "carrier"
+            else "assignment_client_manual"
+        )
         return format_telegram_status_block(
-            (
-                f"По заявке №{job_id} договориться с перевозчиком не удалось.\n\n"
-                "До перевозки осталось меньше трёх суток, поэтому "
-                "автоматическая рассылка остановлена. "
-                "Заявку проверит диспетчер CargoPT."
-            ),
+            t(locale, key, job_id=job_id),
             state="searching",
+            locale=locale,
         )
 
     if action == "confirm":
         return format_telegram_status_block(
-            (
-                f"Ваше подтверждение по заявке №{job_id} принято. "
-                "Ждём ответ второй стороны."
-            ),
+            t(locale, "assignment_confirmation_received", job_id=job_id),
             state="pending",
+            locale=locale,
         )
 
     return format_telegram_status_block(
-        (
-            f"Ваш ответ по заявке №{job_id} принят.\n\n"
-            "Если сделка не будет подтверждена, "
-            "заявка снова перейдёт в поиск перевозчика."
-        ),
+        t(locale, "assignment_response_received", job_id=job_id),
         state="pending",
+        locale=locale,
     )

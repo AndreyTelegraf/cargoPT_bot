@@ -8,6 +8,8 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery
 
 from app.bot.assignment_confirmation_keyboard import build_assignment_failure_reason_keyboard
+from app.bot.carrier_locale import normalize_carrier_locale
+from app.bot.offer_locale import offer_text as t
 from app.db.session import async_session_maker
 from app.domain.job_decline_reason import is_valid_decline_reason
 from app.domain.job_status import JobStatus
@@ -51,22 +53,23 @@ def _build_assignment_confirmation_final_text(message, status_text: str) -> str:
 async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
     raw_data = callback.data or ""
     failure_reason = None
+    locale = normalize_carrier_locale(callback.from_user.language_code)
 
     if raw_data.startswith("assignment:fail_reason:"):
         parts = raw_data.split(":")
         if len(parts) != 4:
-            await callback.answer("Некорректная кнопка", show_alert=True)
+            await callback.answer(t(locale, "invalid_button"), show_alert=True)
             return
 
         try:
             job_id = int(parts[2])
         except ValueError:
-            await callback.answer("Некорректная кнопка", show_alert=True)
+            await callback.answer(t(locale, "invalid_button"), show_alert=True)
             return
 
         failure_reason = parts[3]
         if not is_valid_decline_reason(failure_reason):
-            await callback.answer("Некорректная причина", show_alert=True)
+            await callback.answer(t(locale, "invalid_reason"), show_alert=True)
             return
 
         action = "fail"
@@ -74,14 +77,25 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
         try:
             action, job_id = parse_assignment_callback(raw_data)
         except ValueError:
-            await callback.answer("Некорректная кнопка", show_alert=True)
+            await callback.answer(t(locale, "invalid_button"), show_alert=True)
             return
 
     if action == "fail" and failure_reason is None:
+        async with async_session_maker() as locale_session:
+            locale_carrier = await CarrierRepository(
+                locale_session
+            ).get_carrier_by_telegram_user_id(callback.from_user.id)
+            if locale_carrier is not None:
+                locale = normalize_carrier_locale(
+                    locale_carrier.preferred_locale or locale
+                )
         if callback.message:
             await callback.message.edit_text(
-                "Укажите причину, почему сделка не состоялась.",
-                reply_markup=build_assignment_failure_reason_keyboard(job_id),
+                t(locale, "assignment_failure_reason_prompt"),
+                reply_markup=build_assignment_failure_reason_keyboard(
+                    job_id,
+                    locale=locale,
+                ),
             )
         await callback.answer()
         return
@@ -93,13 +107,20 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
         carrier_repository = CarrierRepository(session)
         job = await job_repository.get_job_by_id(job_id)
         accepted_offer = await job_repository.get_accepted_offer_by_job_id(job_id)
+        locale_carrier = await carrier_repository.get_carrier_by_telegram_user_id(
+            telegram_user_id
+        )
+        if locale_carrier is not None:
+            locale = normalize_carrier_locale(
+                locale_carrier.preferred_locale or locale
+            )
 
         if job is None:
-            await callback.answer("Заявка не найдена.", show_alert=True)
+            await callback.answer(t(locale, "job_not_found"), show_alert=True)
             return
 
         if failure_reason is not None and accepted_offer is None:
-            await callback.answer("Оффер не найден.", show_alert=True)
+            await callback.answer(t(locale, "offer_not_found"), show_alert=True)
             return
 
         actor = await resolve_assignment_actor(
@@ -110,7 +131,7 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
         )
 
         if actor is None:
-            await callback.answer("Эта кнопка не для вас.", show_alert=True)
+            await callback.answer(t(locale, "not_your_button"), show_alert=True)
             return
 
         if action == "fail" and actor == "client" and job.status == JobStatus.ASSIGNED:
@@ -128,17 +149,16 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
                 status=JobStatus.READY_FOR_MATCHING,
                 updated_at=now,
             )
-            result_text = format_telegram_status_block(
-                (
-                    f"По заявке №{job_id} договориться с перевозчиком не удалось.\n\n"
-                    "Заявка снова в поиске. "
-                    "Мы отправляем её другим подходящим перевозчикам."
-                ),
-                state="searching",
+            result_text = build_assignment_result_text(
+                job_id=job_id,
+                action=action,
+                job_status=updated_job.status,
+                locale=locale,
+                actor=actor,
             )
         else:
             if job.status != JobStatus.ASSIGNED_PENDING_CONFIRMATION:
-                await callback.answer("Статус заявки уже изменён.", show_alert=True)
+                await callback.answer(t(locale, "job_status_changed"), show_alert=True)
                 return
 
             confirmation_status = build_assignment_status_from_action(action)
@@ -157,10 +177,12 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
                     job_id=job_id,
                     action=action,
                     job_status=updated_job.status,
+                    locale=locale,
+                    actor=actor,
                 )
             except InvalidJobStatusTransitionError:
                 await session.rollback()
-                await callback.answer("Статус заявки уже изменён.", show_alert=True)
+                await callback.answer(t(locale, "job_status_changed"), show_alert=True)
                 return
 
         (
@@ -180,6 +202,8 @@ async def handle_assignment_confirmation(callback: CallbackQuery) -> None:
                 job_id=job_id,
                 action=action,
                 job_status=updated_job.status,
+                locale=locale,
+                actor=actor,
             )
 
         await send_assignment_final_notifications(

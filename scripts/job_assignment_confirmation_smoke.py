@@ -203,6 +203,18 @@ def main() -> None:
     pt_keyboard = build_assignment_confirmation_keyboard(123, locale="pt")
     assert pt_keyboard.inline_keyboard[0][0].text == "Acordo confirmado"
     assert pt_keyboard.inline_keyboard[0][1].text == "Sem acordo"
+    pt_result = build_assignment_result_text(
+        job_id=123,
+        action="fail",
+        job_status=JobStatus.READY_FOR_MATCHING,
+        locale="pt",
+        actor="carrier",
+    )
+    assert pt_result == (
+        "🟡 Estado\n"
+        "Não foi possível chegar a acordo com o cliente para o pedido #123.\n\n"
+        "Este pedido está encerrado para si."
+    )
     assert parse_assignment_callback("assignment:confirm:123") == ("confirm", 123)
     assert parse_assignment_callback("assignment:fail:123") == ("fail", 123)
     assert "ожидаем" not in build_assignment_result_text(
