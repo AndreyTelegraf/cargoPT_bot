@@ -33,6 +33,8 @@ from app.bot.offer_keyboard import build_client_offer_selection_keyboard
 from app.bot.offer_keyboard import build_offer_decline_reason_keyboard
 from app.bot.offer_keyboard import parse_client_offer_selection_callback
 from app.bot.assignment_confirmation_keyboard import build_client_reopen_assignment_keyboard
+from app.bot.carrier_locale import normalize_carrier_locale
+from app.bot.offer_locale import offer_text as t
 from app.bot.states.offer_response import OfferResponseStates
 
 router = Router()
@@ -65,9 +67,10 @@ async def _prompt_offer_price(
     callback: CallbackQuery,
     state: FSMContext,
     offer_id: int,
+    locale: str | None = None,
 ) -> None:
     if callback.message is None:
-        await callback.answer("Не удалось открыть ввод цены.", show_alert=True)
+        await callback.answer(t(locale, "request_unknown"), show_alert=True)
         return
 
     await state.clear()
@@ -75,19 +78,14 @@ async def _prompt_offer_price(
         offer_price_offer_id=offer_id,
         offer_price_message_chat_id=callback.message.chat.id,
         offer_price_message_id=callback.message.message_id,
+        offer_price_locale=normalize_carrier_locale(locale),
     )
     await state.set_state(OfferResponseStates.price)
 
     await callback.message.answer(
-        (
-            "Ответьте ценой предложения в евро.\n\n"
-            "Например:\n"
-            "120\n"
-            "или:\n"
-            "120 Подъём и разгрузка включены"
-        )
+        t(locale, "price_prompt")
     )
-    await callback.answer("Введите цену ответным сообщением.")
+    await callback.answer(t(locale, "price_reply"))
 
 
 async def _delete_message_safely(message: Message) -> None:
@@ -252,10 +250,11 @@ def build_carrier_assignment_confirmation_text(job) -> str:
 
 @router.callback_query(F.data.startswith("offer:"))
 async def handle_offer_response(callback: CallbackQuery, state: FSMContext) -> None:
+    locale = normalize_carrier_locale(callback.from_user.language_code)
     try:
         action, offer_id = parse_offer_callback(callback.data or "")
     except ValueError:
-        await callback.answer("Некорректная кнопка", show_alert=True)
+        await callback.answer(t(locale, "invalid_button"), show_alert=True)
         return
 
     telegram_user_id = callback.from_user.id
@@ -270,26 +269,31 @@ async def handle_offer_response(callback: CallbackQuery, state: FSMContext) -> N
         carrier = await carrier_repository.get_carrier_by_telegram_user_id(
             telegram_user_id
         )
+        if carrier is not None:
+            locale = normalize_carrier_locale(carrier.preferred_locale or locale)
 
         offer = await job_repository.get_offer_by_id(offer_id)
 
         if carrier is None or offer is None or offer.carrier_id != carrier.id:
-            await callback.answer("Оффер не найден", show_alert=True)
+            await callback.answer(t(locale, "offer_not_found"), show_alert=True)
             return
 
         if action == "accept":
             if offer.status != "pending":
-                await callback.answer("Этот оффер уже обработан.", show_alert=True)
+                await callback.answer(t(locale, "offer_resolved"), show_alert=True)
                 return
 
-            await _prompt_offer_price(callback, state, offer_id)
+            await _prompt_offer_price(callback, state, offer_id, locale=locale)
             return
         else:
             if callback.message:
                 await callback.message.edit_reply_markup(
-                    reply_markup=build_offer_decline_reason_keyboard(offer_id),
+                    reply_markup=build_offer_decline_reason_keyboard(
+                        offer_id,
+                        locale=locale,
+                    ),
                 )
-            await callback.answer("Укажите причину отказа.")
+            await callback.answer(t(locale, "decline_reason_prompt"))
             return
 
         await session.commit()
@@ -315,36 +319,35 @@ async def handle_offer_response(callback: CallbackQuery, state: FSMContext) -> N
 @router.message(OfferResponseStates.price)
 async def handle_offer_price_input(message: Message, state: FSMContext) -> None:
     data = await state.get_data()
+    locale = normalize_carrier_locale(
+        data.get("offer_price_locale")
+        or (message.from_user.language_code if message.from_user else None)
+    )
     offer_id = data.get("offer_price_offer_id")
     offer_message_chat_id = data.get("offer_price_message_chat_id")
     offer_message_id = data.get("offer_price_message_id")
 
     if offer_id is None:
         await state.clear()
-        await message.answer("Не удалось определить заявку. Нажмите «Принять» ещё раз.")
+        await message.answer(t(locale, "request_unknown"))
         return
 
     payload = (message.text or "").strip()
     try:
         price_cents, carrier_note = _parse_offer_price_input(payload)
     except ValueError:
-        await message.answer(
-            "Не удалось распознать цену. Введите число в евро, например: 120"
-        )
+        await message.answer(t(locale, "price_invalid"))
         return
 
     telegram_user_id = message.from_user.id if message.from_user else None
     if telegram_user_id is None:
         await state.clear()
-        await message.answer("Не удалось определить перевозчика.")
+        await message.answer(t(locale, "carrier_unknown"))
         return
 
     job = None
     accepted_offer = None
-    message_text = (
-        "Спасибо. Ваш отклик отправлен. "
-        "Клиент получит предложения от перевозчиков и выберет подходящее."
-    )
+    message_text = t(locale, "response_sent")
 
     async with async_session_maker() as session:
         carrier_repository = CarrierRepository(session)
@@ -354,18 +357,21 @@ async def handle_offer_price_input(message: Message, state: FSMContext) -> None:
         carrier = await carrier_repository.get_carrier_by_telegram_user_id(
             telegram_user_id
         )
+        if carrier is not None:
+            locale = normalize_carrier_locale(carrier.preferred_locale or locale)
+            message_text = t(locale, "response_sent")
         offer = await job_repository.get_offer_by_id(int(offer_id))
 
         if carrier is None or offer is None or offer.carrier_id != carrier.id:
             await session.rollback()
             await state.clear()
-            await message.answer("Оффер не найден.")
+            await message.answer(t(locale, "offer_not_found"))
             return
 
         if offer.status != "pending":
             await session.rollback()
             await state.clear()
-            await message.answer("Этот оффер уже обработан.")
+            await message.answer(t(locale, "offer_resolved"))
             return
 
         try:
@@ -379,12 +385,12 @@ async def handle_offer_price_input(message: Message, state: FSMContext) -> None:
         except OfferAlreadyResolvedError:
             await session.rollback()
             await state.clear()
-            await message.answer("Этот оффер уже обработан.")
+            await message.answer(t(locale, "offer_resolved"))
             return
         except JobAlreadyAssignedError:
             await session.rollback()
             await state.clear()
-            await message.answer("Заявка уже не принимает предложения.")
+            await message.answer(t(locale, "request_closed"))
             return
 
         job = await job_repository.get_job_by_id(accepted_offer.job_id)
@@ -420,9 +426,9 @@ async def handle_offer_price_input(message: Message, state: FSMContext) -> None:
         await message.answer(
             (
                 f"{message_text}\n\n"
-                f"Цена: {price_cents / 100:.2f} €"
+                f"{t(locale, 'price')}: {price_cents / 100:.2f} €"
                 + (
-                    f"\nКомментарий: {html.escape(carrier_note, quote=False)}"
+                    f"\n{t(locale, 'note')}: {html.escape(carrier_note, quote=False)}"
                     if carrier_note
                     else ""
                 )
@@ -433,20 +439,21 @@ async def handle_offer_price_input(message: Message, state: FSMContext) -> None:
 
 @router.callback_query(F.data.startswith("offer_decline_reason:"))
 async def handle_offer_decline_reason(callback: CallbackQuery) -> None:
+    locale = normalize_carrier_locale(callback.from_user.language_code)
     parts = (callback.data or "").split(":")
     if len(parts) != 3:
-        await callback.answer("Некорректная кнопка", show_alert=True)
+        await callback.answer(t(locale, "invalid_button"), show_alert=True)
         return
 
     try:
         offer_id = int(parts[1])
     except ValueError:
-        await callback.answer("Некорректная кнопка", show_alert=True)
+        await callback.answer(t(locale, "invalid_button"), show_alert=True)
         return
 
     decline_reason = parts[2]
     if not is_valid_decline_reason(decline_reason):
-        await callback.answer("Некорректная причина", show_alert=True)
+        await callback.answer(t(locale, "invalid_reason"), show_alert=True)
         return
 
     telegram_user_id = callback.from_user.id
@@ -460,10 +467,12 @@ async def handle_offer_decline_reason(callback: CallbackQuery) -> None:
         carrier = await carrier_repository.get_carrier_by_telegram_user_id(
             telegram_user_id
         )
+        if carrier is not None:
+            locale = normalize_carrier_locale(carrier.preferred_locale or locale)
         offer = await job_repository.get_offer_by_id(offer_id)
 
         if carrier is None or offer is None or offer.carrier_id != carrier.id:
-            await callback.answer("Оффер не найден", show_alert=True)
+            await callback.answer(t(locale, "offer_not_found"), show_alert=True)
             return
 
         try:
@@ -472,7 +481,7 @@ async def handle_offer_decline_reason(callback: CallbackQuery) -> None:
                 decline_reason=decline_reason,
             )
         except OfferAlreadyResolvedError:
-            await callback.answer("Этот оффер уже обработан.", show_alert=True)
+            await callback.answer(t(locale, "offer_resolved"), show_alert=True)
             await session.rollback()
             return
 
@@ -493,7 +502,7 @@ async def handle_offer_decline_reason(callback: CallbackQuery) -> None:
                     await session.commit()
                     if callback.message:
                         await _delete_message_safely(callback.message)
-                    await callback.answer("Вы отказались от заказа.")
+                    await callback.answer(t(locale, "declined_done"))
                     return
 
                 distribution = OfferDistributionService(
@@ -531,7 +540,7 @@ async def handle_offer_decline_reason(callback: CallbackQuery) -> None:
     if callback.message:
         await _delete_message_safely(callback.message)
 
-    await callback.answer("Вы отказались от заказа.")
+    await callback.answer(t(locale, "declined_done"))
 
 
 @router.callback_query(F.data.startswith("client_offer:"))

@@ -1,6 +1,7 @@
 from aiogram.types import InlineKeyboardButton
 from aiogram.types import InlineKeyboardMarkup
 
+from app.bot.offer_locale import decline_reason_text
 from app.bot.offer_locale import offer_text as t
 from app.domain.job_decline_reason import DECLINE_REASONS
 
@@ -52,14 +53,17 @@ def parse_client_offer_selection_callback(data: str) -> tuple[int, int]:
     return int(parts[2]), int(parts[3])
 
 
-def build_offer_decline_reason_keyboard(offer_id: int) -> InlineKeyboardMarkup:
+def build_offer_decline_reason_keyboard(
+    offer_id: int,
+    locale: str | None = None,
+) -> InlineKeyboardMarkup:
     rows = []
 
     for index in range(0, len(DECLINE_REASONS), 2):
         rows.append(
             [
                 InlineKeyboardButton(
-                    text=reason.label,
+                    text=decline_reason_text(locale, reason.code),
                     callback_data=f"offer_decline_reason:{offer_id}:{reason.code}",
                 )
                 for reason in DECLINE_REASONS[index:index + 2]

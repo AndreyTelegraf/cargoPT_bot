@@ -26,6 +26,21 @@ OFFER_TRANSLATIONS = {
         "decision": "Decisão sobre o pedido #{job_id}",
         "accept": "✅ Aceitar",
         "decline": "❌ Recusar",
+        "invalid_button": "Botão inválido",
+        "offer_not_found": "Proposta não encontrada.",
+        "offer_resolved": "Esta proposta já foi processada.",
+        "price_prompt": "Responda com o preço da proposta em euros.\n\nExemplo:\n120\nou:\n120 Subida e descarga incluídas",
+        "price_reply": "Envie o preço numa mensagem de resposta.",
+        "decline_reason_prompt": "Indique o motivo da recusa.",
+        "request_unknown": "Não foi possível identificar o pedido. Prima «Aceitar» novamente.",
+        "price_invalid": "Não foi possível reconhecer o preço. Introduza um valor em euros, por exemplo: 120",
+        "carrier_unknown": "Não foi possível identificar o transportador.",
+        "response_sent": "Obrigado. A sua proposta foi enviada. O cliente receberá as propostas dos transportadores e escolherá a mais adequada.",
+        "request_closed": "O pedido já não aceita propostas.",
+        "price": "Preço",
+        "note": "Comentário",
+        "invalid_reason": "Motivo inválido",
+        "declined_done": "Recusou o pedido.",
     },
     "en": {
         "new_request": "New request #{job_id}",
@@ -51,6 +66,21 @@ OFFER_TRANSLATIONS = {
         "decision": "Decision for request #{job_id}",
         "accept": "✅ Accept",
         "decline": "❌ Decline",
+        "invalid_button": "Invalid button",
+        "offer_not_found": "Offer not found.",
+        "offer_resolved": "This offer has already been processed.",
+        "price_prompt": "Reply with your offer price in euros.\n\nExample:\n120\nor:\n120 Carrying and unloading included",
+        "price_reply": "Send the price in a reply message.",
+        "decline_reason_prompt": "Select a reason for declining.",
+        "request_unknown": "The request could not be identified. Press “Accept” again.",
+        "price_invalid": "The price could not be recognized. Enter an amount in euros, for example: 120",
+        "carrier_unknown": "The carrier could not be identified.",
+        "response_sent": "Thank you. Your offer was sent. The customer will receive the carrier offers and choose one.",
+        "request_closed": "The request is no longer accepting offers.",
+        "price": "Price",
+        "note": "Comment",
+        "invalid_reason": "Invalid reason",
+        "declined_done": "You declined the request.",
     },
     "ru": {
         "new_request": "Новая заявка #{job_id}",
@@ -76,6 +106,55 @@ OFFER_TRANSLATIONS = {
         "decision": "Решение по заявке #{job_id}",
         "accept": "✅ Принять",
         "decline": "❌ Отклонить",
+        "invalid_button": "Некорректная кнопка",
+        "offer_not_found": "Оффер не найден.",
+        "offer_resolved": "Этот оффер уже обработан.",
+        "price_prompt": "Ответьте ценой предложения в евро.\n\nНапример:\n120\nили:\n120 Подъём и разгрузка включены",
+        "price_reply": "Введите цену ответным сообщением.",
+        "decline_reason_prompt": "Укажите причину отказа.",
+        "request_unknown": "Не удалось определить заявку. Нажмите «Принять» ещё раз.",
+        "price_invalid": "Не удалось распознать цену. Введите число в евро, например: 120",
+        "carrier_unknown": "Не удалось определить перевозчика.",
+        "response_sent": "Спасибо. Ваш отклик отправлен. Клиент получит предложения от перевозчиков и выберет подходящее.",
+        "request_closed": "Заявка уже не принимает предложения.",
+        "price": "Цена",
+        "note": "Комментарий",
+        "invalid_reason": "Некорректная причина",
+        "declined_done": "Вы отказались от заказа.",
+    },
+}
+
+
+DECLINE_REASON_TRANSLATIONS = {
+    "pt": {
+        "time_unavailable": "Horário indisponível",
+        "price_not_agreed": "Preço não acordado",
+        "outside_area": "Fora da área",
+        "wrong_vehicle": "É necessário outro veículo",
+        "no_loaders": "Sem ajudantes disponíveis",
+        "route_or_floor_issue": "Problema com rota/pisos",
+        "client_unreachable": "Cliente não respondeu",
+        "other": "Outro",
+    },
+    "en": {
+        "time_unavailable": "Time unavailable",
+        "price_not_agreed": "Price not agreed",
+        "outside_area": "Outside service area",
+        "wrong_vehicle": "Different vehicle required",
+        "no_loaders": "No helpers available",
+        "route_or_floor_issue": "Route/floor issue",
+        "client_unreachable": "Customer unreachable",
+        "other": "Other",
+    },
+    "ru": {
+        "time_unavailable": "Не подошло время",
+        "price_not_agreed": "Не договорились по цене",
+        "outside_area": "Не подходит зона",
+        "wrong_vehicle": "Нужна другая машина",
+        "no_loaders": "Нет грузчиков",
+        "route_or_floor_issue": "Маршрут/этажи не подходят",
+        "client_unreachable": "Клиент не вышел на связь",
+        "other": "Другое",
     },
 }
 
@@ -83,3 +162,8 @@ OFFER_TRANSLATIONS = {
 def offer_text(locale: str | None, key: str, **values) -> str:
     language = normalize_carrier_locale(locale)
     return OFFER_TRANSLATIONS[language][key].format(**values)
+
+
+def decline_reason_text(locale: str | None, code: str) -> str:
+    language = normalize_carrier_locale(locale)
+    return DECLINE_REASON_TRANSLATIONS[language].get(code, code)
