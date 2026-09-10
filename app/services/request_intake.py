@@ -89,6 +89,14 @@ class RequestIntakeService:
     def _normalized_text(value: str | None) -> str:
         return " ".join((value or "").strip().casefold().split())
 
+    @staticmethod
+    def _normalized_datetime(value: datetime | None) -> datetime | None:
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            return value.replace(tzinfo=UTC)
+        return value.astimezone(UTC)
+
     @classmethod
     def _is_identical_request(cls, job, request: RequestIntakeInput) -> bool:
         job_addresses = sorted(
@@ -139,7 +147,8 @@ class RequestIntakeService:
 
         return (
             job.source_locale == request.source_locale
-            and job.requested_date == request.requested_date
+            and cls._normalized_datetime(job.requested_date)
+            == cls._normalized_datetime(request.requested_date)
             and bool(job.needs_assembly) == request.needs_assembly
             and bool(job.needs_packing) == request.needs_packing
             and bool(job.needs_tail_lift) == request.needs_tail_lift

@@ -2,6 +2,8 @@ import asyncio
 import sys
 from datetime import UTC
 from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -38,7 +40,7 @@ async def main() -> None:
     existing_job = SimpleNamespace(
         id=103,
         source_locale="ru",
-        requested_date=None,
+        requested_date=datetime(2026, 10, 15, 14, 30),
         needs_assembly=False,
         needs_packing=False,
         needs_tail_lift=False,
@@ -98,7 +100,14 @@ async def main() -> None:
             utm_campaign=None,
             utm_content=None,
             landing_version=None,
-            requested_date=None,
+            requested_date=datetime(
+                2026,
+                10,
+                15,
+                16,
+                30,
+                tzinfo=timezone(timedelta(hours=2)),
+            ),
             addresses=(
                 RequestIntakeAddress("pickup", " OVAR ", 1, False),
                 RequestIntakeAddress("dropoff", "Lisboa", 1, False),
