@@ -119,6 +119,60 @@ def main() -> None:
         "comment": "Submitted from web form",
     }
 
+    from pydantic import ValidationError
+
+    from app.api.web_request_schemas import WebRequestPayload
+
+    invalid_payloads = []
+
+    whitespace_contact = dict(payload)
+    whitespace_contact.update(
+        customer_email=None,
+        client_phone="   ",
+        client_whatsapp="\t",
+    )
+    invalid_payloads.append(("whitespace contact", whitespace_contact))
+
+    invalid_email = dict(payload)
+    invalid_email.update(
+        customer_email="not-an-email",
+        client_phone=None,
+        client_whatsapp=None,
+    )
+    invalid_payloads.append(("invalid email", invalid_email))
+
+    blank_cargo = dict(payload)
+    blank_cargo["items"] = [{"description": "   ", "quantity": 0}]
+    invalid_payloads.append(("blank cargo and zero quantity", blank_cargo))
+
+    duplicate_route = dict(payload)
+    duplicate_route["addresses"] = [
+        dict(payload["addresses"][0]),
+        dict(payload["addresses"][0]),
+        dict(payload["addresses"][1]),
+        dict(payload["addresses"][1]),
+    ]
+    invalid_payloads.append(("duplicate route structure", duplicate_route))
+
+    for label, invalid_payload in invalid_payloads:
+        try:
+            WebRequestPayload.model_validate(invalid_payload)
+        except ValidationError:
+            pass
+        else:
+            raise AssertionError(f"invalid web request accepted: {label}")
+
+    normalized_payload = dict(payload)
+    normalized_payload.update(
+        customer_name="  Web Client  ",
+        customer_email="  client@example.test  ",
+        client_phone="  +351900000000  ",
+    )
+    normalized = WebRequestPayload.model_validate(normalized_payload)
+    assert normalized.customer_name == "Web Client"
+    assert normalized.customer_email == "client@example.test"
+    assert normalized.client_phone == "+351900000000"
+
     with TestClient(app) as client:
         health = client.get("/health")
         if health.status_code != 200:

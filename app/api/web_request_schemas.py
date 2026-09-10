@@ -1,8 +1,10 @@
+import re
 from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel
 from pydantic import Field
+from pydantic import field_validator
 from pydantic import model_validator
 
 from app.domain.requested_date import RequestedDateInPastError
@@ -10,6 +12,9 @@ from app.domain.requested_date import validate_requested_date_not_in_past
 from app.services.web_intake import WebIntakeAddress
 from app.services.web_intake import WebIntakeItem
 from app.services.web_intake import WebIntakeRequest
+
+
+EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 class WebRequestAddressPayload(BaseModel):
@@ -24,6 +29,23 @@ class WebRequestAddressPayload(BaseModel):
     postal_code: str | None = Field(default=None, max_length=32)
     floor: int | None = Field(default=None, ge=-1, le=24)
     has_elevator: bool | None = None
+
+    @field_validator("raw_text", "normalized_address", mode="before")
+    @classmethod
+    def normalize_required_text(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("country_code", mode="before")
+    @classmethod
+    def normalize_country_code(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("address_details", "postal_code", mode="before")
+    @classmethod
+    def normalize_optional_text(cls, value):
+        if not isinstance(value, str):
+            return value
+        return value.strip() or None
 
     @model_validator(mode="after")
     def validate_location_selection(self) -> "WebRequestAddressPayload":
@@ -48,7 +70,12 @@ class WebRequestAddressPayload(BaseModel):
 
 class WebRequestItemPayload(BaseModel):
     description: str = Field(min_length=1, max_length=1000)
-    quantity: int | None = Field(default=None, ge=0)
+    quantity: int | None = Field(default=None, ge=1, le=100000)
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def normalize_description(cls, value):
+        return value.strip() if isinstance(value, str) else value
 
     def to_service_item(self) -> WebIntakeItem:
         return WebIntakeItem(
@@ -72,8 +99,8 @@ class WebRequestPayload(BaseModel):
     fbclid: str | None = Field(default=None, max_length=1024)
     landing_version: str | None = Field(default=None, max_length=64)
     requested_date: datetime | None = None
-    addresses: list[WebRequestAddressPayload] = Field(min_length=2)
-    items: list[WebRequestItemPayload] = Field(min_length=1)
+    addresses: list[WebRequestAddressPayload] = Field(min_length=2, max_length=2)
+    items: list[WebRequestItemPayload] = Field(min_length=1, max_length=50)
     needs_assembly: bool = False
     needs_packing: bool = False
     needs_tail_lift: bool = False
@@ -84,14 +111,42 @@ class WebRequestPayload(BaseModel):
     estimated_volume_m3: float | None = Field(default=None, ge=0)
     comment: str | None = Field(default=None, max_length=2000)
 
+    @field_validator(
+        "customer_name",
+        "customer_email",
+        "client_phone",
+        "client_whatsapp",
+        "utm_source",
+        "utm_medium",
+        "utm_campaign",
+        "utm_content",
+        "referrer_host",
+        "fbclid",
+        "landing_version",
+        "comment",
+        mode="before",
+    )
+    @classmethod
+    def normalize_optional_text(cls, value):
+        if not isinstance(value, str):
+            return value
+        return value.strip() or None
+
+    @field_validator("customer_email")
+    @classmethod
+    def validate_customer_email(cls, value: str | None) -> str | None:
+        if value is not None and EMAIL_PATTERN.fullmatch(value) is None:
+            raise ValueError("customer_email must be a valid email address")
+        return value
+
     @model_validator(mode="after")
     def validate_web_request(self) -> "WebRequestPayload":
         if not (self.customer_email or self.client_phone or self.client_whatsapp):
             raise ValueError("at least one contact is required")
 
-        address_kinds = {address.kind for address in self.addresses}
-        if "pickup" not in address_kinds or "dropoff" not in address_kinds:
-            raise ValueError("pickup and dropoff addresses are required")
+        address_kinds = [address.kind for address in self.addresses]
+        if address_kinds.count("pickup") != 1 or address_kinds.count("dropoff") != 1:
+            raise ValueError("exactly one pickup and one dropoff address are required")
 
         has_foreign_destination = any(
             address.country_code.lower() != "pt" for address in self.addresses
