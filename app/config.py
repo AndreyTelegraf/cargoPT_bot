@@ -27,6 +27,11 @@ class Settings(BaseSettings):
         "https://nominatim.openstreetmap.org/search"
     )
 
+    telegram_notification_max_attempts: int = Field(default=5, gt=0)
+    telegram_notification_retry_base_seconds: int = Field(default=60, gt=0)
+    telegram_notification_stale_sending_seconds: int = Field(default=300, gt=0)
+    telegram_notification_dispatch_limit: int = Field(default=50, gt=0, le=500)
+
     email_enabled: bool = False
     email_transport: str = "smtp"
     email_public_base_url: str = "https://cargopt.pt"

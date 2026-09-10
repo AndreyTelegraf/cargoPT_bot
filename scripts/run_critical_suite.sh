@@ -45,6 +45,7 @@ TESTS=(
   scripts/web_idempotency_migration_smoke.py
   scripts/telegram_notification_outbox_migration_smoke.py
   scripts/telegram_notification_dispatcher_smoke.py
+  scripts/telegram_notification_dispatch_entrypoint_smoke.py
   scripts/acquisition_funnel_smoke.py
   scripts/job_tracking_workspace_v2_smoke.py
 )

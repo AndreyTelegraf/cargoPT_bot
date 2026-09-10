@@ -1,0 +1,12 @@
+[Unit]
+Description=Run CargoPT Telegram outbox dispatcher every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+AccuracySec=10s
+Persistent=true
+Unit=cargopt_telegram_dispatch.service
+
+[Install]
+WantedBy=timers.target
