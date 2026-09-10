@@ -6,7 +6,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 STATIC = ROOT / "app/static"
 JS_PATH = STATIC / "assets/js/landing.js"
-ASSET_VERSION = "acquisition-funnel-v1-lead-time-v1"
+ASSET_VERSION = "intake-services-v1"
 
 
 def main() -> None:
