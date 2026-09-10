@@ -5,6 +5,11 @@ def main() -> None:
     html = Path(
         "app/static/track/index.html"
     ).read_text(encoding="utf-8")
+    localized_html = [
+        html,
+        Path("app/static/en/track/index.html").read_text(encoding="utf-8"),
+        Path("app/static/ru/track/index.html").read_text(encoding="utf-8"),
+    ]
 
     track_js = Path(
         "app/static/assets/js/track.js"
@@ -33,10 +38,14 @@ def main() -> None:
     assert "Os seus pedidos" not in html
     assert "track-new-request" not in html
 
-    assert "/assets/css/track.css?v=short-lead-v1" in html
     assert "/assets/js/progress-header.js?v=progress-stage-v5" in html
-    assert "/assets/js/tracking-workspace.js?v=short-lead-filter-v1" in html
-    assert "/assets/js/track.js?v=short-lead-filter-v1" in html
+    for page in localized_html:
+        assert "/assets/css/track.css?v=request-management-v1" in page
+        assert (
+            "/assets/js/tracking-workspace.js?v=request-management-v1"
+            in page
+        )
+        assert "/assets/js/track.js?v=request-management-v1" in page
 
     assert (
         'document.querySelector("#otherRequestsPanel")'
@@ -79,6 +88,29 @@ def main() -> None:
         in workspace_js
     )
     assert "renderWaitingState(entry, messages)" in workspace_js
+    assert 'section.id = "requestSummary"' in workspace_js
+    assert 'form.id = "requestDateChange"' in workspace_js
+    assert 'cancelButton.id = "requestCancel"' in workspace_js
+    assert "function renderRequestSummary(" in workspace_js
+    assert "function renderRequestActions(" in workspace_js
+    assert "request_details" in workspace_js
+    assert "Europe/Lisbon" in workspace_js
+    assert "options.onRequestedDateChange" in workspace_js
+    assert "options.onRequestCancel" in workspace_js
+    assert "/requested-date`" in track_js
+    assert "/cancel`" in track_js
+    assert "requested_date_local: dateValue" in track_js
+    assert "requested_time_local: timeValue" in track_js
+
+    for copy in (
+        "Ao alterar a data, as propostas atuais serão fechadas",
+        "Changing the date will close current offers",
+        "При изменении даты текущие предложения закроются",
+        "Depois de escolher um transportador",
+        "After choosing a carrier",
+        "После выбора перевозчика",
+    ):
+        assert copy in track_js
 
     assert (
         'if (snapshot.status === "no_carriers_found") '
@@ -160,6 +192,9 @@ def main() -> None:
     assert ".tracking-waiting-title" in track_css
     assert ".tracking-waiting-text" in track_css
     assert ".tracking-waiting-note" in track_css
+    assert ".tracking-request-summary" in track_css
+    assert ".tracking-request-actions" in track_css
+    assert ".tracking-request-date-form" in track_css
 
     assert ".track-offer-nav-empty" not in track_css
     assert ".track-new-request" not in track_css

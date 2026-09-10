@@ -112,6 +112,90 @@
   line-height: var(--line-height-copy);
 }
 
+.tracking-request-summary,
+.tracking-request-actions {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: var(--surface-nested-border);
+  border-radius: var(--surface-radius-card);
+  background: var(--surface-nested-bg);
+}
+
+.tracking-request-summary-title {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--font-size-card-title);
+  line-height: var(--line-height-card-title);
+}
+
+.tracking-request-summary-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.tracking-request-definition {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.tracking-request-definition dt {
+  color: var(--muted);
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-title);
+}
+
+.tracking-request-definition dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--text);
+  line-height: var(--line-height-copy);
+  overflow-wrap: anywhere;
+}
+
+.tracking-request-action-note,
+.tracking-request-action-feedback {
+  margin: 0;
+  line-height: var(--line-height-copy);
+}
+
+.tracking-request-action-note {
+  color: var(--muted);
+}
+
+.tracking-request-action-feedback {
+  min-height: 1.4em;
+  color: var(--error-text, #b42318);
+}
+
+.tracking-request-date-form {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(120px, .7fr) auto;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.tracking-request-date-form input {
+  width: 100%;
+  min-height: var(--button-height-small);
+  box-sizing: border-box;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--input-radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.tracking-cancel-request {
+  width: fit-content;
+  color: var(--error-text, #b42318);
+}
+
 .track-offer-nav-list {
   display: grid;
   align-content: start;
@@ -240,6 +324,21 @@
   .track-workspace-shell .tracking-waiting-state {
     min-height: 180px;
     padding: var(--space-5) var(--space-3);
+  }
+
+  .tracking-request-summary,
+  .tracking-request-actions {
+    padding: var(--space-4);
+  }
+
+  .tracking-request-summary-list,
+  .tracking-request-date-form {
+    grid-template-columns: 1fr;
+  }
+
+  .tracking-request-date-form .button,
+  .tracking-cancel-request {
+    width: 100%;
   }
 
   .track-workspace-shell .tracking-offers {

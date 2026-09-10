@@ -32,8 +32,31 @@
     statusCancelled: "Pedido cancelado",
     statusNoOffers: "Sem ofertas disponíveis",
     detailsTitle: "Detalhes do pedido",
+    requestedDateLabel: "Data e hora",
+    pickupLabel: "Origem",
+    dropoffLabel: "Destino",
+    floorLabel: "Piso",
+    elevatorLabel: "Elevador",
+    yesLabel: "Sim",
+    noLabel: "Não",
+    notProvidedLabel: "Não indicado",
     itemsLabel: "Itens",
     commentLabel: "Comentário",
+    requirementsLabel: "Serviços e requisitos",
+    assemblyLabel: "Montagem",
+    packingLabel: "Embalamento",
+    requestContactLabel: "Contacto do pedido",
+    requestActionsTitle: "Gerir pedido",
+    changeDateHelp: "Pode alterar a data antes de escolher um transportador.",
+    repricingWarning: "Se já existirem propostas, serão fechadas e a CargoPT pedirá novos preços.",
+    saveRequestedDate: "Alterar data",
+    savingRequestedDate: "A alterar...",
+    cancelRequest: "Cancelar pedido",
+    cancellingRequest: "A cancelar...",
+    confirmCancelRequest: "Tem a certeza de que pretende cancelar este pedido?",
+    requestActionFailed: "Não foi possível guardar a alteração. Tente novamente.",
+    coordinatedChange: "Depois de escolher um transportador, alterações e cancelamentos têm de ser coordenados com a CargoPT.",
+    contactCargoPT: "Contactar a CargoPT",
     defaultCarrier: "Transportador",
     contactLabel: "Contacto",
     phoneLabel: "Telefone",
@@ -508,6 +531,256 @@
     return waiting;
   }
 
+  const MANAGEABLE_REQUEST_STATUSES = new Set([
+    "ready_for_matching",
+    "matching",
+    "offered",
+    "unmatched",
+    "no_carriers_found",
+    "offers_exhausted",
+    "expired_without_response",
+    "manual_review_required"
+  ]);
+
+  function parseStoredRequestedDate(value) {
+    if (!value) return null;
+    const hasTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(value);
+    const parsed = new Date(hasTimezone ? value : `${value}Z`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  function portugalDateParts(value) {
+    const parsed = parseStoredRequestedDate(value);
+    if (!parsed) return {date: "", time: ""};
+
+    const parts = Object.fromEntries(
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Europe/Lisbon",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23"
+      }).formatToParts(parsed).map((part) => [part.type, part.value])
+    );
+
+    return {
+      date: `${parts.year}-${parts.month}-${parts.day}`,
+      time: `${parts.hour}:${parts.minute}`
+    };
+  }
+
+  function formatRequestedDate(value, locale, messages) {
+    const parsed = parseStoredRequestedDate(value);
+    if (!parsed) return messages.notProvidedLabel;
+    return new Intl.DateTimeFormat(locale || "pt-PT", {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: "Europe/Lisbon"
+    }).format(parsed);
+  }
+
+  function appendSummaryDefinition(list, label, value) {
+    if (value === null || value === undefined || value === "") return;
+    const item = document.createElement("div");
+    item.className = "tracking-request-definition";
+    const term = document.createElement("dt");
+    term.textContent = label;
+    const description = document.createElement("dd");
+    description.textContent = String(value);
+    item.append(term, description);
+    list.appendChild(item);
+  }
+
+  function formatAddress(address, messages) {
+    if (!address) return messages.notProvidedLabel;
+    const lines = [address.normalized_address || address.raw_text];
+    if (address.address_details) lines.push(address.address_details);
+    if (address.floor !== null && address.floor !== undefined) {
+      lines.push(`${messages.floorLabel}: ${address.floor}`);
+    }
+    if (address.has_elevator !== null && address.has_elevator !== undefined) {
+      lines.push(
+        `${messages.elevatorLabel}: ${address.has_elevator ? messages.yesLabel : messages.noLabel}`
+      );
+    }
+    return lines.filter(Boolean).join(" · ");
+  }
+
+  function renderRequestSummary(entry, options, messages) {
+    const details = entry.tracking_snapshot?.request_details;
+    if (!details) return null;
+
+    const section = document.createElement("section");
+    section.id = "requestSummary";
+    section.className = "tracking-request-summary";
+
+    const title = document.createElement("h2");
+    title.className = "tracking-request-summary-title";
+    title.textContent = messages.detailsTitle;
+
+    const list = document.createElement("dl");
+    list.className = "tracking-request-summary-list";
+    appendSummaryDefinition(
+      list,
+      messages.requestedDateLabel,
+      formatRequestedDate(details.requested_date, options.locale, messages)
+    );
+
+    const pickup = details.addresses?.find((item) => item.kind === "pickup");
+    const dropoff = details.addresses?.find((item) => item.kind === "dropoff");
+    appendSummaryDefinition(list, messages.pickupLabel, formatAddress(pickup, messages));
+    appendSummaryDefinition(list, messages.dropoffLabel, formatAddress(dropoff, messages));
+
+    const itemSummary = (details.items || []).map((item) => {
+      const quantity = item.quantity ? `${item.quantity} × ` : "";
+      return `${quantity}${item.description}`;
+    }).join("; ");
+    appendSummaryDefinition(list, messages.itemsLabel, itemSummary);
+
+    const requirements = [
+      details.needs_assembly ? messages.assemblyLabel : null,
+      details.needs_packing ? messages.packingLabel : null,
+      details.needs_tail_lift ? messages.tailLiftLabel : null,
+      details.needs_crane ? messages.craneLabel : null,
+      details.needs_mobile_lift ? messages.mobileLiftLabel : null
+    ].filter(Boolean);
+    appendSummaryDefinition(
+      list,
+      messages.requirementsLabel,
+      requirements.join(", ") || messages.notProvidedLabel
+    );
+    appendSummaryDefinition(list, messages.loadersLabel, details.required_loaders);
+    appendSummaryDefinition(
+      list,
+      messages.payloadLabel,
+      details.estimated_payload_kg == null ? null : `${details.estimated_payload_kg} kg`
+    );
+    appendSummaryDefinition(
+      list,
+      messages.volumeLabel,
+      details.estimated_volume_m3 == null ? null : `${details.estimated_volume_m3} m³`
+    );
+    appendSummaryDefinition(list, messages.commentLabel, details.comment);
+
+    const contact = [
+      details.customer_name,
+      details.customer_email,
+      details.client_phone,
+      details.client_whatsapp
+    ].filter(Boolean).join(" · ");
+    appendSummaryDefinition(list, messages.requestContactLabel, contact);
+    section.append(title, list);
+    return section;
+  }
+
+  function renderRequestActions(entry, options, messages) {
+    const snapshot = entry.tracking_snapshot || {};
+    const status = String(snapshot.status || "");
+    const assigned = [
+      "assigned_pending_confirmation",
+      "assigned",
+      "in_progress"
+    ].includes(status);
+
+    if (!assigned && !MANAGEABLE_REQUEST_STATUSES.has(status)) return null;
+
+    const section = document.createElement("section");
+    section.className = "tracking-request-actions";
+    const title = document.createElement("h2");
+    title.className = "tracking-request-summary-title";
+    title.textContent = messages.requestActionsTitle;
+    section.appendChild(title);
+
+    if (assigned) {
+      const note = document.createElement("p");
+      note.className = "tracking-request-action-note";
+      note.textContent = messages.coordinatedChange;
+      const contact = document.createElement("a");
+      contact.className = "button button-small button-secondary";
+      contact.href = "mailto:hello@cargopt.pt";
+      contact.textContent = messages.contactCargoPT;
+      section.append(note, contact);
+      return section;
+    }
+
+    const help = document.createElement("p");
+    help.className = "tracking-request-action-note";
+    help.textContent = status === "offered"
+      ? messages.repricingWarning
+      : messages.changeDateHelp;
+
+    const form = document.createElement("form");
+    form.id = "requestDateChange";
+    form.className = "tracking-request-date-form";
+    const storedDate = portugalDateParts(
+      snapshot.request_details?.requested_date
+    );
+    const dateInput = document.createElement("input");
+    dateInput.type = "date";
+    dateInput.required = true;
+    dateInput.value = storedDate.date;
+    dateInput.setAttribute("aria-label", messages.requestedDateLabel);
+    const timeInput = document.createElement("input");
+    timeInput.type = "time";
+    timeInput.required = true;
+    timeInput.value = storedDate.time;
+    timeInput.setAttribute("aria-label", messages.requestedDateLabel);
+    const saveButton = document.createElement("button");
+    saveButton.type = "submit";
+    saveButton.className = "button button-small";
+    saveButton.textContent = messages.saveRequestedDate;
+    const feedback = document.createElement("p");
+    feedback.className = "tracking-request-action-feedback";
+    feedback.setAttribute("role", "status");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!form.reportValidity() || !options.onRequestedDateChange) return;
+      feedback.textContent = "";
+      saveButton.disabled = true;
+      saveButton.textContent = messages.savingRequestedDate;
+      try {
+        await options.onRequestedDateChange(
+          dateInput.value,
+          timeInput.value,
+          saveButton
+        );
+      } catch (error) {
+        console.error(error);
+        saveButton.disabled = false;
+        saveButton.textContent = messages.saveRequestedDate;
+        feedback.textContent = messages.requestActionFailed;
+      }
+    });
+
+    const cancelButton = document.createElement("button");
+    cancelButton.id = "requestCancel";
+    cancelButton.type = "button";
+    cancelButton.className = "button button-small button-secondary tracking-cancel-request";
+    cancelButton.textContent = messages.cancelRequest;
+    cancelButton.addEventListener("click", async () => {
+      if (!options.onRequestCancel) return;
+      if (!window.confirm(messages.confirmCancelRequest)) return;
+      feedback.textContent = "";
+      cancelButton.disabled = true;
+      cancelButton.textContent = messages.cancellingRequest;
+      try {
+        await options.onRequestCancel(cancelButton);
+      } catch (error) {
+        console.error(error);
+        cancelButton.disabled = false;
+        cancelButton.textContent = messages.cancelRequest;
+        feedback.textContent = messages.requestActionFailed;
+      }
+    });
+
+    form.append(dateInput, timeInput, saveButton);
+    section.append(help, form, cancelButton, feedback);
+    return section;
+  }
+
   function renderOffers(entry, options, messages) {
     const offers = entry.tracking_snapshot?.accepted_offers || [];
 
@@ -551,6 +824,13 @@
 
     const workspace = document.createElement("div");
     workspace.className = "tracking-workspace-content";
+
+    const requestSummary = renderRequestSummary(
+      entry,
+      options,
+      messages
+    );
+    if (requestSummary) workspace.appendChild(requestSummary);
 
     if (entry.tracking_snapshot?.short_lead_time_warning) {
       const warning = document.createElement("aside");
@@ -597,6 +877,13 @@
     if (completionActions) {
       workspace.appendChild(completionActions);
     }
+
+    const requestActions = renderRequestActions(
+      entry,
+      options,
+      messages
+    );
+    if (requestActions) workspace.appendChild(requestActions);
 
     container.appendChild(workspace);
   }

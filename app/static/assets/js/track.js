@@ -380,6 +380,8 @@ let activeSidebarOfferId = null;
 let isSelectingOffer = false;
 let isSendingAssignmentAction = false;
 let isSendingCompletionAction = false;
+let isChangingRequestedDate = false;
+let isCancellingRequest = false;
 
 const MESSAGE_SETS = {
   pt: {
@@ -435,8 +437,31 @@ const MESSAGE_SETS = {
     completionRecorded: "A sua resposta foi guardada. Aguardamos a confirmação do transportador.",
     completionProblemRecorded: "O problema foi registado. A CargoPT irá verificar a situação.",
     detailsTitle: "Detalhes do pedido",
+    requestedDateLabel: "Data e hora",
+    pickupLabel: "Origem",
+    dropoffLabel: "Destino",
+    floorLabel: "Piso",
+    elevatorLabel: "Elevador",
+    yesLabel: "Sim",
+    noLabel: "Não",
+    notProvidedLabel: "Não indicado",
     itemsLabel: "Itens",
     commentLabel: "Comentário",
+    requirementsLabel: "Serviços e requisitos",
+    assemblyLabel: "Montagem",
+    packingLabel: "Embalamento",
+    requestContactLabel: "Contacto do pedido",
+    requestActionsTitle: "Gerir pedido",
+    changeDateHelp: "Pode alterar a data antes de escolher um transportador.",
+    repricingWarning: "Ao alterar a data, as propostas atuais serão fechadas e a CargoPT pedirá novos preços.",
+    saveRequestedDate: "Alterar data",
+    savingRequestedDate: "A alterar...",
+    cancelRequest: "Cancelar pedido",
+    cancellingRequest: "A cancelar...",
+    confirmCancelRequest: "Tem a certeza de que pretende cancelar este pedido?",
+    requestActionFailed: "Não foi possível guardar a alteração. Tente novamente.",
+    coordinatedChange: "Depois de escolher um transportador, alterações e cancelamentos têm de ser coordenados com a CargoPT.",
+    contactCargoPT: "Contactar a CargoPT",
     contactLabel: "Contacto",
     phoneLabel: "Telefone",
     telegramLabel: "Telegram",
@@ -512,8 +537,31 @@ const MESSAGE_SETS = {
     completionRecorded: "Your response was saved. We are waiting for the carrier's confirmation.",
     completionProblemRecorded: "The problem was recorded. CargoPT will review the situation.",
     detailsTitle: "Request details",
+    requestedDateLabel: "Date and time",
+    pickupLabel: "Pickup",
+    dropoffLabel: "Drop-off",
+    floorLabel: "Floor",
+    elevatorLabel: "Lift",
+    yesLabel: "Yes",
+    noLabel: "No",
+    notProvidedLabel: "Not provided",
     itemsLabel: "Items",
     commentLabel: "Comment",
+    requirementsLabel: "Services and requirements",
+    assemblyLabel: "Assembly",
+    packingLabel: "Packing",
+    requestContactLabel: "Request contact",
+    requestActionsTitle: "Manage request",
+    changeDateHelp: "You can change the date before choosing a carrier.",
+    repricingWarning: "Changing the date will close current offers and CargoPT will request new prices.",
+    saveRequestedDate: "Change date",
+    savingRequestedDate: "Changing...",
+    cancelRequest: "Cancel request",
+    cancellingRequest: "Cancelling...",
+    confirmCancelRequest: "Are you sure you want to cancel this request?",
+    requestActionFailed: "The change could not be saved. Please try again.",
+    coordinatedChange: "After choosing a carrier, changes and cancellations must be coordinated with CargoPT.",
+    contactCargoPT: "Contact CargoPT",
     contactLabel: "Contact",
     phoneLabel: "Phone",
     telegramLabel: "Telegram",
@@ -589,8 +637,31 @@ const MESSAGE_SETS = {
     completionRecorded: "Ваш ответ сохранён. Ожидаем подтверждение перевозчика.",
     completionProblemRecorded: "Проблема зафиксирована. CargoPT проверит ситуацию.",
     detailsTitle: "Детали заявки",
+    requestedDateLabel: "Дата и время",
+    pickupLabel: "Откуда",
+    dropoffLabel: "Куда",
+    floorLabel: "Этаж",
+    elevatorLabel: "Лифт",
+    yesLabel: "Да",
+    noLabel: "Нет",
+    notProvidedLabel: "Не указано",
     itemsLabel: "Что перевезти",
     commentLabel: "Комментарий",
+    requirementsLabel: "Услуги и требования",
+    assemblyLabel: "Сборка",
+    packingLabel: "Упаковка",
+    requestContactLabel: "Контакт заявки",
+    requestActionsTitle: "Управление заявкой",
+    changeDateHelp: "Дату можно изменить до выбора перевозчика.",
+    repricingWarning: "При изменении даты текущие предложения закроются, и CargoPT запросит новые цены.",
+    saveRequestedDate: "Изменить дату",
+    savingRequestedDate: "Изменяем...",
+    cancelRequest: "Отменить заявку",
+    cancellingRequest: "Отменяем...",
+    confirmCancelRequest: "Вы уверены, что хотите отменить эту заявку?",
+    requestActionFailed: "Не удалось сохранить изменение. Попробуйте ещё раз.",
+    coordinatedChange: "После выбора перевозчика изменения и отмену нужно согласовать с CargoPT.",
+    contactCargoPT: "Связаться с CargoPT",
     contactLabel: "Контакт",
     phoneLabel: "Телефон",
     telegramLabel: "Telegram",
@@ -671,7 +742,9 @@ function renderTrackingWorkspace(entry) {
     hideShareActions: true,
     onSelectOffer: selectOffer,
     onAssignmentAction: sendAssignmentAction,
-    onCompletionAction: sendCompletionAction
+    onCompletionAction: sendCompletionAction,
+    onRequestedDateChange: changeRequestedDate,
+    onRequestCancel: cancelRequest
   });
 }
 
@@ -933,6 +1006,64 @@ async function sendCompletionAction(action, button) {
     }, 2200);
   } finally {
     isSendingCompletionAction = false;
+  }
+}
+
+async function responseError(response) {
+  try {
+    const body = await response.json();
+    return new Error(body.detail || `HTTP ${response.status}`);
+  } catch {
+    return new Error(`HTTP ${response.status}`);
+  }
+}
+
+async function changeRequestedDate(dateValue, timeValue, button) {
+  const activeEntry = getActiveTrackingEntry();
+  if (isChangingRequestedDate || !activeEntry) return;
+
+  isChangingRequestedDate = true;
+  try {
+    const response = await fetch(
+      `/api/v1/track/${encodeURIComponent(activeEntry.token)}/requested-date`,
+      {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          requested_date_local: dateValue,
+          requested_time_local: timeValue
+        })
+      }
+    );
+    if (!response.ok) throw await responseError(response);
+    button.blur();
+    await refreshActiveTrackingEntry();
+  } finally {
+    isChangingRequestedDate = false;
+  }
+}
+
+async function cancelRequest(button) {
+  const activeEntry = getActiveTrackingEntry();
+  if (isCancellingRequest || !activeEntry) return;
+
+  isCancellingRequest = true;
+  try {
+    const response = await fetch(
+      `/api/v1/track/${encodeURIComponent(activeEntry.token)}/cancel`,
+      {
+        method: "POST",
+        headers: {"Accept": "application/json"}
+      }
+    );
+    if (!response.ok) throw await responseError(response);
+    button.blur();
+    await refreshActiveTrackingEntry();
+  } finally {
+    isCancellingRequest = false;
   }
 }
 
