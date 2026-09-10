@@ -171,37 +171,60 @@ def _build_accepted_offer_final_text(message: Message, status_text: str) -> str:
     return status_block
 
 
-def _format_client_offer_value(value, suffix: str = "") -> str:
+def _format_client_offer_value(value, suffix: str = "", locale: str | None = None) -> str:
     if value is None:
-        return "не указано"
+        return t(locale, "not_provided")
     return html.escape(f"{value}{suffix}", quote=False)
 
 
-def build_client_offer_selection_text(job_id: int, offers) -> str:
+def build_client_offer_selection_text(
+    job_id: int,
+    offers,
+    locale: str | None = None,
+) -> str:
     lines = [
-        f"<b>Перевозчики откликнулись на заявку №{job_id}</b>",
+        f"<b>{t(locale, 'client_offers_title', job_id=job_id)}</b>",
         "",
-        "Выберите подходящее предложение:",
+        t(locale, "choose_offer"),
     ]
 
     for index, offer in enumerate(offers, start=1):
         lines.extend(
             [
                 "",
-                f"<b>Предложение {index}</b>",
-                f"Компания: {html.escape(offer.company_name, quote=False)}",
-                f"Машина: {html.escape(offer.vehicle_type, quote=False)}",
-                f"Грузоподъёмность: {_format_client_offer_value(offer.payload_kg, ' кг')}",
-                f"Объём: {_format_client_offer_value(offer.volume_m3, ' м³')}",
-                f"Грузчики: {_format_client_offer_value(offer.max_loaders)}",
+                f"<b>{t(locale, 'offer_label', index=index)}</b>",
+                f"{t(locale, 'company')}: {html.escape(offer.company_name, quote=False)}",
+                f"{t(locale, 'vehicle')}: {html.escape(offer.vehicle_type, quote=False)}",
+                f"{t(locale, 'payload')}: {_format_client_offer_value(offer.payload_kg, ' kg', locale)}",
+                f"{t(locale, 'volume')}: {_format_client_offer_value(offer.volume_m3, ' m³', locale)}",
+                f"{t(locale, 'loaders')}: {_format_client_offer_value(offer.max_loaders, locale=locale)}",
             ]
         )
 
         if offer.price_cents is not None:
-            lines.append(f"Цена: {offer.price_cents / 100:.2f} €")
+            lines.append(f"{t(locale, 'price')}: {offer.price_cents / 100:.2f} €")
+
+        lines.extend(
+            [
+                f"{t(locale, 'included_services')}: "
+                f"{_format_client_offer_value(offer.included_services, locale=locale)}",
+                f"{t(locale, 'possible_surcharges')}: "
+                f"{_format_client_offer_value(offer.possible_surcharges, locale=locale)}",
+                f"{t(locale, 'service_window')}: "
+                f"{_format_client_offer_value(offer.service_window, locale=locale)}",
+                f"{t(locale, 'estimate_status')}: "
+                + (
+                    t(locale, f"estimate_{offer.estimate_status}")
+                    if offer.estimate_status in {"final", "estimate"}
+                    else t(locale, "not_provided")
+                ),
+            ]
+        )
 
         if offer.carrier_note:
-            lines.append(f"Комментарий: {html.escape(offer.carrier_note, quote=False)}")
+            lines.append(
+                f"{t(locale, 'note')}: {html.escape(offer.carrier_note, quote=False)}"
+            )
 
     return "\n".join(lines)
 
@@ -227,8 +250,8 @@ async def send_client_offer_selection_message(
 
     await bot.send_message(
         chat_id=job.client_telegram_user_id,
-        text=build_client_offer_selection_text(job.id, views),
-        reply_markup=build_client_offer_selection_keyboard(views),
+        text=build_client_offer_selection_text(job.id, views, job.source_locale),
+        reply_markup=build_client_offer_selection_keyboard(views, job.source_locale),
         parse_mode="HTML",
     )
 

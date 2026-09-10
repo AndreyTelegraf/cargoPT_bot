@@ -29,14 +29,17 @@ from aiogram.types import InlineKeyboardButton
 from aiogram.types import InlineKeyboardMarkup
 
 
-def build_client_offer_selection_keyboard(offers) -> InlineKeyboardMarkup:
+def build_client_offer_selection_keyboard(
+    offers,
+    locale: str | None = None,
+) -> InlineKeyboardMarkup:
     rows = []
 
     for index, offer in enumerate(offers, start=1):
         rows.append(
             [
                 InlineKeyboardButton(
-                    text=f"Выбрать предложение {index}",
+                    text=t(locale, "select_offer", index=index),
                     callback_data=f"client_offer:select:{offer.job_id}:{offer.offer_id}",
                 )
             ]
