@@ -50,18 +50,22 @@ class OfferDistributionService:
         )
         vehicles = matching_result.vehicles
 
-        selected = []
-        selected_carrier_ids = set(existing_carrier_ids)
-
+        first_vehicle_by_carrier = {}
         for vehicle in vehicles:
-            if vehicle.carrier_id in selected_carrier_ids:
-                continue
+            first_vehicle_by_carrier.setdefault(vehicle.carrier_id, vehicle)
 
-            selected.append(vehicle)
-            selected_carrier_ids.add(vehicle.carrier_id)
+        candidates = list(first_vehicle_by_carrier.values())
+        if candidates:
+            rotation_offset = (job.id - 1) % len(candidates)
+            candidates = candidates[rotation_offset:] + candidates[:rotation_offset]
 
-            if limit is not None and len(selected) >= limit:
-                break
+        selected = [
+            vehicle
+            for vehicle in candidates
+            if vehicle.carrier_id not in existing_carrier_ids
+        ]
+        if limit is not None:
+            selected = selected[:limit]
 
         offers = []
 

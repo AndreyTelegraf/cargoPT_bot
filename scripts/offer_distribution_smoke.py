@@ -7,6 +7,7 @@ from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
 from pathlib import Path
+from types import SimpleNamespace
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -64,6 +65,61 @@ def build_job(now, *, payload: int, volume: float, required_loaders: int = 2, ne
         created_at=now,
         updated_at=now,
     )
+
+
+async def exercise_fair_rotation() -> None:
+    class MatchingService:
+        async def find_matching_result_for_job(self, job, addresses=None):
+            from app.services.job_matching import MatchingReason
+            from app.services.job_matching import MatchingResult
+
+            vehicles = [
+                SimpleNamespace(id=carrier_id, carrier_id=carrier_id)
+                for carrier_id in range(1, 8)
+            ]
+            return MatchingResult(
+                vehicles=vehicles,
+                reason=MatchingReason.MATCH_FOUND,
+                regions=["Lisboa"],
+            )
+
+    class OfferService:
+        async def create_offer(self, *, job_id, vehicle, expires_in_minutes):
+            return SimpleNamespace(carrier_id=vehicle.carrier_id)
+
+    class JobRepository:
+        async def update_job_status(self, **kwargs):
+            return None
+
+        async def list_offer_carrier_ids_by_job(self, job_id):
+            return set()
+
+        async def list_addresses_by_job(self, job_id):
+            return [SimpleNamespace()]
+
+    distribution = OfferDistributionService(
+        matching_service=MatchingService(),
+        offer_service=OfferService(),
+        job_repository=JobRepository(),
+    )
+
+    first = await distribution.create_offers_for_job(
+        SimpleNamespace(id=100, updated_at=None),
+        limit=5,
+    )
+    second = await distribution.create_offers_for_job(
+        SimpleNamespace(id=101, updated_at=None),
+        limit=5,
+    )
+    first_ids = [offer.carrier_id for offer in first]
+    second_ids = [offer.carrier_id for offer in second]
+
+    if first_ids == second_ids:
+        raise SystemExit(f"consecutive jobs kept the same first five: {first_ids}")
+    if first_ids != [2, 3, 4, 5, 6] or second_ids != [3, 4, 5, 6, 7]:
+        raise SystemExit(
+            f"unexpected deterministic rotation: first={first_ids}, second={second_ids}"
+        )
 
 
 async def exercise_offer_distribution() -> None:
@@ -276,6 +332,7 @@ def main() -> None:
 
     reset_db()
     run([".venv/bin/alembic", "upgrade", "head"])
+    asyncio.run(exercise_fair_rotation())
     asyncio.run(exercise_offer_distribution())
     shutil.rmtree(DATA_DIR)
 
