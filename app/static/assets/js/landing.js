@@ -1,4 +1,5 @@
 const TRACKING_LINKS_KEY = "cargopt_tracking_links";
+const ACTIVE_SUBMISSION_KEY = "cargopt_active_submission_v1";
 const LANDING_VERSION = "landing_static_v3_acquisition";
 const ACQUISITION_EVENT_ENDPOINT = "/api/v1/acquisition-events";
 const pageLocale = document.body.dataset.locale || document.documentElement.lang || "ru";
@@ -11,6 +12,7 @@ const formMessage = document.querySelector("#formMessage");
 const progress = document.querySelector(".progress");
 let currentStep = 1;
 const sentAcquisitionEvents = new Set();
+let activeSubmission = loadActiveSubmission();
 
 const MESSAGES = {
   pt: {
@@ -273,6 +275,77 @@ function setMessage(text, type) {
   formMessage.textContent = text || "";
   formMessage.classList.toggle("is-error", type === "error");
   formMessage.classList.toggle("is-success", type === "success");
+}
+
+function createIdempotencyKey() {
+  if (window.crypto && typeof window.crypto.randomUUID === "function") {
+    return window.crypto.randomUUID();
+  }
+
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).slice(2);
+  return `web-${timestamp}-${random}`;
+}
+
+function submissionSignature(serializedPayload) {
+  let hash = 2166136261;
+  for (let index = 0; index < serializedPayload.length; index += 1) {
+    hash ^= serializedPayload.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `${serializedPayload.length}:${(hash >>> 0).toString(16)}`;
+}
+
+function loadActiveSubmission() {
+  try {
+    const raw = sessionStorage.getItem(ACTIVE_SUBMISSION_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (
+      parsed
+      && typeof parsed.key === "string"
+      && /^[A-Za-z0-9._:-]{8,128}$/.test(parsed.key)
+      && typeof parsed.signature === "string"
+    ) {
+      return parsed;
+    }
+  } catch {
+    // Storage must never block request submission.
+  }
+  return null;
+}
+
+function persistActiveSubmission() {
+  try {
+    sessionStorage.setItem(
+      ACTIVE_SUBMISSION_KEY,
+      JSON.stringify(activeSubmission)
+    );
+  } catch {
+    // In-memory idempotency still protects rapid duplicate submits.
+  }
+}
+
+function idempotencyKeyFor(serializedPayload) {
+  const signature = submissionSignature(serializedPayload);
+  if (activeSubmission && activeSubmission.signature === signature) {
+    return activeSubmission.key;
+  }
+
+  activeSubmission = {
+    key: createIdempotencyKey(),
+    signature
+  };
+  persistActiveSubmission();
+  return activeSubmission.key;
+}
+
+function clearActiveSubmission() {
+  activeSubmission = null;
+  try {
+    sessionStorage.removeItem(ACTIVE_SUBMISSION_KEY);
+  } catch {
+    // A successful request must not be turned into an error by storage.
+  }
 }
 
 function normalizeTrackingLink(entry) {
@@ -1124,10 +1197,15 @@ async function submitRequest() {
   submitButton.disabled = true;
 
   try {
+    const requestBody = JSON.stringify(buildPayload());
+    const idempotencyKey = idempotencyKeyFor(requestBody);
     const response = await fetch("/api/v1/requests", {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(buildPayload()),
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey
+      },
+      body: requestBody,
       signal: controller.signal
     });
 
@@ -1161,8 +1239,10 @@ async function submitRequest() {
         token: body.tracking_token
       };
       saveTrackingLink(trackingEntry);
+      clearActiveSubmission();
       window.location.href = localizedTrackingPath(body.tracking_token);
     } else {
+      clearActiveSubmission();
       setMessage(messages.success, "success");
     }
 
