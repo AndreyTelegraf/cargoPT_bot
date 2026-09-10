@@ -16,13 +16,16 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.domain.carrier_status import CarrierStatus
 from app.domain.job_offer_status import JobOfferStatus
+from app.domain.job_status import JobStatus
 from app.models.carrier import CarrierCompany
 from app.models.carrier import CarrierVehicle
 from app.models.job import Job
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
 from app.services.job_offer import JobOfferService
+from app.services.job_offer import OfferAlreadyResolvedError
 from app.services.job_offer import OfferExpiredError
+from app.services.job_lifecycle import cancel_client_job
 
 DATA_DIR = PROJECT_ROOT / ".tmp_job_offer_acceptance_smoke"
 DATABASE_URL = "sqlite+aiosqlite:///.tmp_job_offer_acceptance_smoke/cargopt_dev.db"
@@ -157,6 +160,70 @@ async def exercise_offer_acceptance() -> None:
             pass
         else:
             raise SystemExit("expired offer with naive SQLite timestamp was accepted")
+
+        cancel_target = await job_repo.create_job(
+            Job(
+                client_telegram_user_id=9002,
+                status=JobStatus.MATCHING,
+                requested_date=None,
+                needs_assembly=False,
+                needs_packing=False,
+                needs_tail_lift=True,
+                needs_crane=False,
+                needs_mobile_lift=False,
+                required_loaders=None,
+                estimated_payload_kg=1000,
+                estimated_volume_m3=12.0,
+                comment=None,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+        accepted_before_cancel = await service.create_offer(
+            job_id=cancel_target.id,
+            vehicle=vehicle,
+            expires_in_minutes=30,
+        )
+        await service.accept_offer_without_assignment(
+            accepted_before_cancel.id
+        )
+        pending_before_cancel = await service.create_offer(
+            job_id=cancel_target.id,
+            vehicle=vehicle,
+            expires_in_minutes=30,
+        )
+
+        cancelled_job, cancelled_from = await cancel_client_job(
+            job_repo,
+            job_id=cancel_target.id,
+        )
+        await session.commit()
+
+        if cancelled_job.status != JobStatus.CANCELLED:
+            raise SystemExit("client cancellation did not cancel the job")
+        if cancelled_from != JobStatus.OFFERED:
+            raise SystemExit(
+                f"unexpected client cancellation source: {cancelled_from}"
+            )
+        cancelled_offers = await job_repo.list_offers_by_job(
+            cancel_target.id
+        )
+        if [str(item.status) for item in cancelled_offers] != [
+            "cancelled",
+            "cancelled",
+        ]:
+            raise SystemExit(
+                "client cancellation left an offer open: "
+                f"{[str(item.status) for item in cancelled_offers]}"
+            )
+        try:
+            await service.accept_offer_without_assignment(
+                pending_before_cancel.id
+            )
+        except OfferAlreadyResolvedError:
+            pass
+        else:
+            raise SystemExit("offer was accepted after client cancellation")
 
     await engine.dispose()
 

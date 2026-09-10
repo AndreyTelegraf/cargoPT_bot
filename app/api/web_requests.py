@@ -23,6 +23,7 @@ from app.api.web_request_schemas import TrackingAddressResponse
 from app.api.web_request_schemas import TrackingItemResponse
 from app.api.web_request_schemas import TrackingJobResponse
 from app.api.web_request_schemas import TrackingRequestDetailsResponse
+from app.api.web_request_schemas import TrackingRequestCancelResponse
 from app.api.web_request_schemas import TrackingAssignmentActionResponse
 from app.api.web_request_schemas import TrackingCompletionActionResponse
 from app.services.assignment_notifications import send_assignment_confirmation_requests
@@ -44,6 +45,7 @@ from app.services.client_offer_presentation import ClientOfferPresentationServic
 from app.services.carrier_public_profile import carrier_logo_path
 from app.services.email.notification_service import EmailNotificationService
 from app.services.job_lifecycle import InvalidJobStatusTransitionError
+from app.services.job_lifecycle import cancel_client_job
 from app.services.job_completion import COMPLETION_CONFIRMED
 from app.services.job_completion import COMPLETION_PROBLEM
 from app.services.job_completion import notify_job_control_about_completion_problem
@@ -401,6 +403,34 @@ async def get_tracking_job(
             )
             for view in accepted_offer_views
         ],
+    )
+
+
+@router.post(
+    "/track/{tracking_token}/cancel",
+    response_model=TrackingRequestCancelResponse,
+)
+async def cancel_tracking_job(
+    tracking_token: str,
+    session: AsyncSession = Depends(get_session),
+) -> TrackingRequestCancelResponse:
+    job_repository = JobRepository(session)
+    job = await job_repository.get_job_by_tracking_token(tracking_token)
+    if job is None:
+        raise HTTPException(status_code=404, detail="tracking job not found")
+
+    try:
+        cancelled_job, previous_status = await cancel_client_job(
+            job_repository,
+            job_id=job.id,
+        )
+    except InvalidJobStatusTransitionError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    return TrackingRequestCancelResponse(
+        job_id=cancelled_job.id,
+        status=str(cancelled_job.status),
+        cancelled_from_status=str(previous_status),
     )
 
 

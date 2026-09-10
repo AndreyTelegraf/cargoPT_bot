@@ -90,3 +90,46 @@ async def cancel_job(repository: JobRepository, *, job_id: int) -> Job:
         },
         target_status=JobStatus.CANCELLED,
     )
+
+
+async def cancel_client_job(
+    repository: JobRepository,
+    *,
+    job_id: int,
+) -> tuple[Job, JobStatus]:
+    job = await repository.get_job_by_id(job_id)
+    if job is None:
+        raise ValueError("job not found")
+
+    current_status = JobStatus(job.status)
+    allowed_from = {
+        JobStatus.READY_FOR_MATCHING,
+        JobStatus.MATCHING,
+        JobStatus.OFFERED,
+        JobStatus.UNMATCHED,
+        JobStatus.NO_CARRIERS_FOUND,
+        JobStatus.OFFERS_EXHAUSTED,
+        JobStatus.EXPIRED_WITHOUT_RESPONSE,
+        JobStatus.MANUAL_REVIEW_REQUIRED,
+    }
+    if current_status not in allowed_from:
+        raise InvalidJobStatusTransitionError(
+            f"cannot cancel job {job_id} from {current_status}"
+        )
+
+    cancelled_at = datetime.now(UTC)
+    cancelled_job = await repository.claim_job_for_client_cancellation(
+        job_id=job_id,
+        expected_status=str(current_status),
+        cancelled_at=cancelled_at,
+    )
+    if cancelled_job is None:
+        raise InvalidJobStatusTransitionError(
+            f"job {job_id} changed before cancellation"
+        )
+
+    await repository.cancel_open_offers_by_job(
+        job_id=job_id,
+        cancelled_at=cancelled_at,
+    )
+    return cancelled_job, current_status

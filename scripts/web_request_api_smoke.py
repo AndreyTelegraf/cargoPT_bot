@@ -41,6 +41,7 @@ def main() -> None:
     os.environ["DATABASE_URL"] = DATABASE_URL
     os.environ["ENVIRONMENT"] = "web-request-api-smoke"
     os.environ["LOG_LEVEL"] = "INFO"
+    os.environ["EMAIL_ENABLED"] = "true"
 
     reset_db()
 
@@ -250,6 +251,12 @@ def main() -> None:
         tracking_response = client.get(
             f"/api/v1/track/{response.json()['tracking_token']}"
         )
+        cancel_response = client.post(
+            f"/api/v1/track/{response.json()['tracking_token']}/cancel"
+        )
+        repeated_cancel_response = client.post(
+            f"/api/v1/track/{response.json()['tracking_token']}/cancel"
+        )
 
     app.dependency_overrides.clear()
     asyncio.run(app_engine.dispose())
@@ -357,6 +364,25 @@ def main() -> None:
         raise SystemExit("tracking volume mismatch")
     if tracking_details["comment"] != payload["comment"]:
         raise SystemExit("tracking comment mismatch")
+    if cancel_response.status_code != 200:
+        raise SystemExit(
+            "tracking cancellation failed: "
+            f"{cancel_response.status_code} {cancel_response.text}"
+        )
+    if cancel_response.json() != {
+        "job_id": body["job_id"],
+        "status": "cancelled",
+        "cancelled_from_status": "manual_review_required",
+    }:
+        raise SystemExit(
+            f"unexpected tracking cancellation: {cancel_response.json()}"
+        )
+    if repeated_cancel_response.status_code != 409:
+        raise SystemExit(
+            "repeated tracking cancellation was not rejected: "
+            f"{repeated_cancel_response.status_code} "
+            f"{repeated_cancel_response.text}"
+        )
 
     connection = sqlite3.connect(DATA_DIR / "cargopt_dev.db")
     try:
@@ -366,6 +392,24 @@ def main() -> None:
             FROM telegram_notification_outbox
             GROUP BY job_id, notification_type, delivery_status
             """
+        ).fetchall()
+        cancellation_events = connection.execute(
+            """
+            SELECT from_status, to_status, count(*)
+            FROM job_status_event
+            WHERE job_id = ? AND to_status = 'cancelled'
+            GROUP BY from_status, to_status
+            """,
+            (body["job_id"],),
+        ).fetchall()
+        cancellation_emails = connection.execute(
+            """
+            SELECT event_type, status_snapshot, delivery_status, count(*)
+            FROM job_email_notification
+            WHERE job_id = ? AND event_type = 'request_cancelled'
+            GROUP BY event_type, status_snapshot, delivery_status
+            """,
+            (body["job_id"],),
         ).fetchall()
     finally:
         connection.close()
@@ -379,6 +423,18 @@ def main() -> None:
         raise SystemExit(
             "unexpected manual review outbox state: "
             f"{notifications} != {[expected_notification]}"
+        )
+    if cancellation_events != [
+        ("manual_review_required", "cancelled", 1)
+    ]:
+        raise SystemExit(
+            f"unexpected cancellation events: {cancellation_events}"
+        )
+    if cancellation_emails != [
+        ("request_cancelled", "cancelled", "pending", 1)
+    ]:
+        raise SystemExit(
+            f"unexpected cancellation email state: {cancellation_emails}"
         )
 
     shutil.rmtree(DATA_DIR)

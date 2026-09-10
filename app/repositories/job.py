@@ -924,6 +924,26 @@ class JobRepository:
         await self.session.flush()
         return closed
 
+    async def cancel_open_offers_by_job(
+        self,
+        *,
+        job_id: int,
+        cancelled_at,
+    ) -> list[JobOffer]:
+        offers = await self.list_offers_by_job(job_id)
+        cancelled: list[JobOffer] = []
+
+        for offer in offers:
+            if offer.status not in {"pending", "accepted"}:
+                continue
+            offer.status = "cancelled"
+            offer.responded_at = cancelled_at
+            offer.updated_at = cancelled_at
+            cancelled.append(offer)
+
+        await self.session.flush()
+        return cancelled
+
     async def claim_job_for_offer_selection(
         self,
         *,
@@ -1013,6 +1033,51 @@ class JobRepository:
 
         await self.session.flush()
 
+        return job
+
+    async def claim_job_for_client_cancellation(
+        self,
+        *,
+        job_id: int,
+        expected_status: str,
+        cancelled_at,
+    ) -> Job | None:
+        result = await self.session.execute(
+            update(Job)
+            .where(Job.id == job_id)
+            .where(Job.status == expected_status)
+            .values(
+                status="cancelled",
+                cancelled_at=cancelled_at,
+                updated_at=cancelled_at,
+            )
+            .execution_options(synchronize_session=False)
+        )
+        if result.rowcount != 1:
+            return None
+
+        job = await self.session.get(
+            Job,
+            job_id,
+            populate_existing=True,
+        )
+        if job is None:
+            raise ValueError("job not found after cancellation")
+
+        self.session.add(
+            JobStatusEvent(
+                job_id=job.id,
+                from_status=expected_status,
+                to_status="cancelled",
+                occurred_at=cancelled_at,
+            )
+        )
+        await self.enqueue_email_notification(
+            job=job,
+            event_type=EmailEventType.REQUEST_CANCELLED,
+            now=cancelled_at,
+        )
+        await self.session.flush()
         return job
 
     async def update_estimated_payload(

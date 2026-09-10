@@ -382,6 +382,12 @@ class TrackingOfferSelectResponse(BaseModel):
     selected_offer_id: int
 
 
+class TrackingRequestCancelResponse(BaseModel):
+    job_id: int
+    status: str
+    cancelled_from_status: str
+
+
 class TrackingAssignmentActionResponse(BaseModel):
     job_id: int
     status: str
