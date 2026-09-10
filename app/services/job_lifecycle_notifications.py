@@ -1,16 +1,13 @@
-import logging
 from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
 
-from app.bot.completion_keyboard import build_completion_keyboard
 from app.domain.requested_date import PORTUGAL_TIMEZONE
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
+from app.repositories.telegram_notification import TelegramNotificationRepository
 from app.services.email.models import EmailEventType
-
-
-logger = logging.getLogger(__name__)
+from app.services.telegram_notifications import TelegramNotificationEnqueueService
 
 
 def _format_requested_date(value: datetime | None) -> str:
@@ -21,50 +18,24 @@ def _format_requested_date(value: datetime | None) -> str:
     return value.astimezone(PORTUGAL_TIMEZONE).strftime("%d.%m.%Y %H:%M")
 
 
-async def _send_telegram_safely(bot, *, chat_id: int | None, text: str, reply_markup=None) -> None:
-    if chat_id is None:
-        return
-    try:
-        await bot.send_message(
-            chat_id=chat_id,
-            text=text,
-            reply_markup=reply_markup,
-        )
-    except Exception:
-        logger.exception(
-            "job lifecycle Telegram notification failed",
-            extra={"chat_id": chat_id},
-        )
-
-
-async def _notify_job_parties(
+async def _job_party_chat_ids(
     *,
-    bot,
     job,
     accepted_offer,
     carrier_repository: CarrierRepository,
-    text: str,
-    reply_markup=None,
-) -> None:
-    await _send_telegram_safely(
-        bot,
-        chat_id=job.client_telegram_user_id,
-        text=text,
-        reply_markup=reply_markup,
-    )
+):
+    chat_ids = []
+    if job.client_telegram_user_id is not None:
+        chat_ids.append(job.client_telegram_user_id)
 
     if accepted_offer is None:
-        return
+        return chat_ids
     carrier = await carrier_repository.get_carrier_by_id(
         accepted_offer.carrier_id
     )
-    if carrier is not None:
-        await _send_telegram_safely(
-            bot,
-            chat_id=carrier.telegram_user_id,
-            text=text,
-            reply_markup=reply_markup,
-        )
+    if carrier is not None and carrier.telegram_user_id is not None:
+        chat_ids.append(carrier.telegram_user_id)
+    return chat_ids
 
 
 async def process_job_lifecycle_notifications(
@@ -77,6 +48,11 @@ async def process_job_lifecycle_notifications(
     timestamp = now or datetime.now(UTC)
     job_repository = JobRepository(session)
     carrier_repository = CarrierRepository(session)
+    notification_service = TelegramNotificationEnqueueService(
+        TelegramNotificationRepository(session),
+        job_repository=job_repository,
+        carrier_repository=carrier_repository,
+    )
     processed = 0
 
     reminder_24h_jobs = await job_repository.list_jobs_for_24h_reminder(
@@ -91,23 +67,29 @@ async def process_job_lifecycle_notifications(
             f"Перевозка запланирована на {_format_requested_date(job.requested_date)}.\n"
             "Проверьте адреса и договорённости второй стороны."
         )
-        await _notify_job_parties(
-            bot=bot,
+        chat_ids = await _job_party_chat_ids(
             job=job,
             accepted_offer=accepted_offer,
             carrier_repository=carrier_repository,
+        )
+        notifications = await notification_service.enqueue_lifecycle_messages(
+            job=job,
+            recipient_chat_ids=chat_ids,
             text=text,
+            lifecycle_notification="reminder_24h",
+            now=timestamp,
         )
         await job_repository.enqueue_email_notification(
             job=job,
             event_type=EmailEventType.MOVE_REMINDER_24H,
             now=timestamp,
         )
-        await job_repository.mark_lifecycle_notification_sent(
-            job_id=job.id,
-            notification="reminder_24h",
-            sent_at=timestamp,
-        )
+        if not notifications:
+            await job_repository.mark_lifecycle_notification_sent(
+                job_id=job.id,
+                notification="reminder_24h",
+                sent_at=timestamp,
+            )
         processed += 1
 
     reminder_2h_jobs = await job_repository.list_jobs_for_2h_reminder(
@@ -122,23 +104,29 @@ async def process_job_lifecycle_notifications(
             f"Перевозка запланирована на {_format_requested_date(job.requested_date)}.\n"
             "До начала осталось менее двух часов."
         )
-        await _notify_job_parties(
-            bot=bot,
+        chat_ids = await _job_party_chat_ids(
             job=job,
             accepted_offer=accepted_offer,
             carrier_repository=carrier_repository,
+        )
+        notifications = await notification_service.enqueue_lifecycle_messages(
+            job=job,
+            recipient_chat_ids=chat_ids,
             text=text,
+            lifecycle_notification="reminder_2h",
+            now=timestamp,
         )
         await job_repository.enqueue_email_notification(
             job=job,
             event_type=EmailEventType.MOVE_REMINDER_2H,
             now=timestamp,
         )
-        await job_repository.mark_lifecycle_notification_sent(
-            job_id=job.id,
-            notification="reminder_2h",
-            sent_at=timestamp,
-        )
+        if not notifications:
+            await job_repository.mark_lifecycle_notification_sent(
+                job_id=job.id,
+                notification="reminder_2h",
+                sent_at=timestamp,
+            )
         processed += 1
 
     completion_jobs = await job_repository.list_jobs_for_completion_prompt(
@@ -152,24 +140,30 @@ async def process_job_lifecycle_notifications(
             f"Запланированное время перевозки по заявке #{job.id} прошло.\n\n"
             "Подтвердите результат перевозки."
         )
-        await _notify_job_parties(
-            bot=bot,
+        chat_ids = await _job_party_chat_ids(
             job=job,
             accepted_offer=accepted_offer,
             carrier_repository=carrier_repository,
+        )
+        notifications = await notification_service.enqueue_lifecycle_messages(
+            job=job,
+            recipient_chat_ids=chat_ids,
             text=text,
-            reply_markup=build_completion_keyboard(job.id),
+            lifecycle_notification="completion_prompt",
+            completion_keyboard=True,
+            now=timestamp,
         )
         await job_repository.enqueue_email_notification(
             job=job,
             event_type=EmailEventType.COMPLETION_REQUESTED,
             now=timestamp,
         )
-        await job_repository.mark_lifecycle_notification_sent(
-            job_id=job.id,
-            notification="completion_prompt",
-            sent_at=timestamp,
-        )
+        if not notifications:
+            await job_repository.mark_lifecycle_notification_sent(
+                job_id=job.id,
+                notification="completion_prompt",
+                sent_at=timestamp,
+            )
         processed += 1
 
     return processed

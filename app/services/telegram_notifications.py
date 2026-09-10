@@ -149,3 +149,65 @@ class TelegramNotificationEnqueueService:
                 )
 
         return stored_notifications
+
+    async def enqueue_lifecycle_messages(
+        self,
+        *,
+        job,
+        recipient_chat_ids,
+        text: str,
+        lifecycle_notification: str,
+        completion_keyboard: bool = False,
+        now: datetime | None = None,
+    ) -> list[TelegramNotificationOutbox]:
+        timestamp = now or datetime.now(UTC)
+        stored_notifications = []
+
+        for recipient_chat_id in dict.fromkeys(recipient_chat_ids):
+            if recipient_chat_id is None:
+                continue
+            notification = TelegramNotificationOutbox(
+                job_id=job.id,
+                offer_id=None,
+                notification_type=(
+                    TelegramNotificationType.LIFECYCLE_MESSAGE.value
+                ),
+                recipient_chat_id=recipient_chat_id,
+                dedupe_key=(
+                    f"job:{job.id}:lifecycle:{lifecycle_notification}:"
+                    f"{recipient_chat_id}"
+                ),
+                payload_json=json.dumps(
+                    {
+                        "text": text,
+                        "lifecycle_notification": lifecycle_notification,
+                        "completion_keyboard": completion_keyboard,
+                    },
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ),
+                delivery_status=TelegramDeliveryStatus.PENDING.value,
+                attempt_count=0,
+                next_attempt_at=timestamp,
+                last_attempt_at=None,
+                sent_at=None,
+                provider_chat_id=None,
+                provider_message_id=None,
+                last_error=None,
+                created_at=timestamp,
+                updated_at=timestamp,
+            )
+            stored = await self.repository.enqueue(notification)
+            stored_notifications.append(stored)
+            if stored is notification:
+                logger.info(
+                    "telegram_notification_enqueued",
+                    extra={
+                        "job_id": job.id,
+                        "notification_type": notification.notification_type,
+                        "lifecycle_notification": lifecycle_notification,
+                        "delivery_status": notification.delivery_status,
+                    },
+                )
+
+        return stored_notifications

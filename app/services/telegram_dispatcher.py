@@ -11,6 +11,7 @@ from aiogram.types import InputMediaVideo
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.bot.offer_keyboard import build_offer_keyboard
+from app.bot.completion_keyboard import build_completion_keyboard
 from app.domain.telegram_notification import TelegramDeliveryStatus
 from app.domain.telegram_notification import TelegramNotificationType
 from app.repositories.job import JobRepository
@@ -133,6 +134,15 @@ class TelegramNotificationDispatcher:
                         message_id=provider_message_id,
                         updated_at=sent_at,
                     )
+                lifecycle_notification = snapshot["payload"].get(
+                    "lifecycle_notification"
+                )
+                if isinstance(lifecycle_notification, str):
+                    await JobRepository(session).mark_lifecycle_notification_sent(
+                        job_id=snapshot["job_id"],
+                        notification=lifecycle_notification,
+                        sent_at=sent_at,
+                    )
                 await session.commit()
             logger.info(
                 "telegram_notification_sent",
@@ -154,6 +164,16 @@ class TelegramNotificationDispatcher:
 
         if notification_type == TelegramNotificationType.MANUAL_REVIEW:
             return await self.bot.send_message(chat_id=recipient, text=text)
+
+        if notification_type == TelegramNotificationType.LIFECYCLE_MESSAGE:
+            reply_markup = None
+            if snapshot["payload"].get("completion_keyboard") is True:
+                reply_markup = build_completion_keyboard(snapshot["job_id"])
+            return await self.bot.send_message(
+                chat_id=recipient,
+                text=text,
+                reply_markup=reply_markup,
+            )
 
         keyboard = build_offer_keyboard(snapshot["offer_id"])
         media = snapshot["media"]

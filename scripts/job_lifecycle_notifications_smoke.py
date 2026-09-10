@@ -10,6 +10,7 @@ os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///data/cargopt_dev.db")
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy import select
 
 from app.db.base import Base
 import app.models
@@ -17,7 +18,9 @@ from app.models.carrier import CarrierCompany
 from app.models.carrier import CarrierVehicle
 from app.models.job import Job
 from app.models.job import JobOffer
+from app.models.telegram_notification import TelegramNotificationOutbox
 from app.services.job_lifecycle_notifications import process_job_lifecycle_notifications
+from app.services.telegram_dispatcher import TelegramNotificationDispatcher
 
 
 class FakeBot:
@@ -26,6 +29,19 @@ class FakeBot:
 
     async def send_message(self, **kwargs):
         self.messages.append(kwargs)
+        return type(
+            "Message",
+            (),
+            {
+                "chat": type("Chat", (), {"id": kwargs["chat_id"]})(),
+                "message_id": 9000 + len(self.messages),
+            },
+        )()
+
+
+class FailingBot:
+    async def send_message(self, **kwargs):
+        raise RuntimeError("simulated lifecycle Telegram failure")
 
 
 async def main():
@@ -127,15 +143,84 @@ async def main():
             now=now,
         )
         assert processed == 3
-        assert jobs[0].reminder_24h_sent_at == now
+        assert jobs[0].reminder_24h_sent_at is None
         assert jobs[0].reminder_2h_sent_at is None
-        assert jobs[1].reminder_2h_sent_at == now
-        assert jobs[2].completion_prompted_at == now
-        assert len(bot.messages) == 6
+        assert jobs[1].reminder_2h_sent_at is None
+        assert jobs[2].completion_prompted_at is None
+        assert not bot.messages
+        outbox = list(
+            (
+                await session.execute(
+                    select(TelegramNotificationOutbox).order_by(
+                        TelegramNotificationOutbox.id
+                    )
+                )
+            ).scalars()
+        )
+        assert len(outbox) == 6
+        assert all(item.delivery_status == "pending" for item in outbox)
+        await session.commit()
+
+    delivery_bot = FakeBot()
+    dispatcher = TelegramNotificationDispatcher(
+        session_maker=sessions,
+        bot=delivery_bot,
+        retry_base_seconds=0,
+    )
+    assert await dispatcher.dispatch_due() == 6
+
+    async with sessions() as session:
+        delivered_jobs = [await session.get(Job, job_id) for job_id in (201, 202, 203)]
+        assert delivered_jobs[0].reminder_24h_sent_at is not None
+        assert delivered_jobs[1].reminder_2h_sent_at is not None
+        assert delivered_jobs[2].completion_prompted_at is not None
+        assert len(delivery_bot.messages) == 6
         completion_messages = [
-            message for message in bot.messages if message.get("reply_markup") is not None
+            message
+            for message in delivery_bot.messages
+            if message.get("reply_markup") is not None
         ]
         assert len(completion_messages) == 2
+
+        failed_job = Job(
+            id=204,
+            client_telegram_user_id=8004,
+            status="assigned",
+            requested_date=now + timedelta(hours=12),
+            needs_assembly=False,
+            needs_packing=False,
+            needs_tail_lift=False,
+            needs_crane=False,
+            needs_mobile_lift=False,
+            created_at=now,
+            updated_at=now,
+        )
+        session.add(failed_job)
+        await session.commit()
+
+    async with sessions() as session:
+        assert await process_job_lifecycle_notifications(
+            bot=FailingBot(),
+            session=session,
+            now=now,
+        ) == 1
+        await session.commit()
+
+    failing_dispatcher = TelegramNotificationDispatcher(
+        session_maker=sessions,
+        bot=FailingBot(),
+        retry_base_seconds=0,
+    )
+    assert await failing_dispatcher.dispatch_due() == 1
+    async with sessions() as session:
+        failed_job = await session.get(Job, 204)
+        assert failed_job.reminder_24h_sent_at is None
+        failed_notification = await session.scalar(
+            select(TelegramNotificationOutbox).where(
+                TelegramNotificationOutbox.job_id == 204
+            )
+        )
+        assert failed_notification.delivery_status == "retry"
 
     await engine.dispose()
     print("JOB_LIFECYCLE_NOTIFICATIONS_SMOKE_OK")
