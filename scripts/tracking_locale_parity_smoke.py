@@ -251,7 +251,7 @@ for locale, path in FILES.items():
         ),
         (
             "/assets/css/track.css"
-            "?v=short-lead-v1"
+            "?v=request-management-v1"
         ),
         (
             "/assets/css/progress-header.css"
@@ -263,11 +263,11 @@ for locale, path in FILES.items():
         ),
         (
             "/assets/js/tracking-workspace.js"
-            "?v=short-lead-filter-v1"
+            "?v=offer-terms-v1"
         ),
         (
             "/assets/js/track.js"
-            "?v=short-lead-filter-v1"
+            "?v=offer-terms-v1"
         ),
     ):
         assert asset in source, (

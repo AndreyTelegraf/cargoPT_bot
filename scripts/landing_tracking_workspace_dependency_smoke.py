@@ -17,7 +17,7 @@ TRACK_PAGES = (
 TRACKING_REF = "/assets/js/tracking-workspace.js"
 LANDING_REF = (
     "/assets/js/landing.js"
-    "?v=acquisition-funnel-v1"
+    "?v=intake-services-v1"
 )
 
 for path in LANDINGS:

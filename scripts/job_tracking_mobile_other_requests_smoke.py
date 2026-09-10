@@ -20,8 +20,8 @@ def main() -> None:
     assert 'aria-expanded="false"' in html
     assert 'aria-controls="trackPedidosList"' in html
 
-    assert "/assets/css/track.css?v=short-lead-v1" in html
-    assert "/assets/js/track.js?v=short-lead-filter-v1" in html
+    assert "/assets/css/track.css?v=request-management-v1" in html
+    assert "/assets/js/track.js?v=offer-terms-v1" in html
 
     assert (
         'document.querySelector("#otherRequestsToggle")'

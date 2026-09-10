@@ -78,7 +78,7 @@ for relative in (
         in html
     )
     assert (
-        "/assets/js/landing.js?v=acquisition-funnel-v1"
+        "/assets/js/landing.js?v=intake-services-v1"
         in html
     )
     assert "/assets/css/components.css?v=location-selector-v1" in html

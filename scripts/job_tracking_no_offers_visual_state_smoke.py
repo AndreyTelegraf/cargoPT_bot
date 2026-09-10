@@ -51,12 +51,12 @@ for relative in (
 
     assert (
         "/assets/js/tracking-workspace.js"
-        "?v=request-management-v1"
+        "?v=offer-terms-v1"
     ) in html
 
     assert (
         "/assets/js/track.js"
-        "?v=request-management-v1"
+        "?v=offer-terms-v1"
     ) in html
 
 print("TRACKING_NO_OFFERS_VISUAL_STATE_ERROR_OK")
