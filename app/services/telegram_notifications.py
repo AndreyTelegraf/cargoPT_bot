@@ -2,8 +2,9 @@ import json
 import logging
 from datetime import UTC
 from datetime import datetime
-from enum import StrEnum
 
+from app.domain.telegram_notification import TelegramDeliveryStatus
+from app.domain.telegram_notification import TelegramNotificationType
 from app.models.telegram_notification import TelegramNotificationOutbox
 from app.repositories.telegram_notification import TelegramNotificationRepository
 from app.services.job_escalation import build_offer_escalation_text
@@ -11,19 +12,6 @@ from app.services.offer_notification import build_offer_text
 
 
 logger = logging.getLogger(__name__)
-
-
-class TelegramNotificationType(StrEnum):
-    CARRIER_OFFER = "carrier_offer"
-    MANUAL_REVIEW = "manual_review"
-
-
-class TelegramDeliveryStatus(StrEnum):
-    PENDING = "pending"
-    SENDING = "sending"
-    RETRY = "retry"
-    SENT = "sent"
-    FAILED = "failed"
 
 
 class TelegramNotificationEnqueueService:
