@@ -15,6 +15,7 @@ from app.models.partner_outreach import PartnerOutreachComplianceSnapshot
 from app.models.partner_outreach import PartnerOutreachMessage
 from app.models.partner_outreach import PartnerOutreachSuppression
 from app.models.partner_outreach import PartnerProspect
+from app.models.telegram_notification import TelegramNotificationOutbox
 
 __all__ = [
     "AdminInviteToken",
@@ -34,4 +35,5 @@ __all__ = [
     "PartnerOutreachMessage",
     "PartnerOutreachSuppression",
     "PartnerProspect",
+    "TelegramNotificationOutbox",
 ]

@@ -61,7 +61,7 @@ def main() -> None:
         env["DATABASE_URL"] = f"sqlite+aiosqlite:///{database}"
         env["BOT_TOKEN"] = "migration-smoke"
 
-        run_alembic(env, "upgrade", "head")
+        run_alembic(env, "upgrade", CURRENT_REVISION)
 
         connection = sqlite3.connect(database)
         try:
