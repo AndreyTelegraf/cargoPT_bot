@@ -1,9 +1,12 @@
 from collections.abc import AsyncIterator
 from datetime import UTC
 from datetime import datetime
+import hashlib
+import json
 
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import Header
 from fastapi import HTTPException
 from fastapi import Query
 from fastapi import Response
@@ -50,6 +53,7 @@ from app.services.request_intake import RequestIntakeInput
 from app.services.request_intake import RequestIntakeItem
 from app.services.request_intake import RequestIntakeService
 from app.services.request_intake import WebRequestRateLimitError
+from app.services.request_intake import WebRequestIdempotencyConflictError
 from app.services.location_normalization import search_location_suggestions
 from app.services.tracking_url import build_tracking_path
 
@@ -94,6 +98,22 @@ async def get_session() -> AsyncIterator[AsyncSession]:
         except Exception:
             await session.rollback()
             raise
+
+
+def _web_request_fingerprint(payload: WebRequestPayload) -> str:
+    canonical = payload.model_dump(mode="json")
+    if payload.requested_date is not None:
+        requested_date = payload.requested_date
+        if requested_date.tzinfo is None:
+            requested_date = requested_date.replace(tzinfo=UTC)
+        canonical["requested_date"] = requested_date.astimezone(UTC).isoformat()
+    serialized = json.dumps(
+        canonical,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(serialized).hexdigest()
 
 
 @router.post("/acquisition-events", status_code=204)
@@ -166,6 +186,13 @@ async def get_api_bot() -> AsyncIterator[object]:
 @router.post("/requests", response_model=WebRequestResponse)
 async def submit_web_request(
     payload: WebRequestPayload,
+    idempotency_key: str | None = Header(
+        default=None,
+        alias="Idempotency-Key",
+        min_length=8,
+        max_length=128,
+        pattern=r"^[A-Za-z0-9._:-]+$",
+    ),
     session: AsyncSession = Depends(get_session),
     bot=Depends(get_api_bot),
 ) -> WebRequestResponse:
@@ -227,8 +254,19 @@ async def submit_web_request(
                 estimated_payload_kg=service_request.estimated_payload_kg,
                 estimated_volume_m3=service_request.estimated_volume_m3,
                 comment=service_request.comment,
+                idempotency_key=idempotency_key,
+                request_fingerprint=(
+                    _web_request_fingerprint(payload)
+                    if idempotency_key is not None
+                    else None
+                ),
             )
         )
+    except WebRequestIdempotencyConflictError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="idempotency key was already used for another request",
+        ) from exc
     except WebRequestRateLimitError as exc:
         raise HTTPException(
             status_code=429,

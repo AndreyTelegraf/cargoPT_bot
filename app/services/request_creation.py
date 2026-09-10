@@ -38,6 +38,8 @@ class WebDraftInput:
     required_loaders: int | None = None
     estimated_payload_kg: int | None = None
     estimated_volume_m3: float | None = None
+    idempotency_key: str | None = None
+    request_fingerprint: str | None = None
 
 
 class RequestCreationService:
@@ -94,6 +96,8 @@ class RequestCreationService:
             client_telegram_username=None,
             source="web_form",
             source_locale=payload.source_locale,
+            web_idempotency_key=payload.idempotency_key,
+            web_request_fingerprint=payload.request_fingerprint,
             customer_name=payload.customer_name,
             customer_email=payload.customer_email,
             preferred_contact=payload.preferred_contact,

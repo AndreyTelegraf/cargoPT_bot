@@ -38,6 +38,7 @@ TESTS=(
   scripts/email_status_events_smoke.py
   scripts/web_request_duplicate_guard_smoke.py
   scripts/web_intake_service_smoke.py
+  scripts/web_request_idempotency_smoke.py
   scripts/request_submission_transaction_boundary_smoke.py
   scripts/static_release_inventory_smoke.py
   scripts/web_idempotency_migration_smoke.py

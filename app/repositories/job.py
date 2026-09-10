@@ -48,6 +48,9 @@ class JobRepository:
     async def commit(self) -> None:
         await self.session.commit()
 
+    async def rollback(self) -> None:
+        await self.session.rollback()
+
     async def enqueue_email_notification(
         self,
         *,
@@ -175,6 +178,22 @@ class JobRepository:
             select(Job)
             .options(selectinload(Job.addresses))
             .where(Job.tracking_token == tracking_token)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_web_job_by_idempotency_key(
+        self,
+        idempotency_key: str,
+    ) -> Job | None:
+        stmt = (
+            select(Job)
+            .options(
+                selectinload(Job.addresses),
+                selectinload(Job.items),
+            )
+            .where(Job.source == "web_form")
+            .where(Job.web_idempotency_key == idempotency_key)
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()

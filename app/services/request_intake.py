@@ -3,6 +3,8 @@ from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
 
+from sqlalchemy.exc import IntegrityError
+
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
 from app.config import settings
@@ -65,9 +67,15 @@ class RequestIntakeInput:
     estimated_payload_kg: int | None = None
     estimated_volume_m3: float | None = None
     comment: str | None = None
+    idempotency_key: str | None = None
+    request_fingerprint: str | None = None
 
 
 class WebRequestRateLimitError(ValueError):
+    pass
+
+
+class WebRequestIdempotencyConflictError(ValueError):
     pass
 
 
@@ -163,40 +171,73 @@ class RequestIntakeService:
             and job_items == request_items
         )
 
+    async def _existing_result(
+        self,
+        job,
+    ) -> RequestSubmissionResult:
+        existing_offers = await self.job_repository.list_offers_by_job(job.id)
+        return RequestSubmissionResult(
+            job=job,
+            offers_count=len(existing_offers),
+            sent_count=sum(
+                offer.carrier_message_id is not None
+                for offer in existing_offers
+            ),
+        )
+
+    async def _idempotent_replay_result(
+        self,
+        job,
+        request: RequestIntakeInput,
+    ) -> RequestSubmissionResult:
+        if job.web_request_fingerprint != request.request_fingerprint:
+            raise WebRequestIdempotencyConflictError(
+                "idempotency key payload mismatch"
+            )
+        return await self._existing_result(job)
+
     async def submit_web_intake(
         self,
         request: RequestIntakeInput,
     ) -> RequestSubmissionResult:
         validate_requested_date_not_in_past(request.requested_date)
-        duplicate_cutoff = datetime.now(UTC) - timedelta(minutes=15)
-        recent_jobs = await self.job_repository.list_recent_web_jobs_for_contact(
-            since=duplicate_cutoff,
-            customer_email=request.customer_email,
-            client_phone=request.client_phone,
-            client_whatsapp=request.client_whatsapp,
-        )
-
-        duplicate_job = next(
-            (
-                job
-                for job in recent_jobs
-                if self._is_identical_request(job, request)
-            ),
-            None,
-        )
-
-        if duplicate_job is not None:
-            existing_offers = await self.job_repository.list_offers_by_job(
-                duplicate_job.id
+        if request.idempotency_key is not None:
+            if request.request_fingerprint is None:
+                raise ValueError(
+                    "request fingerprint is required with idempotency key"
+                )
+            idempotent_job = (
+                await self.job_repository.get_web_job_by_idempotency_key(
+                    request.idempotency_key
+                )
             )
-            return RequestSubmissionResult(
-                job=duplicate_job,
-                offers_count=len(existing_offers),
-                sent_count=sum(
-                    offer.carrier_message_id is not None
-                    for offer in existing_offers
+            if idempotent_job is not None:
+                return await self._idempotent_replay_result(
+                    idempotent_job,
+                    request,
+                )
+        else:
+            duplicate_cutoff = datetime.now(UTC) - timedelta(minutes=15)
+            recent_jobs = (
+                await self.job_repository.list_recent_web_jobs_for_contact(
+                    since=duplicate_cutoff,
+                    customer_email=request.customer_email,
+                    client_phone=request.client_phone,
+                    client_whatsapp=request.client_whatsapp,
+                )
+            )
+
+            duplicate_job = next(
+                (
+                    job
+                    for job in recent_jobs
+                    if self._is_identical_request(job, request)
                 ),
+                None,
             )
+
+            if duplicate_job is not None:
+                return await self._existing_result(duplicate_job)
 
         recent_contact_jobs = (
             await self.job_repository.count_recent_web_jobs_for_contact(
@@ -210,32 +251,49 @@ class RequestIntakeService:
             raise WebRequestRateLimitError("web contact daily limit reached")
 
         creation = RequestCreationService(job_repository=self.job_repository)
-        job = await creation.create_web_draft(
-            WebDraftInput(
-                source_locale=request.source_locale,
-                customer_name=request.customer_name,
-                customer_email=request.customer_email,
-                preferred_contact=request.preferred_contact,
-                client_phone=request.client_phone,
-                client_whatsapp=request.client_whatsapp,
-                utm_source=request.utm_source,
-                utm_medium=request.utm_medium,
-                utm_campaign=request.utm_campaign,
-                utm_content=request.utm_content,
-                referrer_host=request.referrer_host,
-                fbclid=request.fbclid,
-                landing_version=request.landing_version,
-                requested_date=request.requested_date,
-                needs_assembly=request.needs_assembly,
-                needs_packing=request.needs_packing,
-                needs_tail_lift=request.needs_tail_lift,
-                needs_crane=request.needs_crane,
-                needs_mobile_lift=request.needs_mobile_lift,
-                required_loaders=request.required_loaders,
-                estimated_payload_kg=request.estimated_payload_kg,
-                estimated_volume_m3=request.estimated_volume_m3,
-            )
+        draft_input = WebDraftInput(
+            source_locale=request.source_locale,
+            customer_name=request.customer_name,
+            customer_email=request.customer_email,
+            preferred_contact=request.preferred_contact,
+            client_phone=request.client_phone,
+            client_whatsapp=request.client_whatsapp,
+            utm_source=request.utm_source,
+            utm_medium=request.utm_medium,
+            utm_campaign=request.utm_campaign,
+            utm_content=request.utm_content,
+            referrer_host=request.referrer_host,
+            fbclid=request.fbclid,
+            landing_version=request.landing_version,
+            requested_date=request.requested_date,
+            needs_assembly=request.needs_assembly,
+            needs_packing=request.needs_packing,
+            needs_tail_lift=request.needs_tail_lift,
+            needs_crane=request.needs_crane,
+            needs_mobile_lift=request.needs_mobile_lift,
+            required_loaders=request.required_loaders,
+            estimated_payload_kg=request.estimated_payload_kg,
+            estimated_volume_m3=request.estimated_volume_m3,
+            idempotency_key=request.idempotency_key,
+            request_fingerprint=request.request_fingerprint,
         )
+        try:
+            job = await creation.create_web_draft(draft_input)
+        except IntegrityError as error:
+            if request.idempotency_key is None:
+                raise
+            await self.job_repository.rollback()
+            idempotent_job = (
+                await self.job_repository.get_web_job_by_idempotency_key(
+                    request.idempotency_key
+                )
+            )
+            if idempotent_job is None:
+                raise error
+            return await self._idempotent_replay_result(
+                idempotent_job,
+                request,
+            )
 
         population = RequestPopulationService(job_repository=self.job_repository)
         await population.populate(
