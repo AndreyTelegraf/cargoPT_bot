@@ -10,6 +10,8 @@ from pydantic import Field
 from pydantic import field_validator
 from pydantic import model_validator
 
+from app.domain.contact_identity import normalize_email_identity
+from app.domain.contact_identity import normalize_phone_identity
 from app.domain.requested_date import RequestedDateInPastError
 from app.domain.requested_date import PORTUGAL_TIMEZONE
 from app.domain.requested_date import validate_requested_date_not_in_past
@@ -166,7 +168,17 @@ class WebRequestPayload(BaseModel):
     def validate_customer_email(cls, value: str | None) -> str | None:
         if value is not None and EMAIL_PATTERN.fullmatch(value) is None:
             raise ValueError("customer_email must be a valid email address")
-        return value
+        return normalize_email_identity(value)
+
+    @field_validator("client_phone", "client_whatsapp")
+    @classmethod
+    def validate_phone(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = normalize_phone_identity(value)
+        if normalized is None:
+            raise ValueError("phone must contain a valid international number")
+        return normalized
 
     @model_validator(mode="after")
     def validate_web_request(self) -> "WebRequestPayload":

@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.config import settings
+from app.domain.contact_identity import contact_identity_keys
 from app.models.job import ClientBan
 from app.models.job import Job
 from app.models.job import JobAddress
@@ -218,20 +219,12 @@ class JobRepository:
         client_whatsapp: str | None,
         limit: int = 10,
     ) -> list[Job]:
-        contact_filters = []
-
-        if customer_email:
-            contact_filters.append(
-                func.lower(Job.customer_email) == customer_email.strip().lower()
-            )
-
-        if client_phone:
-            contact_filters.append(Job.client_phone == client_phone.strip())
-
-        if client_whatsapp:
-            contact_filters.append(Job.client_whatsapp == client_whatsapp.strip())
-
-        if not contact_filters:
+        requested_keys = contact_identity_keys(
+            customer_email=customer_email,
+            client_phone=client_phone,
+            client_whatsapp=client_whatsapp,
+        )
+        if not requested_keys:
             return []
 
         stmt = (
@@ -255,12 +248,21 @@ class JobRepository:
                     )
                 )
             )
-            .where(or_(*contact_filters))
             .order_by(Job.created_at.desc(), Job.id.desc())
-            .limit(limit)
         )
         result = await self.session.execute(stmt)
-        return list(result.scalars().unique().all())
+        matching_jobs = []
+        for job in result.scalars().unique().all():
+            stored_keys = contact_identity_keys(
+                customer_email=job.customer_email,
+                client_phone=job.client_phone,
+                client_whatsapp=job.client_whatsapp,
+            )
+            if requested_keys & stored_keys:
+                matching_jobs.append(job)
+                if len(matching_jobs) >= limit:
+                    break
+        return matching_jobs
 
     async def count_recent_web_jobs_for_contact(
         self,
@@ -270,25 +272,33 @@ class JobRepository:
         client_phone: str | None,
         client_whatsapp: str | None,
     ) -> int:
-        contact_filters = []
-        if customer_email:
-            contact_filters.append(
-                func.lower(Job.customer_email) == customer_email.strip().lower()
-            )
-        if client_phone:
-            contact_filters.append(Job.client_phone == client_phone.strip())
-        if client_whatsapp:
-            contact_filters.append(Job.client_whatsapp == client_whatsapp.strip())
-        if not contact_filters:
+        requested_keys = contact_identity_keys(
+            customer_email=customer_email,
+            client_phone=client_phone,
+            client_whatsapp=client_whatsapp,
+        )
+        if not requested_keys:
             return 0
 
         result = await self.session.execute(
-            select(func.count(Job.id))
+            select(
+                Job.customer_email,
+                Job.client_phone,
+                Job.client_whatsapp,
+            )
             .where(Job.source == "web_form")
             .where(Job.created_at >= since)
-            .where(or_(*contact_filters))
         )
-        return int(result.scalar_one())
+        return sum(
+            1
+            for email, phone, whatsapp in result.all()
+            if requested_keys
+            & contact_identity_keys(
+                customer_email=email,
+                client_phone=phone,
+                client_whatsapp=whatsapp,
+            )
+        )
 
     async def get_cancelled_from_status(
         self,
