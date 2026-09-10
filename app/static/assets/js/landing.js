@@ -23,6 +23,7 @@ const MESSAGES = {
     validationFailure: "Alguns dados do pedido não são válidos. Verifique os campos e tente novamente.",
     validationFieldFailure: "Verifique estes campos: {fields}.",
     requestedDatePast: "A data do transporte não pode estar no passado.",
+    requestedTimeRequired: "Indique a hora do transporte em Portugal.",
     conflictFailure: "Este pedido já foi alterado ou enviado. Atualize a página antes de tentar novamente.",
     rateLimitFailure: "Foram enviados demasiados pedidos. Aguarde um pouco e tente novamente.",
     serverFailure: "Ocorreu um erro no servidor. Os dados introduzidos foram mantidos; tente novamente.",
@@ -57,6 +58,7 @@ const MESSAGES = {
     validationFailure: "Some request details are invalid. Check the fields and try again.",
     validationFieldFailure: "Check these fields: {fields}.",
     requestedDatePast: "The moving date cannot be in the past.",
+    requestedTimeRequired: "Add the moving time in Portugal.",
     conflictFailure: "This request has already been changed or submitted. Refresh the page before trying again.",
     rateLimitFailure: "Too many requests were submitted. Wait a moment and try again.",
     serverFailure: "A server error occurred. Your entered data was kept; try again.",
@@ -91,6 +93,7 @@ const MESSAGES = {
     validationFailure: "Некоторые данные заявки заполнены неверно. Проверьте поля и отправьте ещё раз.",
     validationFieldFailure: "Проверьте поля: {fields}.",
     requestedDatePast: "Дата перевозки не может быть в прошлом.",
+    requestedTimeRequired: "Укажите время перевозки по Португалии.",
     conflictFailure: "Эта заявка уже была изменена или отправлена. Обновите страницу перед повторной попыткой.",
     rateLimitFailure: "Отправлено слишком много заявок. Подождите немного и попробуйте снова.",
     serverFailure: "На сервере произошла ошибка. Введённые данные сохранены; попробуйте отправить ещё раз.",
@@ -819,7 +822,7 @@ function isValidPhone(value) {
 function isRequestedDateInPast(value) {
   const normalized = normalizeRequestedDate(value);
   if (!normalized) return false;
-  return new Date(normalized) < new Date();
+  return normalized < portugalCalendarToday();
 }
 
 function validateField(field, focusField = false) {
@@ -925,6 +928,16 @@ function validateStep(step) {
 
   if (step === 2) {
     const data = getFormData();
+    const requestedDateLocal = normalizeRequestedDate(data.requested_date);
+    if (requestedDateLocal && !(data.requested_time || "").trim()) {
+      const requestedTimeField = form.elements.requested_time;
+      markFieldInvalid(
+        requestedTimeField,
+        messages.requestedTimeRequired,
+        false
+      );
+      if (firstInvalidField === null) firstInvalidField = requestedTimeField;
+    }
     const hasContact = [
       data.client_phone,
       data.client_whatsapp,
@@ -950,51 +963,55 @@ function validateStep(step) {
   return true;
 }
 
-function requestedDateAtMidday(year, month, day) {
-  let requestedDate = new Date(year, month - 1, day, 12, 0, 0, 0);
-  const now = new Date();
+function formatCalendarDate(year, month, day) {
+  return [
+    String(year).padStart(4, "0"),
+    String(month).padStart(2, "0"),
+    String(day).padStart(2, "0")
+  ].join("-");
+}
 
-  if (
-    requestedDate <= now
-    && requestedDate.toDateString() === now.toDateString()
-  ) {
-    requestedDate = new Date(now.getTime() + 60 * 60 * 1000);
-  }
+function portugalCalendarToday() {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Lisbon",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(
+    parts
+      .filter((part) => ["year", "month", "day"].includes(part.type))
+      .map((part) => [part.type, part.value])
+  );
+  return `${values.year}-${values.month}-${values.day}`;
+}
 
-  return requestedDate.toISOString();
+function shiftCalendarDate(value, days) {
+  const [year, month, day] = value.split("-").map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1, day + days));
+  return formatCalendarDate(
+    shifted.getUTCFullYear(),
+    shifted.getUTCMonth() + 1,
+    shifted.getUTCDate()
+  );
 }
 
 function normalizeRequestedDate(value) {
   const rawValue = (value || "").trim().toLowerCase();
   if (!rawValue) return null;
 
-  const today = new Date();
-  const targetDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const today = portugalCalendarToday();
 
   if (["hoje", "today", "сегодня"].includes(rawValue)) {
-    return requestedDateAtMidday(
-      targetDate.getFullYear(),
-      targetDate.getMonth() + 1,
-      targetDate.getDate()
-    );
+    return today;
   }
 
   if (["amanhã", "amanha", "tomorrow", "завтра"].includes(rawValue)) {
-    targetDate.setDate(targetDate.getDate() + 1);
-    return requestedDateAtMidday(
-      targetDate.getFullYear(),
-      targetDate.getMonth() + 1,
-      targetDate.getDate()
-    );
+    return shiftCalendarDate(today, 1);
   }
 
   if (["próximos dias", "proximos dias", "next few days", "в ближайшие дни"].includes(rawValue)) {
-    targetDate.setDate(targetDate.getDate() + 3);
-    return requestedDateAtMidday(
-      targetDate.getFullYear(),
-      targetDate.getMonth() + 1,
-      targetDate.getDate()
-    );
+    return shiftCalendarDate(today, 3);
   }
 
   if (["qualquer dia", "any day", "любой день"].includes(rawValue)) {
@@ -1004,12 +1021,11 @@ function normalizeRequestedDate(value) {
   const europeanDateMatch = rawValue.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (europeanDateMatch) {
     const [, day, month, year] = europeanDateMatch;
-    return requestedDateAtMidday(Number(year), Number(month), Number(day));
+    return formatCalendarDate(Number(year), Number(month), Number(day));
   }
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(rawValue)) {
-    const [year, month, day] = rawValue.split("-").map(Number);
-    return requestedDateAtMidday(year, month, day);
+    return rawValue;
   }
 
   return null;
@@ -1017,7 +1033,7 @@ function normalizeRequestedDate(value) {
 
 function buildPayload() {
   const data = getFormData();
-  const requestedDate = normalizeRequestedDate(data.requested_date);
+  const requestedDateLocal = normalizeRequestedDate(data.requested_date);
   const pickupLocation = locationFieldStates.get(form.elements.pickup);
   const dropoffLocation = locationFieldStates.get(form.elements.dropoff);
 
@@ -1053,7 +1069,10 @@ function buildPayload() {
     referrer_host: firstTouchAttribution.referrer_host,
     fbclid: firstTouchAttribution.fbclid,
     landing_version: LANDING_VERSION,
-    requested_date: requestedDate,
+    requested_date_local: requestedDateLocal,
+    requested_time_local: requestedDateLocal
+      ? (data.requested_time || null)
+      : null,
     addresses: [
       buildAddress(
         "pickup",

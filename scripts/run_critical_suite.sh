@@ -44,6 +44,7 @@ TESTS=(
   scripts/web_request_api_smoke.py
   scripts/web_request_idempotency_smoke.py
   scripts/web_request_idempotency_frontend_smoke.py
+  scripts/web_request_datetime_frontend_smoke.py
   scripts/request_submission_transaction_boundary_smoke.py
   scripts/job_comment_queued_acceptance_smoke.py
   scripts/static_release_inventory_smoke.py
