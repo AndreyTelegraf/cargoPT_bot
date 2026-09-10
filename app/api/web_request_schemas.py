@@ -322,6 +322,10 @@ class TrackingOfferResponse(BaseModel):
     has_mobile_lift: bool
     carrier_note: str | None
     price_cents: int | None
+    included_services: str | None
+    possible_surcharges: str | None
+    service_window: str | None
+    estimate_status: str | None
 
 
 class TrackingAddressResponse(BaseModel):

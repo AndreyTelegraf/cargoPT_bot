@@ -24,6 +24,10 @@ class ClientOfferView:
     has_mobile_lift: bool
     carrier_note: str | None
     price_cents: int | None
+    included_services: str | None
+    possible_surcharges: str | None
+    service_window: str | None
+    estimate_status: str | None
     operating_regions: str | None = None
     experience_since_year: int | None = None
     logo_file_name: str | None = None
@@ -93,6 +97,10 @@ class ClientOfferPresentationService:
                     has_mobile_lift=vehicle.has_mobile_lift,
                     carrier_note=offer.carrier_note,
                     price_cents=offer.price_cents,
+                    included_services=offer.included_services,
+                    possible_surcharges=offer.possible_surcharges,
+                    service_window=offer.service_window,
+                    estimate_status=offer.estimate_status,
                 )
             )
 

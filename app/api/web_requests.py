@@ -404,6 +404,10 @@ async def get_tracking_job(
                 has_mobile_lift=view.has_mobile_lift,
                 carrier_note=view.carrier_note,
                 price_cents=view.price_cents,
+                included_services=view.included_services,
+                possible_surcharges=view.possible_surcharges,
+                service_window=view.service_window,
+                estimate_status=view.estimate_status,
             )
             for view in accepted_offer_views
         ],

@@ -20,6 +20,7 @@ from app.models.carrier import CarrierVehicle
 from app.models.job import Job
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
+from app.api.web_request_schemas import TrackingOfferResponse
 from app.services.client_offer_presentation import ClientOfferPresentationService
 from app.services.job_offer import JobOfferService
 
@@ -181,6 +182,17 @@ async def exercise_client_offer_presentation() -> None:
             expires_in_minutes=30,
         )
 
+        await job_repo.update_offer_terms(
+            offer_id=first_offer.id,
+            price_cents=12500,
+            included_services="Loading and unloading",
+            possible_surcharges="Tolls if applicable",
+            service_window="12 Sep, 14:00-16:00",
+            estimate_status="final",
+            carrier_note="Call before arrival",
+            updated_at=now,
+        )
+
         await offer_service.accept_offer_without_assignment(first_offer.id)
         await offer_service.accept_offer_without_assignment(second_offer.id)
 
@@ -219,6 +231,34 @@ async def exercise_client_offer_presentation() -> None:
 
         if first_view.max_loaders != 2:
             raise SystemExit(f"bad first max_loaders: {first_view.max_loaders}")
+
+        if first_view.included_services != "Loading and unloading":
+            raise SystemExit("included services missing from offer view")
+        if first_view.possible_surcharges != "Tolls if applicable":
+            raise SystemExit("possible surcharges missing from offer view")
+        if first_view.service_window != "12 Sep, 14:00-16:00":
+            raise SystemExit("service window missing from offer view")
+        if first_view.estimate_status != "final":
+            raise SystemExit("estimate status missing from offer view")
+
+        api_offer = TrackingOfferResponse.model_validate(
+            {
+                **first_view.__dict__,
+                "logo_url": "/api/v1/carriers/1/logo",
+            }
+        )
+        if api_offer.included_services != "Loading and unloading":
+            raise SystemExit("included services missing from tracking schema")
+
+        route_source = Path("app/api/web_requests.py").read_text(encoding="utf-8")
+        for field in (
+            "included_services",
+            "possible_surcharges",
+            "service_window",
+            "estimate_status",
+        ):
+            if f"{field}=view.{field}" not in route_source:
+                raise SystemExit(f"tracking route does not map {field}")
 
         if second_view.company_name != "Second Accepted Carrier":
             raise SystemExit(f"bad second company: {second_view.company_name}")
