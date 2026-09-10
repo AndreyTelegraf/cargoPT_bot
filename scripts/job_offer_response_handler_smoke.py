@@ -48,7 +48,7 @@ assert "proposta foi enviada" in offer_text("pt", "response_sent")
 assert "Ваш отклик отправлен" in offer_text("ru", "response_sent")
 
 assert "_parse_offer_price_input" in source
-assert "update_offer_price_and_note" in source
+assert "update_offer_terms" in source
 assert "OfferResponseStates.price" in source
 assert "offer_price_offer_id" in source
 assert "offer_price_offer_id=offer_id" in source

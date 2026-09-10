@@ -1,7 +1,9 @@
 import html
 import re
+from dataclasses import dataclass
 from datetime import UTC
 from datetime import datetime
+from decimal import Decimal
 
 from aiogram import F
 from aiogram import Router
@@ -39,28 +41,65 @@ from app.bot.states.offer_response import OfferResponseStates
 
 router = Router()
 
-_offer_price_input_re = re.compile(
-    r"^\s*(?P<price>\d+(?:[.,]\d{1,2})?)\s*(?P<note>.*)$",
-    re.DOTALL,
-)
+_offer_price_input_re = re.compile(r"^\d+(?:[.,]\d{1,2})?$")
+_estimate_status_aliases = {
+    "final": "final",
+    "definitivo": "final",
+    "definitiva": "final",
+    "окончательная": "final",
+    "окончательный": "final",
+    "estimate": "estimate",
+    "estimated": "estimate",
+    "preliminary": "estimate",
+    "estimativa": "estimate",
+    "estimado": "estimate",
+    "preliminar": "estimate",
+    "предварительная": "estimate",
+    "предварительный": "estimate",
+}
 
 
-def _parse_offer_price_input(text: str) -> tuple[int, str | None]:
-    match = _offer_price_input_re.match(text)
+@dataclass(frozen=True)
+class ParsedOfferInput:
+    price_cents: int
+    included_services: str
+    possible_surcharges: str
+    service_window: str
+    estimate_status: str
+    carrier_note: str | None
 
-    if match is None:
+
+def _parse_offer_price_input(text: str) -> ParsedOfferInput:
+    lines = [line.strip() for line in text.strip().splitlines()]
+    if len(lines) < 5 or any(not line for line in lines[:5]):
+        raise ValueError("incomplete offer terms")
+
+    price_text = lines[0].replace(",", ".")
+    if _offer_price_input_re.fullmatch(lines[0]) is None:
         raise ValueError("invalid offer price")
 
-    price_text = match.group("price").replace(",", ".")
-    price = float(price_text)
-
+    price = Decimal(price_text)
     if price <= 0:
         raise ValueError("invalid offer price")
 
-    price_cents = int(round(price * 100))
-    note = match.group("note").strip() or None
+    included_services = lines[1]
+    possible_surcharges = lines[2]
+    service_window = lines[3]
+    estimate_status = _estimate_status_aliases.get(lines[4].casefold())
+    if estimate_status is None:
+        raise ValueError("invalid estimate status")
+    if len(service_window) > 255:
+        raise ValueError("service window is too long")
 
-    return price_cents, note
+    carrier_note = "\n".join(line for line in lines[5:] if line) or None
+    return ParsedOfferInput(
+        price_cents=int(price * 100),
+        included_services=included_services,
+        possible_surcharges=possible_surcharges,
+        service_window=service_window,
+        estimate_status=estimate_status,
+        carrier_note=carrier_note,
+    )
 
 
 async def _prompt_offer_price(
@@ -334,9 +373,9 @@ async def handle_offer_price_input(message: Message, state: FSMContext) -> None:
 
     payload = (message.text or "").strip()
     try:
-        price_cents, carrier_note = _parse_offer_price_input(payload)
+        parsed_offer = _parse_offer_price_input(payload)
     except ValueError:
-        await message.answer(t(locale, "price_invalid"))
+        await message.answer(t(locale, "offer_input_invalid"))
         return
 
     telegram_user_id = message.from_user.id if message.from_user else None
@@ -375,10 +414,14 @@ async def handle_offer_price_input(message: Message, state: FSMContext) -> None:
             return
 
         try:
-            await job_repository.update_offer_price_and_note(
+            await job_repository.update_offer_terms(
                 offer_id=offer.id,
-                price_cents=price_cents,
-                carrier_note=carrier_note,
+                price_cents=parsed_offer.price_cents,
+                included_services=parsed_offer.included_services,
+                possible_surcharges=parsed_offer.possible_surcharges,
+                service_window=parsed_offer.service_window,
+                estimate_status=parsed_offer.estimate_status,
+                carrier_note=parsed_offer.carrier_note,
                 updated_at=datetime.now(UTC),
             )
             accepted_offer = await offer_service.accept_offer_without_assignment(offer.id)
@@ -426,10 +469,19 @@ async def handle_offer_price_input(message: Message, state: FSMContext) -> None:
         await message.answer(
             (
                 f"{message_text}\n\n"
-                f"{t(locale, 'price')}: {price_cents / 100:.2f} €"
+                f"{t(locale, 'price')}: {parsed_offer.price_cents / 100:.2f} €\n"
+                f"{t(locale, 'included_services')}: "
+                f"{html.escape(parsed_offer.included_services, quote=False)}\n"
+                f"{t(locale, 'possible_surcharges')}: "
+                f"{html.escape(parsed_offer.possible_surcharges, quote=False)}\n"
+                f"{t(locale, 'service_window')}: "
+                f"{html.escape(parsed_offer.service_window, quote=False)}\n"
+                f"{t(locale, 'estimate_status')}: "
+                f"{t(locale, 'estimate_' + parsed_offer.estimate_status)}"
                 + (
-                    f"\n{t(locale, 'note')}: {html.escape(carrier_note, quote=False)}"
-                    if carrier_note
+                    f"\n{t(locale, 'note')}: "
+                    f"{html.escape(parsed_offer.carrier_note, quote=False)}"
+                    if parsed_offer.carrier_note
                     else ""
                 )
             ),

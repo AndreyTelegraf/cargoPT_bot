@@ -835,11 +835,15 @@ class JobRepository:
 
         return offer
 
-    async def update_offer_price_and_note(
+    async def update_offer_terms(
         self,
         *,
         offer_id: int,
         price_cents: int,
+        included_services: str,
+        possible_surcharges: str,
+        service_window: str,
+        estimate_status: str,
         carrier_note: str | None,
         updated_at,
     ) -> JobOffer:
@@ -849,6 +853,10 @@ class JobRepository:
             raise ValueError("offer not found")
 
         offer.price_cents = price_cents
+        offer.included_services = included_services
+        offer.possible_surcharges = possible_surcharges
+        offer.service_window = service_window
+        offer.estimate_status = estimate_status
         offer.carrier_note = carrier_note
         offer.updated_at = updated_at
 
