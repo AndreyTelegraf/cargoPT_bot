@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "mode": "applied",
+  "static_root": "/opt/bots/cargoPT_bot/app/static",
+  "static_files": [
+    "/opt/bots/cargoPT_bot/app/static/index.html",
+    "/opt/bots/cargoPT_bot/app/static/en/index.html",
+    "/opt/bots/cargoPT_bot/app/static/ru/index.html",
+    "/opt/bots/cargoPT_bot/app/static/assets/css/landing.css",
+    "/opt/bots/cargoPT_bot/app/static/assets/css/landing-designer-review-v1.css",
+    "/opt/bots/cargoPT_bot/app/static/track/index.html",
+    "/opt/bots/cargoPT_bot/app/static/en/track/index.html",
+    "/opt/bots/cargoPT_bot/app/static/ru/track/index.html"
+  ]
+}
