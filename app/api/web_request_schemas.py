@@ -191,6 +191,7 @@ class WebRequestResponse(BaseModel):
     tracking_url: str
     offers_count: int
     sent_count: int
+    queued_count: int
 
 
 class LocationSuggestionResponse(BaseModel):

@@ -290,6 +290,7 @@ async def submit_web_request(
         ),
         offers_count=result.offers_count,
         sent_count=result.sent_count,
+        queued_count=result.queued_count,
     )
 
 

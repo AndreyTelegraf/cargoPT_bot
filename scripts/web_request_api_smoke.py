@@ -177,6 +177,8 @@ def main() -> None:
         raise SystemExit(f"unexpected offers_count: {body.get('offers_count')}")
     if body.get("sent_count") != 0:
         raise SystemExit(f"unexpected sent_count: {body.get('sent_count')}")
+    if "queued_count" not in body or body["queued_count"] != 0:
+        raise SystemExit(f"unexpected queued_count: {body.get('queued_count')}")
     if fake_bot.messages:
         raise SystemExit("manual review called Telegram before outbox dispatch")
 
