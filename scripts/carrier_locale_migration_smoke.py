@@ -17,7 +17,7 @@ with tempfile.TemporaryDirectory(prefix="carrier-locale-migration-") as tmp:
     env["BOT_TOKEN"] = "migration-smoke"
 
     subprocess.run(
-        [str(ROOT / ".venv/bin/alembic"), "upgrade", "head"],
+        [str(ROOT / ".venv/bin/alembic"), "upgrade", CURRENT_REVISION],
         cwd=ROOT,
         env=env,
         check=True,
