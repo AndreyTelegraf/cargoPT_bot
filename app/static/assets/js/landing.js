@@ -24,6 +24,9 @@ const MESSAGES = {
     validationFieldFailure: "Verifique estes campos: {fields}.",
     requestedDatePast: "A data do transporte não pode estar no passado.",
     requestedTimeRequired: "Indique a hora do transporte em Portugal.",
+    leadTimeAutomatic: "Faltam pelo menos 72 horas. Depois do envio, o pedido entra na procura automática de transportadores adequados; propostas e disponibilidade não são garantidas.",
+    leadTimeManual: "Faltam menos de 72 horas. O pedido será guardado para análise manual pela CargoPT e não será enviado automaticamente aos transportadores. Entraremos em contacto através dos dados indicados.",
+    leadTimeFlexible: "Sem uma data e hora exatas, o pedido será guardado para análise manual pela CargoPT. Entraremos em contacto através dos dados indicados.",
     conflictFailure: "Este pedido já foi alterado ou enviado. Atualize a página antes de tentar novamente.",
     rateLimitFailure: "Foram enviados demasiados pedidos. Aguarde um pouco e tente novamente.",
     serverFailure: "Ocorreu um erro no servidor. Os dados introduzidos foram mantidos; tente novamente.",
@@ -59,6 +62,9 @@ const MESSAGES = {
     validationFieldFailure: "Check these fields: {fields}.",
     requestedDatePast: "The moving date cannot be in the past.",
     requestedTimeRequired: "Add the moving time in Portugal.",
+    leadTimeAutomatic: "The move is at least 72 hours away. After submission, the request enters automatic matching with suitable carriers; offers and availability are not guaranteed.",
+    leadTimeManual: "The move is less than 72 hours away. CargoPT will save the request for manual review and will not send it automatically to carriers. We will contact you using the details provided.",
+    leadTimeFlexible: "Without an exact date and time, CargoPT will save the request for manual review. We will contact you using the details provided.",
     conflictFailure: "This request has already been changed or submitted. Refresh the page before trying again.",
     rateLimitFailure: "Too many requests were submitted. Wait a moment and try again.",
     serverFailure: "A server error occurred. Your entered data was kept; try again.",
@@ -94,6 +100,9 @@ const MESSAGES = {
     validationFieldFailure: "Проверьте поля: {fields}.",
     requestedDatePast: "Дата перевозки не может быть в прошлом.",
     requestedTimeRequired: "Укажите время перевозки по Португалии.",
+    leadTimeAutomatic: "До перевозки не менее 72 часов. После отправки заявка попадёт в автоматический подбор подходящих перевозчиков; предложения и доступность не гарантируются.",
+    leadTimeManual: "До перевозки меньше 72 часов. CargoPT сохранит заявку для ручной проверки и не будет автоматически рассылать её перевозчикам. Мы свяжемся по указанным контактам.",
+    leadTimeFlexible: "Без точной даты и времени CargoPT сохранит заявку для ручной проверки. Мы свяжемся по указанным контактам.",
     conflictFailure: "Эта заявка уже была изменена или отправлена. Обновите страницу перед повторной попыткой.",
     rateLimitFailure: "Отправлено слишком много заявок. Подождите немного и попробуйте снова.",
     serverFailure: "На сервере произошла ошибка. Введённые данные сохранены; попробуйте отправить ещё раз.",
@@ -996,6 +1005,51 @@ function shiftCalendarDate(value, days) {
   );
 }
 
+function portugalLocalDateTimeToInstant(localDate, localTime) {
+  if (!localDate || !localTime) return null;
+  const [year, month, day] = localDate.split("-").map(Number);
+  const [hour, minute] = localTime.split(":").map(Number);
+  if (![year, month, day, hour, minute].every(Number.isFinite)) return null;
+
+  const desired = Date.UTC(year, month - 1, day, hour, minute);
+  let instant = desired;
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Lisbon",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  });
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const values = Object.fromEntries(
+      formatter
+        .formatToParts(new Date(instant))
+        .filter((part) => ["year", "month", "day", "hour", "minute"].includes(part.type))
+        .map((part) => [part.type, Number(part.value)])
+    );
+    const represented = Date.UTC(
+      values.year,
+      values.month - 1,
+      values.day,
+      values.hour,
+      values.minute
+    );
+    const adjustment = desired - represented;
+    if (adjustment === 0) return new Date(instant);
+    instant += adjustment;
+  }
+  return null;
+}
+
+function hasShortLeadRequestedDate(localDate, localTime, now = new Date()) {
+  const requested = portugalLocalDateTimeToInstant(localDate, localTime);
+  if (!requested) return null;
+  return requested.getTime() < now.getTime() + 72 * 60 * 60 * 1000;
+}
+
 function normalizeRequestedDate(value) {
   const rawValue = (value || "").trim().toLowerCase();
   if (!rawValue) return null;
@@ -1030,6 +1084,40 @@ function normalizeRequestedDate(value) {
 
   return null;
 }
+
+function renderRequestLeadTimeNotice() {
+  const notice = document.querySelector("#requestLeadTimeNotice");
+  if (!notice) return;
+
+  const rawDate = (form.elements.requested_date.value || "").trim();
+  const rawTime = (form.elements.requested_time.value || "").trim();
+  const flexible = ["qualquer dia", "any day", "любой день"].includes(
+    rawDate.toLowerCase()
+  );
+
+  notice.classList.remove("is-manual", "is-automatic");
+  if (flexible) {
+    notice.textContent = messages.leadTimeFlexible;
+    notice.classList.add("is-manual");
+    return;
+  }
+
+  const localDate = normalizeRequestedDate(rawDate);
+  const shortLead = hasShortLeadRequestedDate(localDate, rawTime);
+  if (shortLead === null) {
+    notice.textContent = "";
+    return;
+  }
+
+  notice.textContent = shortLead
+    ? messages.leadTimeManual
+    : messages.leadTimeAutomatic;
+  notice.classList.add(shortLead ? "is-manual" : "is-automatic");
+}
+
+form.elements.requested_date.addEventListener("input", renderRequestLeadTimeNotice);
+form.elements.requested_time.addEventListener("input", renderRequestLeadTimeNotice);
+renderRequestLeadTimeNotice();
 
 function buildPayload() {
   const data = getFormData();

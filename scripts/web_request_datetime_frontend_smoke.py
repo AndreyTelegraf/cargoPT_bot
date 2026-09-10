@@ -12,7 +12,7 @@ const fs = require("fs");
 const vm = require("vm");
 const source = fs.readFileSync(process.argv[2], "utf8");
 const start = source.indexOf("function isValidCalendarDate");
-const end = source.indexOf("function buildPayload", start);
+const end = source.indexOf("function renderRequestLeadTimeNotice", start);
 if (start < 0 || end < 0) throw new Error("requested date helper block not found");
 const context = {Date, Intl, Object};
 vm.runInNewContext(source.slice(start, end), context, {filename: "landing.js"});
@@ -25,6 +25,13 @@ if (context.normalizeRequestedDate("2026-12-01") !== "2026-12-01") {
 }
 if (context.normalizeRequestedDate("any day") !== null) {
   throw new Error("flexible requested date must remain unset");
+}
+const fixedNow = new Date("2026-12-01T12:00:00Z");
+if (context.hasShortLeadRequestedDate("2026-12-04", "11:59", fixedNow) !== true) {
+  throw new Error(`sub-72-hour request not detected in ${process.env.TZ}`);
+}
+if (context.hasShortLeadRequestedDate("2026-12-04", "12:00", fixedNow) !== false) {
+  throw new Error(`exact 72-hour request misclassified in ${process.env.TZ}`);
 }
 console.log(`WEB_REQUEST_DATETIME_FRONTEND_OK ${process.env.TZ}`);
 '''
