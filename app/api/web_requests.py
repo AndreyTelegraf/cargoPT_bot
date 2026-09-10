@@ -19,7 +19,10 @@ from app.api.web_request_schemas import WebRequestResponse
 from app.api.web_request_schemas import LocationSuggestionResponse
 from app.api.web_request_schemas import TrackingOfferSelectResponse
 from app.api.web_request_schemas import TrackingOfferResponse
+from app.api.web_request_schemas import TrackingAddressResponse
+from app.api.web_request_schemas import TrackingItemResponse
 from app.api.web_request_schemas import TrackingJobResponse
+from app.api.web_request_schemas import TrackingRequestDetailsResponse
 from app.api.web_request_schemas import TrackingAssignmentActionResponse
 from app.api.web_request_schemas import TrackingCompletionActionResponse
 from app.services.assignment_notifications import send_assignment_confirmation_requests
@@ -311,6 +314,8 @@ async def get_tracking_job(
         carrier_repository=carrier_repository,
     )
     accepted_offer_views = await presentation.list_accepted_offer_views(job.id)
+    addresses = await job_repository.list_addresses_by_job(job.id)
+    items = await job_repository.list_items_by_job(job.id)
 
     cancelled_from_status = None
 
@@ -333,6 +338,43 @@ async def get_tracking_job(
         completion_prompted_at=job.completion_prompted_at,
         client_completion_status=job.client_completion_status,
         carrier_completion_status=job.carrier_completion_status,
+        request_details=TrackingRequestDetailsResponse(
+            customer_name=job.customer_name,
+            customer_email=job.customer_email,
+            preferred_contact=job.preferred_contact,
+            client_phone=job.client_phone,
+            client_whatsapp=job.client_whatsapp,
+            requested_date=job.requested_date,
+            addresses=[
+                TrackingAddressResponse(
+                    kind=address.kind,
+                    raw_text=address.raw_text,
+                    normalized_address=address.normalized_address,
+                    country_code=address.country_code,
+                    postal_code=address.postal_code,
+                    address_details=address.address_details,
+                    floor=address.floor,
+                    has_elevator=address.has_elevator,
+                )
+                for address in addresses
+            ],
+            items=[
+                TrackingItemResponse(
+                    description=item.description,
+                    quantity=item.quantity,
+                )
+                for item in items
+            ],
+            needs_assembly=job.needs_assembly,
+            needs_packing=job.needs_packing,
+            needs_tail_lift=job.needs_tail_lift,
+            needs_crane=job.needs_crane,
+            needs_mobile_lift=job.needs_mobile_lift,
+            required_loaders=job.required_loaders,
+            estimated_payload_kg=job.estimated_payload_kg,
+            estimated_volume_m3=job.estimated_volume_m3,
+            comment=job.comment,
+        ),
         accepted_offers=[
             TrackingOfferResponse(
                 offer_id=view.offer_id,

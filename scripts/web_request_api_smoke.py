@@ -247,6 +247,9 @@ def main() -> None:
             )
 
         response = client.post("/api/v1/requests", json=payload)
+        tracking_response = client.get(
+            f"/api/v1/track/{response.json()['tracking_token']}"
+        )
 
     app.dependency_overrides.clear()
     asyncio.run(app_engine.dispose())
@@ -279,6 +282,81 @@ def main() -> None:
         raise SystemExit(f"unexpected queued_count: {body.get('queued_count')}")
     if fake_bot.messages:
         raise SystemExit("manual review called Telegram before outbox dispatch")
+
+    if tracking_response.status_code != 200:
+        raise SystemExit(
+            "tracking request failed: "
+            f"{tracking_response.status_code} {tracking_response.text}"
+        )
+    tracking_details = tracking_response.json().get("request_details")
+    if tracking_details is None:
+        raise SystemExit("tracking request details missing")
+    for field in (
+        "customer_name",
+        "customer_email",
+        "preferred_contact",
+        "client_phone",
+        "client_whatsapp",
+        "requested_date",
+        "addresses",
+        "items",
+        "needs_assembly",
+        "needs_packing",
+        "needs_tail_lift",
+        "needs_crane",
+        "needs_mobile_lift",
+        "required_loaders",
+        "estimated_payload_kg",
+        "estimated_volume_m3",
+        "comment",
+    ):
+        if field not in tracking_details:
+            raise SystemExit(f"tracking request detail missing: {field}")
+    if tracking_details["customer_name"] != payload["customer_name"]:
+        raise SystemExit("tracking customer name mismatch")
+    actual_requested_date = datetime.fromisoformat(
+        tracking_details["requested_date"]
+    ).replace(tzinfo=None)
+    expected_requested_date = datetime.fromisoformat(
+        payload["requested_date"]
+    ).replace(tzinfo=None)
+    if actual_requested_date != expected_requested_date:
+        raise SystemExit("tracking requested date mismatch")
+    if tracking_details["addresses"] != [
+        {
+            "kind": "pickup",
+            "raw_text": "Lisboa",
+            "normalized_address": "Lisboa, Portugal",
+            "country_code": "pt",
+            "postal_code": None,
+            "address_details": None,
+            "floor": 2,
+            "has_elevator": True,
+        },
+        {
+            "kind": "dropoff",
+            "raw_text": "Porto",
+            "normalized_address": "Porto, Portugal",
+            "country_code": "pt",
+            "postal_code": None,
+            "address_details": None,
+            "floor": 0,
+            "has_elevator": False,
+        },
+    ]:
+        raise SystemExit(
+            f"tracking addresses mismatch: {tracking_details['addresses']}"
+        )
+    if tracking_details["items"] != payload["items"]:
+        raise SystemExit("tracking items mismatch")
+    if tracking_details["required_loaders"] != 2:
+        raise SystemExit("tracking access requirements mismatch")
+    if tracking_details["estimated_payload_kg"] != 500:
+        raise SystemExit("tracking payload mismatch")
+    if tracking_details["estimated_volume_m3"] != 3.0:
+        raise SystemExit("tracking volume mismatch")
+    if tracking_details["comment"] != payload["comment"]:
+        raise SystemExit("tracking comment mismatch")
 
     connection = sqlite3.connect(DATA_DIR / "cargopt_dev.db")
     try:

@@ -324,6 +324,42 @@ class TrackingOfferResponse(BaseModel):
     price_cents: int | None
 
 
+class TrackingAddressResponse(BaseModel):
+    kind: str
+    raw_text: str
+    normalized_address: str | None
+    country_code: str | None
+    postal_code: str | None
+    address_details: str | None
+    floor: int | None
+    has_elevator: bool | None
+
+
+class TrackingItemResponse(BaseModel):
+    description: str
+    quantity: int | None
+
+
+class TrackingRequestDetailsResponse(BaseModel):
+    customer_name: str | None
+    customer_email: str | None
+    preferred_contact: str | None
+    client_phone: str | None
+    client_whatsapp: str | None
+    requested_date: datetime | None
+    addresses: list[TrackingAddressResponse]
+    items: list[TrackingItemResponse]
+    needs_assembly: bool
+    needs_packing: bool
+    needs_tail_lift: bool
+    needs_crane: bool
+    needs_mobile_lift: bool
+    required_loaders: int | None
+    estimated_payload_kg: int | None
+    estimated_volume_m3: float | None
+    comment: str | None
+
+
 class TrackingJobResponse(BaseModel):
     job_id: int
     status: str
@@ -337,6 +373,7 @@ class TrackingJobResponse(BaseModel):
     client_completion_status: str | None
     carrier_completion_status: str | None
     accepted_offers: list[TrackingOfferResponse]
+    request_details: TrackingRequestDetailsResponse
 
 
 class TrackingOfferSelectResponse(BaseModel):
