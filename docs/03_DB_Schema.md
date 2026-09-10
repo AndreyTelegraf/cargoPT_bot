@@ -1,5 +1,10 @@
 # CargoPT Bot — DB Schema v1
 
+> Historical design reference. The current production database contract is
+> `00_Current_Production_Contract.md`; ORM models and applied Alembic migrations
+> are executable schema authority. Proposed names below must not be treated as
+> existing production tables.
+
 ## Purpose
 
 This document defines the canonical MVP database schema for CargoPT Bot.
@@ -17,16 +22,16 @@ The database must support:
 - reopen logic
 - schedule-layer foundation
 - audit/event logging
-- future migration from SQLite to PostgreSQL
+- optional future migration from SQLite to PostgreSQL
 
 ## Database strategy
 
-MVP may start on SQLite for speed.
+Production currently uses SQLite.
 
-Schema must remain PostgreSQL-ready:
+Portable design remains desirable where it does not weaken the current target:
 
 - use explicit IDs
-- avoid SQLite-only logic
+- isolate SQLite-specific operational logic and test it against production
 - keep timestamps in UTC
 - keep enum values as strings
 - keep event log append-only

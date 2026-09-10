@@ -1,4 +1,8 @@
-# CargoPT Bot — Deployment Architecture v1
+# CargoPT Bot — Historical Deployment Architecture v1
+
+> This file preserves an early design proposal. It is not a production runbook.
+> Current runtime, database, backup and release boundaries are defined by
+> `00_Current_Production_Contract.md`.
 
 ## Purpose
 
@@ -21,10 +25,10 @@ Recommended MVP target:
 - single VPS
 - systemd service
 - Python virtualenv
-- SQLite or PostgreSQL
+- SQLite in current production
 - git-based deploy
 - file/stdout logs
-- manual backups
+- scheduled online SQLite backups plus pre-change backups
 
 This is enough for MVP because:
 
@@ -38,7 +42,7 @@ MVP components:
 
 - bot process
 - database
-- scheduler inside bot process
+- separate systemd jobs for scheduled work
 - docs in repository
 
 Future components:
@@ -51,12 +55,12 @@ Future components:
 
 ## Recommended MVP stack
 
-- Python 3.13
+- Python 3.12
 - aiogram 3
 - SQLAlchemy
 - Alembic
-- SQLite for earliest prototype
-- PostgreSQL for production-ready MVP
+- SQLite for current production
+- PostgreSQL only as an optional future migration
 - systemd
 - GitHub repository
 - dotenv-based config
@@ -111,9 +115,9 @@ Webhook can be added later if needed.
 
 ## Database choice
 
-### Prototype
+### Current production
 
-SQLite is acceptable for very early development.
+SQLite is the current production database.
 
 Pros:
 
@@ -127,9 +131,9 @@ Cons:
 - limited operational tooling
 - less suitable for production growth
 
-### Production MVP
+### Optional future migration
 
-PostgreSQL is recommended before real public launch.
+PostgreSQL may be evaluated separately; it is not a public-launch prerequisite.
 
 Pros:
 
@@ -157,15 +161,9 @@ Future:
 
 ## systemd services
 
-MVP may use one service:
-
-- cargopt_bot.service
-
-Future services:
-
-- cargopt_bot.service
-- cargopt_worker.service
-- cargopt_web.service
+Production uses separate API and bot services plus systemd timers for email and
+Telegram dispatch, backup, draft archive, regression and business-health work.
+The exact unit list is maintained in `00_Current_Production_Contract.md`.
 
 ## Logging
 
@@ -304,7 +302,7 @@ Phase 1:
 
 Phase 2:
 
-- PostgreSQL mandatory
+- PostgreSQL optional after a separately tested migration plan
 - worker process
 - Redis optional
 - better logging

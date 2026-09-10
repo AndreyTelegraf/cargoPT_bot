@@ -1,5 +1,9 @@
 # CargoPT Bot — Project Structure v1
 
+> Historical structure proposal. Current production boundaries are defined by
+> `00_Current_Production_Contract.md`, `04_Request_FSM.md` and
+> `12_Deployment_Architecture.md`.
+
 ## Purpose
 
 This document defines the implementation structure for CargoPT Bot.
@@ -343,7 +347,7 @@ Priority tests:
 - request FSM transitions
 - carrier onboarding
 - matching filters
-- first-accept-wins
+- carrier response followed by atomic customer offer selection
 - reopen flow
 - scheduler idempotency
 - permission checks
@@ -406,4 +410,3 @@ Keep business logic in services.
 Keep DB access in repositories.
 
 Keep lifecycle state in the database.
-

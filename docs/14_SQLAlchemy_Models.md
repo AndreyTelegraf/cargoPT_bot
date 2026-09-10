@@ -1,5 +1,9 @@
 # CargoPT Bot — SQLAlchemy Models v1
 
+> Historical model proposal. Current ORM code and applied Alembic migrations
+> are executable authority; lifecycle rules come from
+> `00_Current_Production_Contract.md` and `04_Request_FSM.md`.
+
 ## Purpose
 
 This document defines the ORM model design for CargoPT Bot.
@@ -543,8 +547,8 @@ Status values:
 Rules:
 
 - one carrier must not receive duplicate offer for same request and round
-- accepted offer must create assignment
-- losing offers must be cancelled after first accept wins
+- carrier acceptance creates a customer-visible offer, not an assignment
+- unselected offers close only after the customer's atomic offer selection
 
 ## RequestAssignment
 
@@ -1022,4 +1026,3 @@ ORM models describe persistence.
 They do not decide business behavior.
 
 Business behavior belongs in services.
-

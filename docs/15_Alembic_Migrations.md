@@ -1,5 +1,9 @@
 # CargoPT Bot — Alembic Migrations v1
 
+> Historical migration design notes. Current production uses SQLite; the
+> operational migration boundary is defined by
+> `00_Current_Production_Contract.md` and `12_Deployment_Architecture.md`.
+
 ## Purpose
 
 This document defines migration strategy for CargoPT Bot.
@@ -18,8 +22,8 @@ Recommended stack:
 
 - SQLAlchemy 2.x
 - Alembic
-- PostgreSQL
-- SQLite for local development only
+- SQLite in current production
+- optional future PostgreSQL migration
 
 Alembic is the single source of truth for schema evolution.
 
@@ -280,11 +284,12 @@ Rules:
 - test on DB copy before production
 - never mix unrelated schema and data changes if avoidable
 
-## SQLite compatibility
+## SQLite production target
 
-SQLite is allowed for local development.
+SQLite is the current production database.
 
-But PostgreSQL-readiness remains the design target.
+PostgreSQL portability is optional future work and must not override verified
+SQLite behaviour.
 
 SQLite limitations to remember:
 
@@ -296,9 +301,10 @@ SQLite limitations to remember:
 
 Migrations should be tested on target database before production.
 
-## PostgreSQL readiness
+## Optional PostgreSQL readiness
 
-Before production launch, validate migrations against PostgreSQL.
+Before any separately approved PostgreSQL migration, validate migrations against
+PostgreSQL.
 
 Minimum checks:
 

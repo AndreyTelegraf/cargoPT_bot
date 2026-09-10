@@ -1,207 +1,182 @@
-# CargoPT Bot — Request FSM v1
+# CargoPT — Request FSM
 
-## Purpose
+Status: current production Source of Truth. Read together with
+`00_Current_Production_Contract.md`.
 
-This document defines the lifecycle of a customer transport request.
+## Principle
 
-The request FSM drives customer UX, carrier UX, matching, reopen logic, admin actions, analytics and future calendar features.
+CargoPT is a request and matching service. A carrier accepting an invitation
+creates a customer-visible offer; it does not assign the job. The customer
+chooses one accepted offer explicitly.
 
-## Main happy path
+## Statuses
 
-new → offered → accepted → in_contact → completed
+### `draft`
 
-## Full status list
+The customer has started a request but has not completed confirmation.
 
-- new
-- offered
-- accepted
-- in_contact
-- completed
-- cancelled_by_customer
-- failed_by_carrier
-- reopened
-- expired
-- admin_closed
+Allowed outcomes:
 
-## Status semantics
+- confirmation evaluates the request for matching;
+- abandoned drafts become `draft_expired`.
 
-### new
+### `draft_expired`
 
-Request has been created but not yet offered to carriers.
+Terminal state for an unconfirmed draft that exceeded the retention window.
 
-Allowed transitions:
+### `ready_for_matching`
 
-- new → offered
-- new → cancelled_by_customer
-- new → admin_closed
-
-### offered
-
-Request has been sent to matching carriers.
+The request is confirmed, has at least 72 hours of lead time and may enter
+automatic matching.
 
 Allowed transitions:
 
-- offered → accepted
-- offered → expired
-- offered → cancelled_by_customer
-- offered → admin_closed
+- `ready_for_matching` -> `matching`
+- `ready_for_matching` -> `cancelled`
 
-Rules:
+### `matching`
 
-- at least one request_offer must exist
-- all open offers must have expiration time
+Suitable carriers and vehicles are being selected and offer records are being
+created.
 
-### accepted
+Allowed outcomes:
 
-A carrier accepted the request first.
+- `offered` when at least one carrier offer is open or accepted;
+- `no_carriers_found` when no eligible carrier exists;
+- `unmatched` for a matching result that needs later handling;
+- `cancelled` on a guarded customer or operator cancellation.
 
-Allowed transitions:
+### `offered`
 
-- accepted → in_contact
-- accepted → failed_by_carrier
-- accepted → cancelled_by_customer
-- accepted → admin_closed
-
-Rules:
-
-- one request_assignment must exist
-- losing offers must be cancelled
-
-### in_contact
-
-Contacts were transferred. Parties are negotiating details.
+The request has carrier offers. Carriers may accept by providing terms or
+decline. Multiple accepted offers may coexist for customer comparison.
 
 Allowed transitions:
 
-- in_contact → completed
-- in_contact → failed_by_carrier
-- in_contact → reopened
-- in_contact → cancelled_by_customer
-- in_contact → admin_closed
+- `offered` -> `assigned_pending_confirmation` only after an atomic customer
+  selection;
+- `offered` -> `offers_exhausted` when all candidates are resolved without a
+  selectable offer;
+- `offered` -> `expired_without_response` when the response window expires;
+- `offered` -> `cancelled`.
 
-Rules:
+An expired offer cannot be accepted or selected. Selection must verify that the
+offer belongs to the request and is accepted, atomically claim the request, and
+close the unselected offers.
 
-- this does not mean the job is completed
-- this means human negotiation is ongoing
+### `unmatched`
 
-### completed
+No automatic match was completed. The request remains available for controlled
+operational handling or cancellation.
 
-The request ended successfully.
+### `no_carriers_found`
 
-Rules:
+Matching found no eligible carriers. No automatic Telegram distribution was
+created.
 
-- final state
-- request_assignment.status must be completed
+### `offers_exhausted`
 
-### cancelled_by_customer
+All offer opportunities ended without a customer-selectable result.
 
-Customer cancelled request.
+### `expired_without_response`
 
-Rules:
+The response window ended without a usable carrier response.
 
-- final state
-- open offers must be cancelled
-- active assignment must be cancelled
+### `manual_review_required`
 
-### failed_by_carrier
+Automatic processing is deliberately stopped and an operator must review the
+request. A request with less than 72 hours before the requested transport time
+enters this status and is not automatically sent to carriers.
 
-Carrier failed after accepting request.
+Other guarded recovery and exception paths may also enter manual review. The
+status is not evidence that an offer or transport is guaranteed.
 
-Allowed transitions:
+### `assigned_pending_confirmation`
 
-- failed_by_carrier → reopened
-- failed_by_carrier → admin_closed
-
-Rules:
-
-- assignment must be marked failed
-- carrier should be added to request_excluded_carrier
-
-### reopened
-
-Request is available for another matching round.
+The customer selected one carrier offer and the assignment is waiting for the
+required confirmations.
 
 Allowed transitions:
 
-- reopened → offered
-- reopened → cancelled_by_customer
-- reopened → admin_closed
-- reopened → expired
+- `assigned_pending_confirmation` -> `assigned` after confirmation;
+- `assigned_pending_confirmation` -> `ready_for_matching` through guarded
+  reopen logic;
+- recovery may route to `manual_review_required`;
+- `assigned_pending_confirmation` -> `cancelled` where cancellation is allowed.
 
-Rules:
+### `assigned`
 
-- offer_round increments
-- excluded carriers must not receive this request again
-
-### expired
-
-Request was not accepted or became stale.
+The selected assignment is confirmed.
 
 Allowed transitions:
 
-- expired → reopened
-- expired → admin_closed
+- `assigned` -> `in_progress`
+- `assigned` -> `cancelled`
 
-### admin_closed
+### `in_progress`
 
-Admin closed request manually.
+The transport is being performed.
 
-Rules:
+Allowed transitions:
 
-- final administrative state
+- `in_progress` -> `completed`
+- `in_progress` -> `cancelled`
 
-## First-accept-wins rule
+### `completed`
 
-1. Carrier presses Accept.
-2. System opens transaction.
-3. System checks request status.
-4. System checks offer status.
-5. System creates assignment.
-6. System marks winning offer as accepted.
-7. System cancels other open offers.
-8. System changes request status to accepted.
-9. System writes event log.
-10. System notifies all parties.
+Terminal successful lifecycle state. It records the system's confirmed
+completion state; it must not be inferred from a sent notification.
 
-Late accept attempts receive "request already taken".
+### `cancelled`
 
-## Reopen flow
+Terminal cancellation state. Guarded cancellation closes open offers when the
+current lifecycle state allows customer cancellation.
 
-Trigger reasons:
+## Submission and outbox transaction
 
-- carrier_declined
-- no_agreement
-- no_response
-- admin_reopen
+For an automatically distributed request, the database transaction contains:
 
-Steps:
+1. the confirmed request;
+2. matched carrier and vehicle decisions;
+3. offer rows;
+4. deduplicated Telegram outbox rows.
 
-1. Mark active assignment as failed or cancelled.
-2. Create request_excluded_carrier row.
-3. Set request status to reopened.
-4. Increment offer_round.
-5. Run matching engine.
-6. Create new request_offer rows.
-7. Set status to offered.
-8. Notify customer.
+Only after commit may the Telegram dispatcher perform external sends. A failed
+send changes outbox attempt state but must not remove the committed request or
+offers. Submission idempotency prevents the same logical confirmation from
+creating a second request and second distribution.
 
-## Event log requirements
+## Carrier response and customer selection
 
-Every state transition must write one row to request_event_log.
+1. A carrier receives an expiring invitation.
+2. The carrier declines, or accepts and submits structured price and service
+   terms.
+3. Acceptance changes the offer state and keeps the job `offered`.
+4. The customer reviews all currently selectable offers in the tracking
+   workspace or supported bot flow.
+5. The customer selects one offer.
+6. A guarded compare-and-set claims the job as
+   `assigned_pending_confirmation`.
+7. Other open offers are closed.
+8. Required confirmations produce `assigned`.
 
-Minimum event types:
+Concurrent or repeated selection attempts must produce one winner and a clear
+already-resolved response. They must not create duplicate assignments.
 
-- request_created
-- request_confirmed
-- request_offered
-- offer_accepted
-- offer_cancelled
-- assignment_created
-- contacts_sent
-- contact_result_recorded
-- request_completed
-- request_cancelled_by_customer
-- request_failed_by_carrier
-- request_reopened
-- request_expired
-- request_admin_closed
+## Cancellation and recovery
+
+Customer cancellation is allowed only from the explicit states enforced by the
+domain service. The operation atomically claims the current state and closes
+open offers. A concurrent state change causes a conflict rather than a blind
+overwrite.
+
+Assignment recovery clears confirmation state before returning to matching.
+Automatic timeout processing is idempotent and must not replace a newer human or
+customer decision.
+
+## Authority
+
+The status enum in `app/domain/job_status.py`, domain transition services and
+guarded repository operations are executable authority. Documentation changes
+must follow verified behaviour; changing this document alone never changes the
+runtime FSM.
