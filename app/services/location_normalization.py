@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 import re
+import socket
 from dataclasses import dataclass
 from time import monotonic
 from urllib.parse import parse_qs
 from urllib.parse import quote_plus
 from urllib.parse import unquote
 from urllib.parse import unquote_plus
+from urllib.parse import urljoin
 from urllib.parse import urlparse
 
 import httpx
@@ -91,6 +94,27 @@ MAPS_URL_RE = re.compile(
     re.IGNORECASE,
 )
 
+TRUSTED_MAPS_HOSTS = frozenset(
+    {
+        "consent.google.com",
+        "consent.google.pt",
+        "goo.gl",
+        "google.com",
+        "google.pt",
+        "maps.app.goo.gl",
+        "maps.apple.com",
+        "maps.google.com",
+        "maps.google.pt",
+        "ul.waze.com",
+        "waze.com",
+        "www.google.com",
+        "www.google.pt",
+        "www.waze.com",
+    }
+)
+MAPS_REDIRECT_STATUS_CODES = frozenset({301, 302, 303, 307, 308})
+MAPS_MAX_REDIRECTS = 5
+
 POSTAL_CODE_RE = re.compile(r"\b\d{4}-\d{3}\b")
 
 COORDINATE_RE = re.compile(
@@ -106,7 +130,49 @@ def extract_maps_url(raw_text: str) -> str | None:
     match = MAPS_URL_RE.search(raw_text)
     if not match:
         return None
-    return match.group(0).rstrip(".,;)")
+    candidate = match.group(0).rstrip(".,;)")
+    if not is_trusted_maps_url(candidate):
+        return None
+    return candidate
+
+
+def is_trusted_maps_url(url: str) -> bool:
+    try:
+        parsed = urlparse(url)
+        port = parsed.port
+    except ValueError:
+        return False
+
+    return (
+        parsed.scheme.casefold() == "https"
+        and parsed.username is None
+        and parsed.password is None
+        and port in (None, 443)
+        and (parsed.hostname or "").casefold() in TRUSTED_MAPS_HOSTS
+    )
+
+
+async def _maps_url_resolves_to_public_ips(url: str) -> bool:
+    parsed = urlparse(url)
+    hostname = parsed.hostname
+    if hostname is None:
+        return False
+
+    try:
+        addresses = await asyncio.to_thread(
+            socket.getaddrinfo,
+            hostname,
+            443,
+            type=socket.SOCK_STREAM,
+        )
+    except OSError:
+        return False
+
+    resolved_ips = {
+        ipaddress.ip_address(sockaddr[0])
+        for *_, sockaddr in addresses
+    }
+    return bool(resolved_ips) and all(address.is_global for address in resolved_ips)
 
 
 def extract_postal_code(raw_text: str) -> str | None:
@@ -268,16 +334,42 @@ def normalize_text_location(raw_text: str) -> dict[str, str | float | None]:
 
 
 async def resolve_google_maps_url(url: str) -> str:
+    if not is_trusted_maps_url(url):
+        return url
+
+    original_url = url
+    current_url = url
+
     try:
         async with httpx.AsyncClient(
-            follow_redirects=True,
+            follow_redirects=False,
             timeout=httpx.Timeout(5.0),
             headers={"User-Agent": "Mozilla/5.0 CargoPT location resolver"},
         ) as client:
-            response = await client.get(url)
-            return str(response.url)
-    except httpx.HTTPError:
-        return url
+            for _ in range(MAPS_MAX_REDIRECTS + 1):
+                if (
+                    not is_trusted_maps_url(current_url)
+                    or not await _maps_url_resolves_to_public_ips(current_url)
+                ):
+                    return original_url
+
+                response = await client.get(current_url)
+                if response.status_code not in MAPS_REDIRECT_STATUS_CODES:
+                    response_url = str(response.url)
+                    return (
+                        response_url
+                        if is_trusted_maps_url(response_url)
+                        else original_url
+                    )
+
+                location = response.headers.get("location")
+                if not location:
+                    return original_url
+                current_url = urljoin(current_url, location)
+
+            return original_url
+    except (httpx.HTTPError, ValueError):
+        return original_url
 
 
 def build_geocoding_queries(address: str) -> list[str]:

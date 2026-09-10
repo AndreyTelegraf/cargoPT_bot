@@ -21,6 +21,7 @@ TESTS=(
   scripts/rate_limit_smoke.py
   scripts/web_request_contact_rate_limit_smoke.py
   scripts/location_search_api_smoke.py
+  scripts/job_location_google_maps_resolution_smoke.py
   scripts/stale_draft_archive_smoke.py
   scripts/requested_date_validation_smoke.py
   scripts/short_lead_time_warning_smoke.py
