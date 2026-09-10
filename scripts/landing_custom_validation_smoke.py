@@ -87,7 +87,10 @@ for relative in (
     assert html.count('data-location-confirmation') == 2
     assert html.count('data-location-confirm>') == 2
     assert html.count('openstreetmap.org/copyright') == 2
-    assert 'aria-autocomplete="list"' not in html
+    assert html.count('role="combobox"') == 2
+    assert html.count('aria-autocomplete="list"') == 2
+    assert html.count('aria-controls=') == 2
+    assert html.count('aria-expanded="false"') == 2
     assert 'id="requestForm"' in html
     assert "novalidate" in html
 
