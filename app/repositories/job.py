@@ -218,6 +218,7 @@ class JobRepository:
                         "ready_for_matching",
                         "matching",
                         "offered",
+                        "manual_review_required",
                         "assigned_pending_confirmation",
                         "assigned",
                         "in_progress",

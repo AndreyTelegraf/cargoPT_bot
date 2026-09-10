@@ -83,12 +83,20 @@ async def exercise_web_intake() -> None:
                     raw_text="Lisboa",
                     floor=2,
                     has_elevator=True,
+                    normalized_address="Lisboa",
+                    latitude=38.7223,
+                    longitude=-9.1393,
+                    country_code="pt",
                 ),
                 RequestIntakeAddress(
                     kind="dropoff",
                     raw_text="Porto",
                     floor=0,
                     has_elevator=False,
+                    normalized_address="Porto",
+                    latitude=41.1579,
+                    longitude=-8.6291,
+                    country_code="pt",
                 ),
             ),
             items=(RequestIntakeItem(description="Boxes", quantity=10),),
@@ -153,6 +161,24 @@ async def exercise_web_intake() -> None:
             raise SystemExit("manual review admin notification was not sent")
 
         await session.commit()
+
+    async with session_maker() as duplicate_session:
+        duplicate_bot = FakeBot()
+        duplicate_result = await RequestIntakeService(
+            job_repository=JobRepository(duplicate_session),
+            carrier_repository=CarrierRepository(duplicate_session),
+            bot=duplicate_bot,
+        ).submit_web_intake(request)
+
+        if duplicate_result.job.id != result.job.id:
+            raise SystemExit(
+                "manual-review duplicate created a second job: "
+                f"first={result.job.id} duplicate={duplicate_result.job.id}"
+            )
+        if duplicate_bot.messages:
+            raise SystemExit("manual-review duplicate sent a second admin notification")
+
+        await duplicate_session.commit()
 
     await engine.dispose()
 
