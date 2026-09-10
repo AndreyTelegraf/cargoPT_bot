@@ -193,6 +193,83 @@ async def exercise_client_offer_selection() -> None:
         else:
             raise SystemExit("second client selection unexpectedly succeeded")
 
+        race_job = await job_repo.create_job(
+            Job(
+                client_telegram_user_id=9002,
+                status=JobStatus.MATCHING,
+                requested_date=None,
+                needs_assembly=False,
+                needs_packing=False,
+                needs_tail_lift=True,
+                needs_crane=False,
+                needs_mobile_lift=False,
+                required_loaders=None,
+                estimated_payload_kg=1000,
+                estimated_volume_m3=12.0,
+                comment=None,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+        race_first = await service.create_offer(
+            job_id=race_job.id,
+            vehicle=first_vehicle,
+            expires_in_minutes=30,
+        )
+        race_second = await service.create_offer(
+            job_id=race_job.id,
+            vehicle=second_vehicle,
+            expires_in_minutes=30,
+        )
+        await service.accept_offer_without_assignment(race_first.id)
+        await service.accept_offer_without_assignment(race_second.id)
+        await session.commit()
+
+        race_job_id = race_job.id
+        race_first_id = race_first.id
+        race_second_id = race_second.id
+
+    async with session_maker() as winner_session, session_maker() as loser_session:
+        winner_repo = JobRepository(winner_session)
+        loser_repo = JobRepository(loser_session)
+        winner_service = JobOfferService(winner_repo)
+        loser_service = JobOfferService(loser_repo)
+
+        stale_job = await loser_repo.get_job_by_id(race_job_id)
+        stale_offer = await loser_repo.get_offer_by_id(race_second_id)
+        if stale_job.status != JobStatus.OFFERED:
+            raise SystemExit("race fixture job was not offered")
+        if stale_offer.status != JobOfferStatus.ACCEPTED:
+            raise SystemExit("race fixture offer was not accepted")
+
+        await winner_service.select_accepted_offer_for_client(
+            job_id=race_job_id,
+            offer_id=race_first_id,
+        )
+        await winner_session.commit()
+
+        try:
+            await loser_service.select_accepted_offer_for_client(
+                job_id=race_job_id,
+                offer_id=race_second_id,
+            )
+        except ClientOfferSelectionError:
+            await loser_session.rollback()
+        else:
+            raise SystemExit("stale concurrent client selection unexpectedly succeeded")
+
+    async with session_maker() as verification_session:
+        verification_repo = JobRepository(verification_session)
+        race_job = await verification_repo.get_job_by_id(race_job_id)
+        race_first = await verification_repo.get_offer_by_id(race_first_id)
+        race_second = await verification_repo.get_offer_by_id(race_second_id)
+        if race_job.status != JobStatus.ASSIGNED_PENDING_CONFIRMATION:
+            raise SystemExit(f"unexpected race job status: {race_job.status}")
+        if race_first.status != JobOfferStatus.ACCEPTED:
+            raise SystemExit("winning race offer did not remain accepted")
+        if race_second.status != JobOfferStatus.CANCELLED:
+            raise SystemExit("losing race offer was not cancelled")
+
     await engine.dispose()
 
 

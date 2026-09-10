@@ -182,11 +182,14 @@ class JobOfferService:
         if job.status != JobStatus.OFFERED:
             raise ClientOfferSelectionError("job is not awaiting client offer selection")
 
-        await self.repository.update_job_status(
+        claimed_job = await self.repository.claim_job_for_offer_selection(
             job_id=job_id,
-            status=JobStatus.ASSIGNED_PENDING_CONFIRMATION,
-            updated_at=now,
+            selected_at=now,
         )
+        if claimed_job is None:
+            raise ClientOfferSelectionError(
+                "job offer selection was already completed"
+            )
 
         await self.repository.close_unselected_offers_by_job_except(
             job_id=job_id,

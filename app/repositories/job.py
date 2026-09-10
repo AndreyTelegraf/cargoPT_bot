@@ -5,6 +5,7 @@ import secrets
 from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy import select
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -922,6 +923,50 @@ class JobRepository:
 
         await self.session.flush()
         return closed
+
+    async def claim_job_for_offer_selection(
+        self,
+        *,
+        job_id: int,
+        selected_at,
+    ) -> Job | None:
+        result = await self.session.execute(
+            update(Job)
+            .where(Job.id == job_id)
+            .where(Job.status == "offered")
+            .values(
+                status="assigned_pending_confirmation",
+                assigned_at=func.coalesce(Job.assigned_at, selected_at),
+                updated_at=selected_at,
+            )
+            .execution_options(synchronize_session=False)
+        )
+        if result.rowcount != 1:
+            return None
+
+        job = await self.session.get(
+            Job,
+            job_id,
+            populate_existing=True,
+        )
+        if job is None:
+            raise ValueError("job not found after offer selection")
+
+        self.session.add(
+            JobStatusEvent(
+                job_id=job.id,
+                from_status="offered",
+                to_status="assigned_pending_confirmation",
+                occurred_at=selected_at,
+            )
+        )
+        await self.enqueue_email_notification(
+            job=job,
+            event_type=EmailEventType.CARRIER_SELECTED,
+            now=selected_at,
+        )
+        await self.session.flush()
+        return job
 
     async def update_job_status(
         self,
