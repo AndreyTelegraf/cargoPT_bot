@@ -22,6 +22,7 @@ from app.api.web_request_schemas import TrackingOfferResponse
 from app.api.web_request_schemas import TrackingAddressResponse
 from app.api.web_request_schemas import TrackingItemResponse
 from app.api.web_request_schemas import TrackingJobResponse
+from app.api.web_request_schemas import TrackingTokenRotateResponse
 from app.api.web_request_schemas import TrackingRequestDetailsResponse
 from app.api.web_request_schemas import TrackingRequestCancelResponse
 from app.api.web_request_schemas import TrackingRequestedDateChangePayload
@@ -411,6 +412,35 @@ async def get_tracking_job(
             )
             for view in accepted_offer_views
         ],
+    )
+
+
+@router.post(
+    "/track/{tracking_token}/rotate",
+    response_model=TrackingTokenRotateResponse,
+)
+async def rotate_tracking_token(
+    tracking_token: str,
+    session: AsyncSession = Depends(get_session),
+) -> TrackingTokenRotateResponse:
+    job_repository = JobRepository(session)
+    job = await job_repository.get_job_by_tracking_token(tracking_token)
+    if job is None:
+        raise HTTPException(status_code=404, detail="tracking job not found")
+
+    rotated_job = await job_repository.rotate_tracking_token(
+        job.id,
+        updated_at=datetime.now(UTC),
+    )
+    await session.commit()
+
+    return TrackingTokenRotateResponse(
+        job_id=rotated_job.id,
+        tracking_token=rotated_job.tracking_token,
+        tracking_url=build_tracking_path(
+            rotated_job.source_locale,
+            rotated_job.tracking_token,
+        ),
     )
 
 

@@ -380,6 +380,12 @@ class TrackingJobResponse(BaseModel):
     request_details: TrackingRequestDetailsResponse
 
 
+class TrackingTokenRotateResponse(BaseModel):
+    job_id: int
+    tracking_token: str
+    tracking_url: str
+
+
 class TrackingOfferSelectResponse(BaseModel):
     job_id: int
     status: str

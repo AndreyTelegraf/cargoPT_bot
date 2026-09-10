@@ -183,6 +183,16 @@ class JobRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def rotate_tracking_token(self, job_id: int, *, updated_at) -> Job:
+        job = await self.get_job_by_id(job_id)
+        if job is None:
+            raise ValueError("job not found")
+
+        job.tracking_token = await self._generate_tracking_token()
+        job.updated_at = updated_at
+        await self.session.flush()
+        return job
+
     async def get_web_job_by_idempotency_key(
         self,
         idempotency_key: str,
