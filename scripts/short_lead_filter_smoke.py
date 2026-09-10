@@ -69,17 +69,29 @@ class FakeBot:
         self.messages = []
 
     async def send_message(self, *args, **kwargs):
-        assert self.repository.committed
-        self.messages.append((args, kwargs))
+        raise AssertionError("request submission must not call Telegram directly")
+
+
+class FakeTelegramNotificationService:
+    def __init__(self, repository):
+        self.repository = repository
+        self.manual_notifications = []
+
+    async def enqueue_manual_review(self, **kwargs):
+        assert not self.repository.committed
+        self.manual_notifications.append(kwargs)
+        return [SimpleNamespace(id=1)]
 
 
 async def exercise_submission_filter() -> None:
     repository = FakeJobRepository(datetime.now(UTC) + timedelta(hours=1))
     bot = FakeBot(repository)
+    notification_service = FakeTelegramNotificationService(repository)
     service = RequestSubmissionService(
         job_repository=repository,
         carrier_repository=FailIfUsedCarrierRepository(),
         bot=bot,
+        telegram_notification_service=notification_service,
     )
 
     result = await service.submit_existing_job(
@@ -93,9 +105,16 @@ async def exercise_submission_filter() -> None:
     assert result.sent_count == 0
     assert result.job.status == JobStatus.MANUAL_REVIEW_REQUIRED
     assert result.job.short_lead_time_filtered is True
-    assert bot.messages
-    assert "меньше 72 часов" in bot.messages[0][1]["text"]
-    assert "не запускалась" in bot.messages[0][1]["text"]
+    assert repository.committed
+    assert notification_service.manual_notifications
+    notification = notification_service.manual_notifications[0]
+    text = build_offer_escalation_text(
+        job=notification["job"],
+        offers=notification["offers"],
+        matching_reason=notification["matching_reason"],
+    )
+    assert "меньше 72 часов" in text
+    assert "не запускалась" in text
 
 
 def assert_boundaries_and_wiring() -> None:

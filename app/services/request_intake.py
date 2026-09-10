@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
+from app.repositories.telegram_notification import TelegramNotificationRepository
 from app.config import settings
 from app.domain.requested_date import validate_requested_date_not_in_past
 from app.services.email.models import EmailEventType
@@ -18,6 +19,7 @@ from app.services.request_population import RequestPopulationItem
 from app.services.request_population import RequestPopulationService
 from app.services.request_submission import RequestSubmissionResult
 from app.services.request_submission import RequestSubmissionService
+from app.services.telegram_notifications import TelegramNotificationEnqueueService
 
 
 @dataclass(frozen=True)
@@ -326,6 +328,11 @@ class RequestIntakeService:
             job_repository=self.job_repository,
             carrier_repository=self.carrier_repository,
             bot=self.bot,
+            telegram_notification_service=TelegramNotificationEnqueueService(
+                TelegramNotificationRepository(self.job_repository.session),
+                job_repository=self.job_repository,
+                carrier_repository=self.carrier_repository,
+            ),
         )
         result = await submission_service.submit_existing_job(
             job_id=job.id,

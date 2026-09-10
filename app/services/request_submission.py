@@ -12,7 +12,6 @@ from app.services.job_escalation import hold_short_lead_job_for_manual_review
 from app.services.job_matching import JobMatchingService
 from app.services.job_offer import JobOfferService
 from app.services.offer_distribution import OfferDistributionService
-from app.services.offer_notification import send_job_offers_to_carriers
 
 
 class ClientJobLimitError(ValueError):
@@ -24,6 +23,7 @@ class RequestSubmissionResult:
     job: Job
     offers_count: int
     sent_count: int
+    queued_count: int = 0
 
 
 class RequestSubmissionService:
@@ -33,10 +33,17 @@ class RequestSubmissionService:
         job_repository: JobRepository,
         carrier_repository: CarrierRepository,
         bot,
+        telegram_notification_service=None,
     ) -> None:
         self.job_repository = job_repository
         self.carrier_repository = carrier_repository
         self.bot = bot
+        self.telegram_notification_service = telegram_notification_service
+
+    def _require_notification_service(self):
+        if self.telegram_notification_service is None:
+            raise RuntimeError("telegram notification outbox service is required")
+        return self.telegram_notification_service
 
     async def submit_existing_job(
         self,
@@ -71,11 +78,14 @@ class RequestSubmissionService:
             updated_at=datetime.now(UTC),
         )
 
+        notification_service = self._require_notification_service()
+
         if await hold_short_lead_job_for_manual_review(
             bot=self.bot,
             job=job,
             job_repository=self.job_repository,
             commit_before_notification=True,
+            notification_service=notification_service,
         ):
             return RequestSubmissionResult(
                 job=job,
@@ -99,14 +109,13 @@ class RequestSubmissionService:
         offers = distribution_result.offers
 
         if offers:
-            await self.job_repository.commit()
-            sent_count = await send_job_offers_to_carriers(
-                bot=self.bot,
+            queued = await notification_service.enqueue_carrier_offers(
                 job=job,
                 offers=offers,
-                job_repository=self.job_repository,
-                carrier_repository=self.carrier_repository,
             )
+            await self.job_repository.commit()
+            sent_count = 0
+            queued_count = len(queued)
         else:
             await escalate_job_to_manual_review(
                 bot=self.bot,
@@ -115,11 +124,14 @@ class RequestSubmissionService:
                 matching_reason=distribution_result.matching_reason,
                 matching_regions=distribution_result.matching_regions,
                 commit_before_notification=True,
+                notification_service=notification_service,
             )
             sent_count = 0
+            queued_count = 0
 
         return RequestSubmissionResult(
             job=job,
             offers_count=len(offers),
             sent_count=sent_count,
+            queued_count=queued_count,
         )

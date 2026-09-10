@@ -12,11 +12,13 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.domain.job_status import JobStatus
 from app.domain.requested_date import RequestedDateInPastError
+from app.models.telegram_notification import TelegramNotificationOutbox
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
 from app.services.request_intake import RequestIntakeAddress
@@ -34,6 +36,7 @@ class FakeBot:
 
     async def send_message(self, *, chat_id, text, **kwargs):
         self.messages.append((chat_id, text, kwargs))
+        raise AssertionError("web intake must not call Telegram directly")
 
 
 def run(cmd: list[str]) -> None:
@@ -157,8 +160,32 @@ async def exercise_web_intake() -> None:
         if result.offers_count != 0:
             raise SystemExit(f"unexpected offers count: {result.offers_count}")
 
-        if not bot.messages:
-            raise SystemExit("manual review admin notification was not sent")
+        if bot.messages:
+            raise SystemExit("manual review called Telegram before outbox dispatch")
+
+        notifications = list(
+            (
+                await session.execute(
+                    select(TelegramNotificationOutbox).where(
+                        TelegramNotificationOutbox.job_id == loaded.id
+                    )
+                )
+            ).scalars()
+        )
+        if len(notifications) != 1:
+            raise SystemExit(
+                "manual review outbox row missing or duplicated: "
+                f"count={len(notifications)}"
+            )
+        notification = notifications[0]
+        if notification.notification_type != "manual_review":
+            raise SystemExit(
+                f"unexpected notification type: {notification.notification_type}"
+            )
+        if notification.delivery_status != "pending":
+            raise SystemExit(
+                f"unexpected notification status: {notification.delivery_status}"
+            )
 
         await session.commit()
 
@@ -177,6 +204,18 @@ async def exercise_web_intake() -> None:
             )
         if duplicate_bot.messages:
             raise SystemExit("manual-review duplicate sent a second admin notification")
+
+        duplicate_notifications = list(
+            (
+                await duplicate_session.execute(
+                    select(TelegramNotificationOutbox).where(
+                        TelegramNotificationOutbox.job_id == result.job.id
+                    )
+                )
+            ).scalars()
+        )
+        if len(duplicate_notifications) != 1:
+            raise SystemExit("manual-review duplicate changed outbox cardinality")
 
         await duplicate_session.commit()
 

@@ -17,6 +17,7 @@ class FakeBot:
 
     async def send_message(self, *, chat_id, text, **kwargs):
         self.messages.append((chat_id, text, kwargs))
+        raise AssertionError("idempotent intake must not call Telegram directly")
 
 
 def request_payload() -> dict:
@@ -117,11 +118,28 @@ async def exercise(app, app_engine, fake_bot, database: Path) -> None:
             FROM job
             """
         ).fetchone()
+        (
+            notification_count,
+            unique_notification_count,
+            pending_count,
+            notified_job_count,
+        ) = connection.execute(
+            """
+            SELECT
+                count(*),
+                count(DISTINCT dedupe_key),
+                sum(delivery_status = 'pending'),
+                count(DISTINCT job_id)
+            FROM telegram_notification_outbox
+            """
+        ).fetchone()
     finally:
         connection.close()
 
     assert (job_count, keyed_count, unique_key_count) == (2, 2, 2)
-    assert len(fake_bot.messages) == 2
+    assert (notification_count, unique_notification_count) == (2, 2)
+    assert (pending_count, notified_job_count) == (2, 2)
+    assert not fake_bot.messages
 
 
 def main() -> None:

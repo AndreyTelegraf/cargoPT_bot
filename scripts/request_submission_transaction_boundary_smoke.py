@@ -7,7 +7,6 @@ from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
 from pathlib import Path
-from types import SimpleNamespace
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -33,6 +32,7 @@ from app.models.carrier import CarrierCompany
 from app.models.carrier import CarrierVehicle
 from app.models.job import Job
 from app.models.job import JobOffer
+from app.models.telegram_notification import TelegramNotificationOutbox
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
 from app.services import job_escalation
@@ -42,21 +42,13 @@ from app.services.request_intake import RequestIntakeItem
 from app.services.request_intake import RequestIntakeService
 
 
-class FailingBot:
-    def __init__(self, fail_on_call: int) -> None:
-        self.fail_on_call = fail_on_call
+class RejectExternalBot:
+    def __init__(self) -> None:
         self.calls = []
 
     async def send_message(self, *, chat_id, text, **kwargs):
         self.calls.append(chat_id)
-        if len(self.calls) == self.fail_on_call:
-            raise RuntimeError(
-                f"simulated Telegram failure on call {self.fail_on_call}"
-            )
-        return SimpleNamespace(
-            chat=SimpleNamespace(id=chat_id),
-            message_id=9000 + len(self.calls),
-        )
+        raise AssertionError("request transaction called Telegram before commit")
 
 
 def reset_db() -> None:
@@ -156,37 +148,36 @@ async def create_three_carriers(session, now: datetime) -> None:
     await session.commit()
 
 
-async def counts(session_maker) -> tuple[int, int]:
+async def counts(session_maker) -> tuple[int, int, int]:
     async with session_maker() as session:
         jobs = int((await session.execute(select(func.count(Job.id)))).scalar_one())
         offers = int(
             (await session.execute(select(func.count(JobOffer.id)))).scalar_one()
         )
-        return jobs, offers
+        notifications = int(
+            (
+                await session.execute(
+                    select(func.count(TelegramNotificationOutbox.id))
+                )
+            ).scalar_one()
+        )
+        return jobs, offers, notifications
 
 
-async def submit_expecting_delivery_failure(
+async def submit_without_external_delivery(
     *,
     session_maker,
     request: RequestIntakeInput,
-    fail_on_call: int,
-) -> FailingBot:
+):
     async with session_maker() as session:
-        bot = FailingBot(fail_on_call)
+        bot = RejectExternalBot()
         service = RequestIntakeService(
             job_repository=JobRepository(session),
             carrier_repository=CarrierRepository(session),
             bot=bot,
         )
-        try:
-            await service.submit_web_intake(request)
-        except RuntimeError as exc:
-            if "simulated Telegram failure" not in str(exc):
-                raise
-            await session.rollback()
-        else:
-            raise AssertionError("Telegram failure did not propagate")
-        return bot
+        result = await service.submit_web_intake(request)
+        return result, bot
 
 
 async def exercise() -> None:
@@ -197,25 +188,26 @@ async def exercise() -> None:
     async with session_maker() as session:
         await create_three_carriers(session, now)
 
-    for sequence, fail_on_call in enumerate((1, 2, 3), start=1):
-        bot = await submit_expecting_delivery_failure(
+    for sequence in range(1, 4):
+        result, bot = await submit_without_external_delivery(
             session_maker=session_maker,
             request=make_request(sequence=sequence, now=now),
-            fail_on_call=fail_on_call,
         )
-        if len(bot.calls) != fail_on_call:
+        if bot.calls:
             raise AssertionError(f"unexpected Telegram calls: {bot.calls}")
+        if (result.offers_count, result.sent_count, result.queued_count) != (3, 0, 3):
+            raise AssertionError(f"unexpected durable acceptance result: {result}")
         actual = await counts(session_maker)
-        expected = (sequence, sequence * 3)
+        expected = (sequence, sequence * 3, sequence * 3)
         if actual != expected:
             raise AssertionError(
-                f"delivery failure lost durable data: expected={expected} actual={actual}"
+                f"outbox transaction mismatch: expected={expected} actual={actual}"
             )
 
     original_recipients = job_escalation.JOB_CONTROL_TELEGRAM_USER_IDS
     job_escalation.JOB_CONTROL_TELEGRAM_USER_IDS = (99001,)
     try:
-        manual_bot = await submit_expecting_delivery_failure(
+        manual_result, manual_bot = await submit_without_external_delivery(
             session_maker=session_maker,
             request=make_request(
                 sequence=4,
@@ -223,13 +215,14 @@ async def exercise() -> None:
                 pickup=("Faro", 37.0194, -7.9304),
                 dropoff=("Faro", 37.0194, -7.9304),
             ),
-            fail_on_call=1,
         )
-        if manual_bot.calls != [99001]:
-            raise AssertionError(f"manual review was not attempted: {manual_bot.calls}")
+        if manual_bot.calls:
+            raise AssertionError(f"manual review called Telegram: {manual_bot.calls}")
+        if (manual_result.offers_count, manual_result.sent_count) != (0, 0):
+            raise AssertionError(f"unexpected manual result: {manual_result}")
         actual = await counts(session_maker)
-        if actual != (4, 9):
-            raise AssertionError(f"manual review failure lost job: {actual}")
+        if actual != (4, 9, 10):
+            raise AssertionError(f"manual review outbox mismatch: {actual}")
 
         async with session_maker() as session:
             latest_job = (
@@ -239,6 +232,35 @@ async def exercise() -> None:
                 raise AssertionError(
                     f"manual review status was not durable: {latest_job.status}"
                 )
+
+            outbox_rows = list(
+                (
+                    await session.execute(
+                        select(TelegramNotificationOutbox).order_by(
+                            TelegramNotificationOutbox.id
+                        )
+                    )
+                ).scalars()
+            )
+            if any(row.delivery_status != "pending" for row in outbox_rows):
+                raise AssertionError("new outbox rows must all be pending")
+            if len({row.dedupe_key for row in outbox_rows}) != len(outbox_rows):
+                raise AssertionError("outbox dedupe keys are not unique")
+            if outbox_rows[-1].recipient_chat_id != 99001:
+                raise AssertionError("manual review recipient was not snapshotted")
+            if '"text"' not in (outbox_rows[-1].payload_json or ""):
+                raise AssertionError("manual review payload was not snapshotted")
+
+        replay_result, replay_bot = await submit_without_external_delivery(
+            session_maker=session_maker,
+            request=make_request(sequence=1, now=now),
+        )
+        if replay_bot.calls:
+            raise AssertionError("idempotent replay called Telegram")
+        if replay_result.job.id != 1:
+            raise AssertionError("idempotent replay returned a different job")
+        if await counts(session_maker) != (4, 9, 10):
+            raise AssertionError("idempotent replay duplicated durable work")
     finally:
         job_escalation.JOB_CONTROL_TELEGRAM_USER_IDS = original_recipients
 

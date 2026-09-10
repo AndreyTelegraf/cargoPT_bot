@@ -7,9 +7,11 @@ from app.bot.states.job_request import JobRequestStates
 from app.db.session import async_session_maker
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
+from app.repositories.telegram_notification import TelegramNotificationRepository
 from app.services.request_submission import ClientJobLimitError
 from app.services.request_submission import RequestSubmissionService
 from app.services.short_lead_time_warning import short_lead_time_warning_text
+from app.services.telegram_notifications import TelegramNotificationEnqueueService
 
 router = Router()
 
@@ -32,6 +34,11 @@ async def job_comment(
             job_repository=job_repository,
             carrier_repository=carrier_repository,
             bot=message.bot,
+            telegram_notification_service=TelegramNotificationEnqueueService(
+                TelegramNotificationRepository(session),
+                job_repository=job_repository,
+                carrier_repository=carrier_repository,
+            ),
         )
 
         try:
