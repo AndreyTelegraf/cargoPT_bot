@@ -60,6 +60,14 @@ assert "tracking_snapshot?.short_lead_time_warning" in workspace_source
 assert track_source.count("shortLeadTimeWarning:") == 3
 assert ".tracking-short-lead-warning" in css_source
 assert "message.from_user.language_code" in bot_source
-assert all(page.count("request-management-v1") == 3 for page in track_pages)
+assert all(
+    "/assets/css/track.css?v=request-management-v1" in page
+    for page in track_pages
+)
+assert all(
+    "/assets/js/tracking-workspace.js?v=offer-terms-v1" in page
+    and "/assets/js/track.js?v=offer-terms-v1" in page
+    for page in track_pages
+)
 
 print("SHORT_LEAD_TIME_WARNING_SMOKE_OK")
