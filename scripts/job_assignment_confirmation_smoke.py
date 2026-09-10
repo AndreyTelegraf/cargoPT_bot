@@ -200,6 +200,9 @@ def main() -> None:
     keyboard = build_assignment_confirmation_keyboard(123)
     assert keyboard.inline_keyboard[0][0].callback_data == "assignment:confirm:123"
     assert keyboard.inline_keyboard[0][1].callback_data == "assignment:fail:123"
+    pt_keyboard = build_assignment_confirmation_keyboard(123, locale="pt")
+    assert pt_keyboard.inline_keyboard[0][0].text == "Acordo confirmado"
+    assert pt_keyboard.inline_keyboard[0][1].text == "Sem acordo"
     assert parse_assignment_callback("assignment:confirm:123") == ("confirm", 123)
     assert parse_assignment_callback("assignment:fail:123") == ("fail", 123)
     assert "ожидаем" not in build_assignment_result_text(

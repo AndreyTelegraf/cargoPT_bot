@@ -517,6 +517,11 @@ async def select_tracking_offer(
         bot=bot,
         job=updated_job,
         carrier_telegram_user_id=carrier_telegram_user_id,
+        carrier_locale=(
+            selected_carrier.preferred_locale
+            if selected_carrier is not None
+            else None
+        ),
     )
 
     return TrackingOfferSelectResponse(

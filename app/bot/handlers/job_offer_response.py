@@ -618,6 +618,11 @@ async def handle_client_offer_selection(callback: CallbackQuery) -> None:
         bot=callback.bot,
         job=job,
         carrier_telegram_user_id=carrier_telegram_user_id,
+        carrier_locale=(
+            selected_carrier.preferred_locale
+            if selected_carrier is not None
+            else None
+        ),
     )
 
     await callback.answer()

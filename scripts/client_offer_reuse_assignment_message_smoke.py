@@ -51,6 +51,8 @@ notification_helper = notification_source[
 assert send_assignment_confirmation_requests is not None
 assert "client_telegram_user_id" not in notification_helper
 assert "client_telegram_user_id=" not in client_handler
+assert "reply_markup=build_assignment_confirmation_keyboard(" in notification_helper
+assert "carrier_locale=" in client_handler
 assert "callback.message.edit_text(" in client_handler
 assert "reply_markup=build_client_reopen_assignment_keyboard(job_id)" in client_handler
 assert "send_assignment_confirmation_requests(" in client_handler

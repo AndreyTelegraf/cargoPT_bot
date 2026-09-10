@@ -1,14 +1,19 @@
 from app.domain.job_status import JobStatus
+from app.bot.assignment_confirmation_keyboard import build_assignment_confirmation_keyboard
+from app.bot.offer_locale import offer_text as t
 from app.repositories.carrier import CarrierRepository
 from app.services.assignment_confirmation import format_telegram_status_block
 
 
-def build_carrier_assignment_confirmation_text(job) -> str:
+def build_carrier_assignment_confirmation_text(
+    job,
+    locale: str | None = None,
+) -> str:
     import html
 
     client_link = (
         f'<a href="tg://user?id={int(job.client_telegram_user_id)}">'
-        f'{html.escape(job.client_telegram_username or "клиент", quote=False)}</a>'
+        f'{html.escape(job.client_telegram_username or t(locale, "client"), quote=False)}</a>'
         if job.client_telegram_user_id is not None
         and job.client_telegram_username
         else html.escape(job.customer_name or "S/N", quote=False)
@@ -20,12 +25,12 @@ def build_carrier_assignment_confirmation_text(job) -> str:
     )
 
     return (
-        f"Клиент выбрал ваше предложение по заявке №{job.id}.\n\n"
-        f"Клиент: {client_link}\n"
-        f"Username: {username}\n"
-        f"Телефон: {html.escape(job.client_phone or 'не указан', quote=False)}\n"
-        f"WhatsApp: {html.escape(job.client_whatsapp or 'не указан', quote=False)}\n\n"
-        "Свяжитесь с клиентом и согласуйте детали перевозки."
+        f"{t(locale, 'assignment_selected', job_id=job.id)}\n\n"
+        f"{t(locale, 'client')}: {client_link}\n"
+        f"{t(locale, 'username')}: {username}\n"
+        f"{t(locale, 'phone')}: {html.escape(job.client_phone or t(locale, 'not_provided'), quote=False)}\n"
+        f"WhatsApp: {html.escape(job.client_whatsapp or t(locale, 'not_provided'), quote=False)}\n\n"
+        f"{t(locale, 'contact_customer')}"
     )
 
 
@@ -34,11 +39,19 @@ async def send_assignment_confirmation_requests(
     bot,
     job,
     carrier_telegram_user_id: int | None,
+    carrier_locale: str | None = None,
 ) -> None:
     if carrier_telegram_user_id is not None:
         await bot.send_message(
             chat_id=carrier_telegram_user_id,
-            text=build_carrier_assignment_confirmation_text(job),
+            text=build_carrier_assignment_confirmation_text(
+                job,
+                locale=carrier_locale,
+            ),
+            reply_markup=build_assignment_confirmation_keyboard(
+                job.id,
+                locale=carrier_locale,
+            ),
             parse_mode="HTML",
         )
 

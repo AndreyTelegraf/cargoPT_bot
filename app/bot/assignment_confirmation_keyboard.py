@@ -1,19 +1,23 @@
 from aiogram.types import InlineKeyboardButton
 from aiogram.types import InlineKeyboardMarkup
 
+from app.bot.offer_locale import offer_text as t
 from app.domain.job_decline_reason import DECLINE_REASONS
 
 
-def build_assignment_confirmation_keyboard(job_id: int) -> InlineKeyboardMarkup:
+def build_assignment_confirmation_keyboard(
+    job_id: int,
+    locale: str | None = None,
+) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="Сделка подтверждена",
+                    text=t(locale, "assignment_confirm"),
                     callback_data=f"assignment:confirm:{job_id}",
                 ),
                 InlineKeyboardButton(
-                    text="Не договорились",
+                    text=t(locale, "assignment_fail"),
                     callback_data=f"assignment:fail:{job_id}",
                 ),
             ]
