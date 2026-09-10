@@ -47,7 +47,7 @@
   ]}</script>
   <link rel="stylesheet" href="/assets/css/design-system-designer-review-v1.css">
   <link rel="stylesheet" href="/assets/css/components.css?v=location-selector-v1">
-  <link rel="stylesheet" href="/assets/css/landing-designer-review-v1.css">
+  <link rel="stylesheet" href="/assets/css/landing-designer-review-v1.css?v=a11y-v1">
   <link rel="stylesheet" href="/assets/css/meta-consent.css?v=meta-pixel-v1">
 </head>
 <body data-locale="pt">
@@ -91,7 +91,7 @@
         </div>
 
         <div class="process-carousel" aria-label="Como a CargoPT funciona">
-          <div class="process-carousel-track">
+          <div class="process-carousel-track" role="region" aria-label="Etapas do processo" tabindex="0">
             <article class="process-card process-card-svg">
               <div class="process-visual" aria-hidden="true"><img src="/assets/hero/process-cards/card_01_pedido_unico.svg" alt=""></div>
               <h2>Pedido único e gratuito</h2>
@@ -137,7 +137,7 @@
           <p class="form-intro">Comece com três perguntas simples.</p>
           <div class="location-field" data-location-field>
             <label for="pickupLocation"><span class="field-label">De onde</span>
-              <input id="pickupLocation" name="pickup" autocomplete="off" required placeholder="Exemplo: Carvoeiro, Lagoa ou 8400-508" aria-controls="pickupSuggestions" aria-expanded="false">
+              <input id="pickupLocation" name="pickup" autocomplete="off" required placeholder="Exemplo: Carvoeiro, Lagoa ou 8400-508" role="combobox" aria-autocomplete="list" aria-controls="pickupSuggestions" aria-expanded="false">
             </label>
             <small class="form-note">Indique a localidade e o município ou o código postal. Clique em «Procurar local», escolha e confirme o ponto correto.</small>
             <button class="button button-secondary location-search-button" type="button" data-location-search>Procurar local</button>
@@ -151,7 +151,7 @@
           </div>
           <div class="location-field" data-location-field>
             <label for="dropoffLocation"><span class="field-label">Para onde</span>
-              <input id="dropoffLocation" name="dropoff" autocomplete="off" required placeholder="Exemplo: Warszawa, Leszno 32, Polónia" aria-controls="dropoffSuggestions" aria-expanded="false">
+              <input id="dropoffLocation" name="dropoff" autocomplete="off" required placeholder="Exemplo: Warszawa, Leszno 32, Polónia" role="combobox" aria-autocomplete="list" aria-controls="dropoffSuggestions" aria-expanded="false">
             </label>
             <small class="form-note">Pode indicar uma morada em Portugal ou no estrangeiro. Clique em «Procurar local», escolha e confirme o ponto correto. Indique o apartamento separadamente nos detalhes.</small>
             <button class="button button-secondary location-search-button" type="button" data-location-search>Procurar local</button>

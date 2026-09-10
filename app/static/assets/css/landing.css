@@ -222,7 +222,7 @@ h3 {
   padding: 6px 10px;
   border-radius: var(--badge-radius);
   background: var(--badge-primary-bg);
-  color: var(--badge-primary-text);
+  color: var(--accent-strong);
   font-size: var(--font-size-badge-small);
   font-weight: var(--font-weight-strong);
 }
@@ -638,6 +638,11 @@ details p {
 
 .process-carousel {
   display: none;
+}
+
+.process-carousel-track:focus-visible {
+  outline: 3px solid var(--accent-strong);
+  outline-offset: 4px;
 }
 
 @media (max-width: 1180px) {

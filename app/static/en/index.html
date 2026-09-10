@@ -40,7 +40,7 @@
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How much does transport cost?","acceptedAnswer":{"@type":"Answer","text":"The price depends on the distance, cargo volume, floors, elevator access, the chosen date and whether movers are needed. If carriers send offers, compare their prices and conditions before deciding."}},{"@type":"Question","name":"Do I pay to submit a request?","acceptedAnswer":{"@type":"Answer","text":"No. Submitting a CargoPT request is free for anyone looking for transport. Carrier availability and offers are not guaranteed."}},{"@type":"Question","name":"Can I move one item only?","acceptedAnswer":{"@type":"Answer","text":"Yes. You can request transport for furniture, appliances, a piano, boxes or other individual items. Specify what needs to be moved, the locations, access conditions and preferred date."}},{"@type":"Question","name":"Can I move between cities?","acceptedAnswer":{"@type":"Answer","text":"Yes. You can request local transport or a move between cities in Portugal, including Lisbon, Porto, Cascais, Sintra, Oeiras and other locations."}},{"@type":"Question","name":"What is CargoPT?","acceptedAnswer":{"@type":"Answer","text":"CargoPT is a request service for moves and transport. It organises the information you submit and may share it with suitable independent carriers; CargoPT does not perform the transport itself."}},{"@type":"Question","name":"Are offers guaranteed?","acceptedAnswer":{"@type":"Answer","text":"No. The number of replies depends on carrier availability, route, date and job details. Submitting a complete request helps carriers assess it but does not guarantee an offer."}}]}</script>
   <link rel="stylesheet" href="/assets/css/design-system-designer-review-v1.css">
   <link rel="stylesheet" href="/assets/css/components.css?v=location-selector-v1">
-  <link rel="stylesheet" href="/assets/css/landing-designer-review-v1.css">
+  <link rel="stylesheet" href="/assets/css/landing-designer-review-v1.css?v=a11y-v1">
   <link rel="stylesheet" href="/assets/css/meta-consent.css?v=meta-pixel-v1">
 </head>
 <body data-locale="en">
@@ -84,7 +84,7 @@
         </div>
 
         <div class="process-carousel" aria-label="How CargoPT works">
-          <div class="process-carousel-track">
+          <div class="process-carousel-track" role="region" aria-label="Process steps" tabindex="0">
             <article class="process-card process-card-svg">
               <div class="process-visual" aria-hidden="true"><img src="/assets/hero/process-cards/card_01_pedido_unico.svg" alt=""></div>
               <h2>One free request</h2>
@@ -127,7 +127,7 @@
           <p class="form-intro">Start with three simple questions.</p>
           <div class="location-field" data-location-field>
             <label for="pickupLocation"><span class="field-label">From</span>
-              <input id="pickupLocation" name="pickup" autocomplete="off" required placeholder="Example: Carvoeiro, Lagoa or 8400-508" aria-controls="pickupSuggestions" aria-expanded="false">
+              <input id="pickupLocation" name="pickup" autocomplete="off" required placeholder="Example: Carvoeiro, Lagoa or 8400-508" role="combobox" aria-autocomplete="list" aria-controls="pickupSuggestions" aria-expanded="false">
             </label>
             <small class="form-note">Enter the locality and municipality or postal code. Click “Find place”, then select and confirm the correct point.</small>
             <button class="button button-secondary location-search-button" type="button" data-location-search>Find place</button>
@@ -141,7 +141,7 @@
           </div>
           <div class="location-field" data-location-field>
             <label for="dropoffLocation"><span class="field-label">To</span>
-              <input id="dropoffLocation" name="dropoff" autocomplete="off" required placeholder="Example: Warszawa, Leszno 32, Poland" aria-controls="dropoffSuggestions" aria-expanded="false">
+              <input id="dropoffLocation" name="dropoff" autocomplete="off" required placeholder="Example: Warszawa, Leszno 32, Poland" role="combobox" aria-autocomplete="list" aria-controls="dropoffSuggestions" aria-expanded="false">
             </label>
             <small class="form-note">You can enter an address in Portugal or abroad. Click “Find place”, then select and confirm the correct point. Add the apartment separately in the details.</small>
             <button class="button button-secondary location-search-button" type="button" data-location-search>Find place</button>

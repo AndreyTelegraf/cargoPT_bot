@@ -40,7 +40,7 @@
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Сколько стоит перевозка?","acceptedAnswer":{"@type":"Answer","text":"Цена зависит от расстояния, объёма груза, этажей, наличия лифта, выбранной даты и необходимости грузчиков. Если предложения поступят, сравните цены и условия перед выбором."}},{"@type":"Question","name":"Нужно ли платить за заявку?","acceptedAnswer":{"@type":"Answer","text":"Нет. Отправка заявки через CargoPT бесплатна для тех, кто ищет перевозчика. Доступность перевозчиков и предложения не гарантируются."}},{"@type":"Question","name":"Можно ли заказать перевозку одной вещи?","acceptedAnswer":{"@type":"Answer","text":"Да. Можно заказать перевозку мебели, бытовой техники, пианино, коробок или других отдельных предметов. Укажите, что нужно перевезти, адреса, условия доступа и желаемую дату."}},{"@type":"Question","name":"Можно ли перевозить между городами?","acceptedAnswer":{"@type":"Answer","text":"Да. Можно оставить заявку на местную перевозку или переезд между городами Португалии, включая Лиссабон, Порту, Кашкайш, Синтру, Оэйраш и другие населённые пункты."}},{"@type":"Question","name":"Что такое CargoPT?","acceptedAnswer":{"@type":"Answer","text":"CargoPT — сервис заявок на переезды и перевозки. Он структурирует отправленную информацию и может передать её подходящим независимым перевозчикам; CargoPT не выполняет перевозку самостоятельно."}},{"@type":"Question","name":"Получение предложений гарантировано?","acceptedAnswer":{"@type":"Answer","text":"Нет. Количество ответов зависит от доступности перевозчиков, маршрута, даты и деталей услуги. Полная заявка помогает оценке, но не гарантирует предложение."}}]}</script>
   <link rel="stylesheet" href="/assets/css/design-system-designer-review-v1.css">
   <link rel="stylesheet" href="/assets/css/components.css?v=location-selector-v1">
-  <link rel="stylesheet" href="/assets/css/landing-designer-review-v1.css">
+  <link rel="stylesheet" href="/assets/css/landing-designer-review-v1.css?v=a11y-v1">
   <link rel="stylesheet" href="/assets/css/meta-consent.css?v=meta-pixel-v1">
 </head>
 <body data-locale="ru">
@@ -84,7 +84,7 @@
         </div>
 
         <div class="process-carousel" aria-label="Как работает CargoPT">
-          <div class="process-carousel-track">
+          <div class="process-carousel-track" role="region" aria-label="Этапы процесса" tabindex="0">
             <article class="process-card process-card-svg">
               <div class="process-visual" aria-hidden="true"><img src="/assets/hero/process-cards/card_01_pedido_unico.svg" alt=""></div>
               <h2>Одна бесплатная заявка</h2>
@@ -127,7 +127,7 @@
           <p class="form-intro">Начните с трёх простых вопросов.</p>
           <div class="location-field" data-location-field>
             <label for="pickupLocation"><span class="field-label">Откуда</span>
-              <input id="pickupLocation" name="pickup" autocomplete="off" required placeholder="Например: Carvoeiro, Lagoa или 8400-508" aria-controls="pickupSuggestions" aria-expanded="false">
+              <input id="pickupLocation" name="pickup" autocomplete="off" required placeholder="Например: Carvoeiro, Lagoa или 8400-508" role="combobox" aria-autocomplete="list" aria-controls="pickupSuggestions" aria-expanded="false">
             </label>
             <small class="form-note">Укажите населённый пункт и муниципалитет или почтовый индекс. Нажмите «Найти место», затем выберите и подтвердите правильную точку.</small>
             <button class="button button-secondary location-search-button" type="button" data-location-search>Найти место</button>
@@ -141,7 +141,7 @@
           </div>
           <div class="location-field" data-location-field>
             <label for="dropoffLocation"><span class="field-label">Куда</span>
-              <input id="dropoffLocation" name="dropoff" autocomplete="off" required placeholder="Например: Warszawa, Leszno 32, Польша" aria-controls="dropoffSuggestions" aria-expanded="false">
+              <input id="dropoffLocation" name="dropoff" autocomplete="off" required placeholder="Например: Warszawa, Leszno 32, Польша" role="combobox" aria-autocomplete="list" aria-controls="dropoffSuggestions" aria-expanded="false">
             </label>
             <small class="form-note">Можно указать адрес в Португалии или за рубежом. Нажмите «Найти место», затем выберите и подтвердите правильную точку. Квартиру укажите отдельно в деталях.</small>
             <button class="button button-secondary location-search-button" type="button" data-location-search>Найти место</button>
