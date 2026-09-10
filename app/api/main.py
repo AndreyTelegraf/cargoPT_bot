@@ -11,6 +11,29 @@ from app.config import settings
 
 
 app = FastAPI(title="CargoPT API")
+
+
+def _is_private_tracking_path(path: str) -> bool:
+    return (
+        path.startswith("/api/v1/track/")
+        or path.startswith("/track/")
+        or path.startswith("/en/track/")
+        or path.startswith("/ru/track/")
+    )
+
+
+@app.middleware("http")
+async def protect_private_tracking_responses(request, call_next):
+    response = await call_next(request)
+    if _is_private_tracking_path(request.url.path):
+        response.headers["Cache-Control"] = "private, no-store, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+    return response
+
+
 app.add_middleware(
     WebRequestRateLimitMiddleware,
     max_requests=settings.web_request_rate_limit_count,

@@ -1,6 +1,9 @@
 from pathlib import Path
 
+from fastapi.testclient import TestClient
+
 from app.api.main import app
+from app.api.main import _is_private_tracking_path
 
 
 def main() -> None:
@@ -31,6 +34,25 @@ def main() -> None:
         if hasattr(route, "path")
     }
     assert "/track/{tracking_token}" in route_paths
+
+    assert _is_private_tracking_path("/api/v1/track/private-token")
+    assert _is_private_tracking_path("/track/private-token")
+    assert _is_private_tracking_path("/en/track/private-token")
+    assert _is_private_tracking_path("/ru/track/private-token")
+    assert not _is_private_tracking_path("/health")
+
+    with TestClient(app) as client:
+        for path in (
+            "/track/private-token",
+            "/en/track/private-token",
+            "/ru/track/private-token",
+        ):
+            response = client.get(path)
+            assert response.status_code == 200
+            assert "no-store" in response.headers["cache-control"]
+            assert response.headers["pragma"] == "no-cache"
+            assert response.headers["referrer-policy"] == "no-referrer"
+            assert "noindex" in response.headers["x-robots-tag"]
 
     print("job_tracking_page_static_ok")
 
