@@ -14,6 +14,10 @@ class OfferAlreadyResolvedError(ValueError):
     pass
 
 
+class OfferExpiredError(OfferAlreadyResolvedError):
+    pass
+
+
 def parse_offer_callback(data: str) -> tuple[str, int]:
     parts = data.split(":")
     if len(parts) != 3 or parts[0] != "offer":
@@ -39,6 +43,19 @@ class ClientOfferSelectionError(ValueError):
 class JobOfferService:
     def __init__(self, repository: JobRepository) -> None:
         self.repository = repository
+
+    @staticmethod
+    def _ensure_offer_accepts_response(offer: JobOffer, *, now: datetime) -> None:
+        if offer.status != JobOfferStatus.PENDING:
+            raise OfferAlreadyResolvedError("offer already resolved")
+
+        expires_at = offer.expires_at
+        if expires_at is None:
+            return
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=UTC)
+        if expires_at <= now:
+            raise OfferExpiredError("offer has expired")
 
     async def create_offer(
         self,
@@ -72,6 +89,10 @@ class JobOfferService:
         offer_id: int,
     ) -> JobOffer:
         now = datetime.now(UTC)
+        offer = await self.repository.get_offer_by_id(offer_id)
+        if offer is None:
+            raise ValueError("offer not found")
+        self._ensure_offer_accepts_response(offer, now=now)
         return await self.repository.update_offer_status(
             offer_id=offer_id,
             status=JobOfferStatus.ACCEPTED,
@@ -89,8 +110,7 @@ class JobOfferService:
         if offer is None:
             raise ValueError("offer not found")
 
-        if offer.status != JobOfferStatus.PENDING:
-            raise OfferAlreadyResolvedError("offer already resolved")
+        self._ensure_offer_accepts_response(offer, now=now)
 
         job = await self.repository.get_job_by_id(offer.job_id)
 
@@ -187,8 +207,7 @@ class JobOfferService:
         if offer is None:
             raise ValueError("offer not found")
 
-        if offer.status != JobOfferStatus.PENDING:
-            raise OfferAlreadyResolvedError("offer already resolved")
+        self._ensure_offer_accepts_response(offer, now=now)
 
         job = await self.repository.get_job_by_id(offer.job_id)
 

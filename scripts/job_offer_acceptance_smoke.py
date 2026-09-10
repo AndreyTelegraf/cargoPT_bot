@@ -5,6 +5,7 @@ import subprocess
 import sys
 from datetime import UTC
 from datetime import datetime
+from datetime import timedelta
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -21,6 +22,7 @@ from app.models.job import Job
 from app.repositories.carrier import CarrierRepository
 from app.repositories.job import JobRepository
 from app.services.job_offer import JobOfferService
+from app.services.job_offer import OfferExpiredError
 
 DATA_DIR = PROJECT_ROOT / ".tmp_job_offer_acceptance_smoke"
 DATABASE_URL = "sqlite+aiosqlite:///.tmp_job_offer_acceptance_smoke/cargopt_dev.db"
@@ -122,6 +124,40 @@ async def exercise_offer_acceptance() -> None:
         if accepted.responded_at is None:
             raise SystemExit("responded_at missing")
 
+        expired_offer = await service.create_offer(
+            job_id=job.id,
+            vehicle=vehicle,
+            expires_in_minutes=-1,
+        )
+        try:
+            await service.accept_offer_without_assignment(expired_offer.id)
+        except OfferExpiredError:
+            pass
+        else:
+            raise SystemExit("expired pending offer was accepted")
+
+        if expired_offer.status != JobOfferStatus.PENDING:
+            raise SystemExit(
+                f"expired offer status changed unexpectedly: {expired_offer.status}"
+            )
+        if expired_offer.responded_at is not None:
+            raise SystemExit("expired offer received a response timestamp")
+
+        naive_expiry_offer = await service.create_offer(
+            job_id=job.id,
+            vehicle=vehicle,
+            expires_in_minutes=30,
+        )
+        naive_expiry_offer.expires_at = datetime.now(UTC).replace(
+            tzinfo=None
+        ) - timedelta(minutes=1)
+        try:
+            await service.accept_offer_without_assignment(naive_expiry_offer.id)
+        except OfferExpiredError:
+            pass
+        else:
+            raise SystemExit("expired offer with naive SQLite timestamp was accepted")
+
     await engine.dispose()
 
 
@@ -146,3 +182,4 @@ source = Path("app/services/job_offer.py").read_text(encoding="utf-8")
 assert "accept_offer_without_assignment" in source
 assert "decline_pending_offers_by_job_except" not in source[source.index("async def accept_offer_without_assignment"):source.index("async def accept_offer_and_assign_job")]
 assert "status=JobStatus.OFFERED" in source[source.index("async def accept_offer_without_assignment"):source.index("async def accept_offer_and_assign_job")]
+assert "_ensure_offer_accepts_response" in source

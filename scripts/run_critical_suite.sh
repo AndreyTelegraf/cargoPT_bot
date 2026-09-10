@@ -33,6 +33,7 @@ TESTS=(
   scripts/manual_offer_redispatch_smoke.py
   scripts/job_control_routing_smoke.py
   scripts/job_completion_smoke.py
+  scripts/job_offer_acceptance_smoke.py
   scripts/job_lifecycle_notifications_smoke.py
   scripts/email_template_locale_smoke.py
   scripts/email_status_events_smoke.py
