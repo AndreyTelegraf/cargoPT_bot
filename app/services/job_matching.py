@@ -286,6 +286,14 @@ class JobMatchingService:
                 reason = address_reason
 
         vehicles = await self.carrier_search.find_matching_vehicles(
+            min_payload_kg=job.estimated_payload_kg or None,
+            min_volume_m3=job.estimated_volume_m3 or None,
+            min_loaders=job.required_loaders or None,
+            needs_tail_lift=job.needs_tail_lift,
+            needs_crane=job.needs_crane,
+            needs_mobile_lift=job.needs_mobile_lift,
+            needs_assembly=job.needs_assembly,
+            needs_packing=job.needs_packing,
             regions=sorted(regions) or None,
         )
 

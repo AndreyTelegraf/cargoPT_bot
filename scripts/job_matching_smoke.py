@@ -93,7 +93,7 @@ async def exercise_job_matching() -> None:
             requested_date=None,
             needs_assembly=False,
             needs_packing=False,
-            needs_tail_lift=False,
+            needs_tail_lift=True,
             needs_crane=True,
             needs_mobile_lift=True,
             required_loaders=999,
@@ -127,21 +127,34 @@ async def exercise_job_matching() -> None:
 
         matches = await matching.find_matching_vehicles_for_job(job)
 
-        if len(matches) != 1:
+        if matches:
             raise SystemExit(
-                "expected 1 region-only match despite impossible cargo "
-                f"constraints, got {len(matches)}"
+                "mandatory capabilities and known capacity limits were ignored"
             )
 
-        if matches[0].carrier_id != carrier.id:
+        job.needs_crane = False
+        job.needs_mobile_lift = False
+        job.required_loaders = 2
+        job.estimated_payload_kg = 1200
+        job.estimated_volume_m3 = 12.0
+        matches = await matching.find_matching_vehicles_for_job(job)
+
+        if len(matches) != 1 or matches[0].carrier_id != carrier.id:
             raise SystemExit("matched wrong carrier")
+
+        job.required_loaders = None
+        job.estimated_payload_kg = None
+        job.estimated_volume_m3 = None
+        unknown_capacity_matches = await matching.find_matching_vehicles_for_job(job)
+        if len(unknown_capacity_matches) != 1:
+            raise SystemExit("unknown capacity incorrectly excluded eligible carrier")
 
         class CapturingCarrierSearch:
             def __init__(self):
-                self.regions = None
+                self.kwargs = None
 
             async def find_matching_vehicles(self, **kwargs):
-                self.regions = kwargs["regions"]
+                self.kwargs = kwargs
                 return [SimpleNamespace(id=999)]
 
         domestic_search = CapturingCarrierSearch()
@@ -172,8 +185,12 @@ async def exercise_job_matching() -> None:
                 "domestic intercity endpoints were not both classified: "
                 f"{domestic_result.regions}"
             )
-        if domestic_search.regions != ["Centro", "Porto"]:
+        if domestic_search.kwargs["regions"] != ["Centro", "Porto"]:
             raise SystemExit("domestic intercity regions were not passed to search")
+        if domestic_search.kwargs["needs_tail_lift"] is not True:
+            raise SystemExit("mandatory tail lift was not passed to search")
+        if domestic_search.kwargs["min_volume_m3"] is not None:
+            raise SystemExit("unknown volume must not become a capacity exclusion")
 
         international_search = CapturingCarrierSearch()
         international_matching = JobMatchingService(international_search)
@@ -203,7 +220,7 @@ async def exercise_job_matching() -> None:
                 "international matching did not stay pickup-only: "
                 f"{international_result.regions}"
             )
-        if international_search.regions != ["Lisboa"]:
+        if international_search.kwargs["regions"] != ["Lisboa"]:
             raise SystemExit("foreign dropoff leaked into carrier search")
 
     await engine.dispose()
