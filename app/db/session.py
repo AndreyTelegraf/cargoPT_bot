@@ -13,6 +13,7 @@ engine = create_async_engine(
 @event.listens_for(engine.sync_engine, "connect")
 def configure_sqlite_connection(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
     cursor.execute("PRAGMA journal_mode=WAL")
     cursor.execute("PRAGMA busy_timeout=30000")
     cursor.close()
