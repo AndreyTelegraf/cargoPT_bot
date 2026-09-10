@@ -45,6 +45,9 @@ class JobRepository:
             else email_enabled
         )
 
+    async def commit(self) -> None:
+        await self.session.commit()
+
     async def enqueue_email_notification(
         self,
         *,

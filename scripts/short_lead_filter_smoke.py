@@ -24,6 +24,7 @@ from app.services.short_lead_time_warning import should_filter_short_lead_time
 class FakeJobRepository:
     def __init__(self, requested_date):
         now = datetime.now(UTC)
+        self.committed = False
         self.job = SimpleNamespace(
             id=901,
             status=JobStatus.DRAFT,
@@ -53,6 +54,9 @@ class FakeJobRepository:
         self.job.updated_at = updated_at
         return self.job
 
+    async def commit(self):
+        self.committed = True
+
 
 class FailIfUsedCarrierRepository:
     def __getattr__(self, name):
@@ -60,16 +64,18 @@ class FailIfUsedCarrierRepository:
 
 
 class FakeBot:
-    def __init__(self):
+    def __init__(self, repository):
+        self.repository = repository
         self.messages = []
 
     async def send_message(self, *args, **kwargs):
+        assert self.repository.committed
         self.messages.append((args, kwargs))
 
 
 async def exercise_submission_filter() -> None:
     repository = FakeJobRepository(datetime.now(UTC) + timedelta(hours=1))
-    bot = FakeBot()
+    bot = FakeBot(repository)
     service = RequestSubmissionService(
         job_repository=repository,
         carrier_repository=FailIfUsedCarrierRepository(),

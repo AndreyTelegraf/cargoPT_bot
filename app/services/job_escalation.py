@@ -138,6 +138,7 @@ async def escalate_job_to_manual_review(
     job_repository,
     matching_reason: MatchingReason | None = None,
     matching_regions: list[str] | None = None,
+    commit_before_notification: bool = False,
 ) -> None:
     offers = await job_repository.list_offers_by_job(job.id)
     has_accepted_offer = any(offer.status == "accepted" for offer in offers)
@@ -155,6 +156,8 @@ async def escalate_job_to_manual_review(
         status=JobStatus.MANUAL_REVIEW_REQUIRED,
         updated_at=job.updated_at,
     )
+    if commit_before_notification:
+        await job_repository.commit()
     await notify_job_control_about_unassigned_job(
         bot=bot,
         job=job,
@@ -170,6 +173,7 @@ async def hold_short_lead_job_for_manual_review(
     job,
     job_repository,
     now=None,
+    commit_before_notification: bool = False,
 ) -> bool:
     if not should_filter_short_lead_time(job.requested_date, now=now):
         return False
@@ -180,5 +184,6 @@ async def hold_short_lead_job_for_manual_review(
         job=job,
         job_repository=job_repository,
         matching_reason=MatchingReason.SHORT_LEAD_TIME,
+        commit_before_notification=commit_before_notification,
     )
     return True

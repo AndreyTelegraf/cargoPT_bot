@@ -75,6 +75,7 @@ class RequestSubmissionService:
             bot=self.bot,
             job=job,
             job_repository=self.job_repository,
+            commit_before_notification=True,
         ):
             return RequestSubmissionResult(
                 job=job,
@@ -97,22 +98,25 @@ class RequestSubmissionService:
         )
         offers = distribution_result.offers
 
-        sent_count = await send_job_offers_to_carriers(
-            bot=self.bot,
-            job=job,
-            offers=offers,
-            job_repository=self.job_repository,
-            carrier_repository=self.carrier_repository,
-        )
-
-        if not offers:
+        if offers:
+            await self.job_repository.commit()
+            sent_count = await send_job_offers_to_carriers(
+                bot=self.bot,
+                job=job,
+                offers=offers,
+                job_repository=self.job_repository,
+                carrier_repository=self.carrier_repository,
+            )
+        else:
             await escalate_job_to_manual_review(
                 bot=self.bot,
                 job=job,
                 job_repository=self.job_repository,
                 matching_reason=distribution_result.matching_reason,
                 matching_regions=distribution_result.matching_regions,
+                commit_before_notification=True,
             )
+            sent_count = 0
 
         return RequestSubmissionResult(
             job=job,
