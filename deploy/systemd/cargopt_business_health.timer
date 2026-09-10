@@ -1,0 +1,12 @@
+[Unit]
+Description=Run CargoPT business health audit every five minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Persistent=true
+Unit=cargopt_business_health.service
+
+[Install]
+WantedBy=timers.target
