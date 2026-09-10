@@ -12,6 +12,7 @@ from app.bot.handlers.job_offer_response import _delete_message_by_id_safely
 from app.bot.handlers.job_offer_response import _finalize_offer_message
 from app.bot.handlers.job_offer_response import router
 from app.bot.offer_keyboard import build_offer_keyboard
+from app.bot.offer_locale import offer_text
 
 assert router is not None
 assert _finalize_offer_message is not None
@@ -38,11 +39,13 @@ assert "accept_offer_and_assign_job" not in handler_source
 assert "build_client_reopen_assignment_keyboard" in handler_source
 assert "build_client_notification_text" not in handler_source
 assert "build_carrier_notification_text" not in handler_source
-assert "Ваш отклик отправлен" in handler_source
+assert 't(locale, "response_sent")' in handler_source
 
 assert "accept_offer_without_assignment" in source
 assert "accept_offer_and_assign_job" not in source
-assert "Ваш отклик отправлен" in source
+assert "Your offer was sent" in offer_text("en", "response_sent")
+assert "proposta foi enviada" in offer_text("pt", "response_sent")
+assert "Ваш отклик отправлен" in offer_text("ru", "response_sent")
 
 assert "_parse_offer_price_input" in source
 assert "update_offer_price_and_note" in source
