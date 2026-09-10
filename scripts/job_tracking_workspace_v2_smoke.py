@@ -42,10 +42,10 @@ def main() -> None:
     for page in localized_html:
         assert "/assets/css/track.css?v=request-management-v1" in page
         assert (
-            "/assets/js/tracking-workspace.js?v=request-management-v1"
+            "/assets/js/tracking-workspace.js?v=offer-terms-v1"
             in page
         )
-        assert "/assets/js/track.js?v=request-management-v1" in page
+        assert "/assets/js/track.js?v=offer-terms-v1" in page
 
     assert (
         'document.querySelector("#otherRequestsPanel")'
@@ -97,6 +97,32 @@ def main() -> None:
     assert "Europe/Lisbon" in workspace_js
     assert "options.onRequestedDateChange" in workspace_js
     assert "options.onRequestCancel" in workspace_js
+    for field in (
+        "offer.included_services",
+        "offer.possible_surcharges",
+        "offer.service_window",
+        "offer.estimate_status",
+    ):
+        assert field in workspace_js
+
+    for copy in (
+        "Condições da proposta",
+        "Offer terms",
+        "Условия предложения",
+        "Serviços incluídos",
+        "Included services",
+        "Что включено",
+        "Possíveis extras",
+        "Possible extras",
+        "Возможные доплаты",
+        "Data / janela horária",
+        "Service date / time window",
+        "Дата / временное окно",
+        "Definitivo",
+        "Final",
+        "Окончательная",
+    ):
+        assert copy in track_js or copy in workspace_js
     assert "/requested-date`" in track_js
     assert "/cancel`" in track_js
     assert "requested_date_local: dateValue" in track_js

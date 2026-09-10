@@ -73,6 +73,13 @@
     payloadLabel: "Carga",
     volumeLabel: "Volume",
     equipmentLabel: "Equipamento",
+    offerTermsLabel: "Condições da proposta",
+    includedServicesLabel: "Serviços incluídos",
+    possibleSurchargesLabel: "Possíveis extras",
+    serviceWindowLabel: "Data / janela horária",
+    estimateStatusLabel: "Tipo de preço",
+    estimateFinalLabel: "Definitivo",
+    estimateEstimateLabel: "Estimativa",
     carrierContactLabel: "Contacto do transportador",
     carrierNoteLabel: "Nota do transportador",
     shortLeadTimeWarning: "Faltam menos de três dias para o transporte. Por isso, o pedido não foi enviado automaticamente aos transportadores e ficou guardado para análise manual pela CargoPT. Para iniciar a procura automática, altere a data para pelo menos três dias a partir de agora.",
@@ -296,6 +303,41 @@
     }
 
     card.appendChild(vehicleSection);
+
+    const termsSection = createOfferSection(
+      "tracking-offer-terms-section",
+      messages.offerTermsLabel
+    );
+    const termsList = document.createElement("dl");
+    termsList.className = "tracking-offer-spec-list";
+
+    appendOfferDefinition(
+      termsList,
+      messages.includedServicesLabel,
+      offer.included_services || messages.notProvidedLabel
+    );
+    appendOfferDefinition(
+      termsList,
+      messages.possibleSurchargesLabel,
+      offer.possible_surcharges || messages.notProvidedLabel
+    );
+    appendOfferDefinition(
+      termsList,
+      messages.serviceWindowLabel,
+      offer.service_window || messages.notProvidedLabel
+    );
+    appendOfferDefinition(
+      termsList,
+      messages.estimateStatusLabel,
+      offer.estimate_status === "final"
+        ? messages.estimateFinalLabel
+        : offer.estimate_status === "estimate"
+          ? messages.estimateEstimateLabel
+          : messages.notProvidedLabel
+    );
+
+    termsSection.appendChild(termsList);
+    card.appendChild(termsSection);
 
     const shouldShowCarrierContacts =
       entry.tracking_snapshot?.status !== "offered";
