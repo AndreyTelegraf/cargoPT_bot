@@ -26,6 +26,11 @@ class Job(Base):
         Index("ix_job_client_telegram_user_id", "client_telegram_user_id"),
         Index("ix_job_requested_date", "requested_date"),
         Index("ix_job_tracking_token", "tracking_token", unique=True),
+        Index(
+            "ux_job_web_idempotency_key",
+            "web_idempotency_key",
+            unique=True,
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -37,6 +42,8 @@ class Job(Base):
 
     source: Mapped[str | None] = mapped_column(String)
     source_locale: Mapped[str | None] = mapped_column(String)
+    web_idempotency_key: Mapped[str | None] = mapped_column(String(128))
+    web_request_fingerprint: Mapped[str | None] = mapped_column(String(64))
 
     customer_name: Mapped[str | None] = mapped_column(String)
     customer_email: Mapped[str | None] = mapped_column(String)
