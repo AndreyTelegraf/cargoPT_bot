@@ -22,6 +22,6 @@ request_constraints = (
 )
 
 for constraint in request_constraints:
-    assert constraint not in source, constraint
+    assert constraint in source, constraint
 
-print("JOB_MATCHING_USES_REGIONS_ONLY_SMOKE_OK")
+print("JOB_MATCHING_USES_REGIONS_AND_CAPABILITIES_SMOKE_OK")
