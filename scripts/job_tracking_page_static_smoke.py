@@ -16,6 +16,7 @@ def main() -> None:
 
     assert "/assets/js/track.js" in html
     assert "/assets/css/track.css" in html
+    assert "tracking-short-lead-warning" in css
     assert "/api/v1/track/" in js
     assert "window.setInterval" in js
     assert "accepted_offers" in js
