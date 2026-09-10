@@ -128,6 +128,7 @@ TESTS=(
   scripts/carrier_start_resume_smoke.py
   scripts/carrier_reinvite_reuse_smoke.py
   scripts/carrier_invite_links_smoke.py
+  scripts/outcome_metrics_smoke.py
   scripts/job_consistency_audit.py
 )
 
