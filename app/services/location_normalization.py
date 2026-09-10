@@ -2,10 +2,15 @@ from __future__ import annotations
 
 import asyncio
 import ipaddress
+import json
+import os
+from pathlib import Path
 import re
 import socket
+import sqlite3
 from dataclasses import dataclass
 from time import monotonic
+from time import time
 from urllib.parse import parse_qs
 from urllib.parse import quote_plus
 from urllib.parse import unquote
@@ -23,9 +28,147 @@ NOMINATIM_USER_AGENT = (
     "CargoPT/1.0 (+https://cargopt.pt; contact: hello@cargopt.pt)"
 )
 
-_nominatim_lock = asyncio.Lock()
-_nominatim_last_request_at = 0.0
 _nominatim_cache: dict[tuple[str, tuple[tuple[str, str], ...]], tuple[float, list]] = {}
+
+
+def _configured_nominatim_provider_url() -> str:
+    return os.environ.get("LOCATION_SEARCH_PROVIDER_URL", NOMINATIM_SEARCH_URL)
+
+
+def _nominatim_shared_state_path() -> Path:
+    return Path(
+        os.environ.get(
+            "LOCATION_SEARCH_CACHE_PATH",
+            "data/nominatim_shared_state.sqlite3",
+        )
+    )
+
+
+def _claim_nominatim_request(
+    cache_key: str,
+) -> tuple[str, float | list]:
+    state_path = _nominatim_shared_state_path()
+    try:
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        connection = sqlite3.connect(state_path, timeout=10, isolation_level=None)
+        try:
+            connection.execute("PRAGMA busy_timeout=10000")
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS nominatim_cache (
+                    cache_key TEXT PRIMARY KEY,
+                    response_json TEXT NOT NULL,
+                    expires_at REAL NOT NULL
+                )
+                """
+            )
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS nominatim_rate_state (
+                    state_key TEXT PRIMARY KEY,
+                    last_request_started_at REAL NOT NULL
+                )
+                """
+            )
+            connection.execute("BEGIN IMMEDIATE")
+            now = time()
+            cached = connection.execute(
+                """
+                SELECT response_json
+                FROM nominatim_cache
+                WHERE cache_key = ? AND expires_at > ?
+                """,
+                (cache_key, now),
+            ).fetchone()
+            if cached is not None:
+                connection.commit()
+                data = json.loads(cached[0])
+                if not isinstance(data, list):
+                    raise ValueError("unexpected shared Nominatim cache value")
+                return "cached", data
+
+            connection.execute(
+                "DELETE FROM nominatim_cache WHERE expires_at <= ?",
+                (now,),
+            )
+            rate_state = connection.execute(
+                """
+                SELECT last_request_started_at
+                FROM nominatim_rate_state
+                WHERE state_key = ?
+                """,
+                ("provider",),
+            ).fetchone()
+            last_request_started_at = rate_state[0] if rate_state else 0.0
+            wait_seconds = NOMINATIM_MIN_INTERVAL_SECONDS - (
+                now - last_request_started_at
+            )
+            if wait_seconds > 0:
+                connection.commit()
+                return "wait", wait_seconds
+
+            connection.execute(
+                """
+                INSERT INTO nominatim_rate_state (
+                    state_key,
+                    last_request_started_at
+                ) VALUES (?, ?)
+                ON CONFLICT(state_key) DO UPDATE SET
+                    last_request_started_at = excluded.last_request_started_at
+                """,
+                ("provider", now),
+            )
+            connection.commit()
+            return "reserved", 0.0
+        finally:
+            connection.close()
+    except (OSError, sqlite3.Error) as exc:
+        raise ValueError("Nominatim shared state unavailable") from exc
+
+
+async def _read_shared_cache_or_reserve(cache_key: str) -> list | None:
+    while True:
+        action, value = await asyncio.to_thread(
+            _claim_nominatim_request,
+            cache_key,
+        )
+        if action == "cached":
+            return value if isinstance(value, list) else []
+        if action == "reserved":
+            return None
+        wait_seconds = float(value)
+        await asyncio.sleep(wait_seconds)
+
+
+def _store_nominatim_shared_cache(cache_key: str, data: list) -> None:
+    state_path = _nominatim_shared_state_path()
+    try:
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        connection = sqlite3.connect(state_path, timeout=10)
+        try:
+            connection.execute("PRAGMA busy_timeout=10000")
+            connection.execute(
+                """
+                INSERT INTO nominatim_cache (
+                    cache_key,
+                    response_json,
+                    expires_at
+                ) VALUES (?, ?, ?)
+                ON CONFLICT(cache_key) DO UPDATE SET
+                    response_json = excluded.response_json,
+                    expires_at = excluded.expires_at
+                """,
+                (
+                    cache_key,
+                    json.dumps(data, ensure_ascii=False, separators=(",", ":")),
+                    time() + NOMINATIM_CACHE_TTL_SECONDS,
+                ),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+    except (OSError, sqlite3.Error) as exc:
+        raise ValueError("Nominatim shared cache unavailable") from exc
 
 LOCATION_SEARCH_LANGUAGES = {
     "pt": "pt-PT,pt;q=0.9",
@@ -50,43 +193,42 @@ async def _nominatim_search(
     provider_url: str,
     params: dict[str, str],
 ) -> list:
-    global _nominatim_last_request_at
-
     cache_key = (provider_url, tuple(sorted(params.items())))
     now = monotonic()
     cached = _nominatim_cache.get(cache_key)
     if cached is not None and cached[0] > now:
         return cached[1]
 
-    async with _nominatim_lock:
-        now = monotonic()
-        cached = _nominatim_cache.get(cache_key)
-        if cached is not None and cached[0] > now:
-            return cached[1]
-
-        wait_seconds = NOMINATIM_MIN_INTERVAL_SECONDS - (
-            now - _nominatim_last_request_at
-        )
-        if wait_seconds > 0:
-            await asyncio.sleep(wait_seconds)
-
-        async with httpx.AsyncClient(
-            timeout=httpx.Timeout(5.0),
-            headers={"User-Agent": NOMINATIM_USER_AGENT},
-        ) as client:
-            response = await client.get(provider_url, params=params)
-            _nominatim_last_request_at = monotonic()
-            response.raise_for_status()
-            data = response.json()
-
-        if not isinstance(data, list):
-            raise ValueError("unexpected Nominatim response")
-
+    serialized_key = json.dumps(
+        [provider_url, sorted(params.items())],
+        ensure_ascii=True,
+        separators=(",", ":"),
+    )
+    shared_cached = await _read_shared_cache_or_reserve(serialized_key)
+    if shared_cached is not None:
         _nominatim_cache[cache_key] = (
             monotonic() + NOMINATIM_CACHE_TTL_SECONDS,
-            data,
+            shared_cached,
         )
-        return data
+        return shared_cached
+
+    async with httpx.AsyncClient(
+        timeout=httpx.Timeout(5.0),
+        headers={"User-Agent": NOMINATIM_USER_AGENT},
+    ) as client:
+        response = await client.get(provider_url, params=params)
+        response.raise_for_status()
+        data = response.json()
+
+    if not isinstance(data, list):
+        raise ValueError("unexpected Nominatim response")
+
+    await asyncio.to_thread(_store_nominatim_shared_cache, serialized_key, data)
+    _nominatim_cache[cache_key] = (
+        monotonic() + NOMINATIM_CACHE_TTL_SECONDS,
+        data,
+    )
+    return data
 
 
 MAPS_URL_RE = re.compile(
@@ -403,7 +545,7 @@ async def geocode_text_address(address: str) -> tuple[float | None, float | None
     try:
         for query in queries:
             data = await _nominatim_search(
-                provider_url=NOMINATIM_SEARCH_URL,
+                provider_url=_configured_nominatim_provider_url(),
                 params={
                     "q": query,
                     "format": "jsonv2",
