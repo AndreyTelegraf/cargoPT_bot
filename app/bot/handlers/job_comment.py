@@ -66,6 +66,7 @@ async def job_comment(
             return
 
         sent_count = result.sent_count
+        queued_count = result.queued_count
         await session.commit()
 
     await state.clear()
@@ -76,6 +77,13 @@ async def job_comment(
                 message.from_user.language_code,
                 default_locale="ru",
             ),
+            reply_markup=support_keyboard(),
+        )
+    elif queued_count > 0:
+        await message.answer(
+            "Заявка принята.\n\n"
+            f"Она поставлена в очередь для подходящих перевозчиков: {queued_count}. "
+            "Как только кто-то примет заказ, вы получите уведомление.",
             reply_markup=support_keyboard(),
         )
     elif sent_count > 0:

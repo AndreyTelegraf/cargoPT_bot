@@ -41,6 +41,7 @@ TESTS=(
   scripts/web_request_idempotency_smoke.py
   scripts/web_request_idempotency_frontend_smoke.py
   scripts/request_submission_transaction_boundary_smoke.py
+  scripts/job_comment_queued_acceptance_smoke.py
   scripts/static_release_inventory_smoke.py
   scripts/web_idempotency_migration_smoke.py
   scripts/telegram_notification_outbox_migration_smoke.py
