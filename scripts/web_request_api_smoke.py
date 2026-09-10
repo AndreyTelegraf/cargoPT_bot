@@ -1,5 +1,6 @@
 import os
 import shutil
+import sqlite3
 import subprocess
 import sys
 from datetime import UTC
@@ -20,6 +21,7 @@ class FakeBot:
 
     async def send_message(self, *, chat_id, text, **kwargs):
         self.messages.append((chat_id, text, kwargs))
+        raise AssertionError("web request API must not call Telegram directly")
 
 
 def run(cmd: list[str]) -> None:
@@ -175,8 +177,31 @@ def main() -> None:
         raise SystemExit(f"unexpected offers_count: {body.get('offers_count')}")
     if body.get("sent_count") != 0:
         raise SystemExit(f"unexpected sent_count: {body.get('sent_count')}")
-    if not fake_bot.messages:
-        raise SystemExit("manual review admin notification was not sent")
+    if fake_bot.messages:
+        raise SystemExit("manual review called Telegram before outbox dispatch")
+
+    connection = sqlite3.connect(DATA_DIR / "cargopt_dev.db")
+    try:
+        notifications = connection.execute(
+            """
+            SELECT job_id, notification_type, delivery_status, count(*)
+            FROM telegram_notification_outbox
+            GROUP BY job_id, notification_type, delivery_status
+            """
+        ).fetchall()
+    finally:
+        connection.close()
+    expected_notification = (
+        body["job_id"],
+        "manual_review",
+        "pending",
+        1,
+    )
+    if notifications != [expected_notification]:
+        raise SystemExit(
+            "unexpected manual review outbox state: "
+            f"{notifications} != {[expected_notification]}"
+        )
 
     shutil.rmtree(DATA_DIR)
     print("WEB_REQUEST_API_SMOKE_OK")
