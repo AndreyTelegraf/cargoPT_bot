@@ -44,7 +44,6 @@ class TelegramNotificationEnqueueService:
             (address for address in addresses if address.kind == "dropoff"),
             None,
         )
-        offer_text = build_offer_text(job, items, pickup, dropoff)
         stored_notifications = []
 
         for offer in offers:
@@ -53,6 +52,13 @@ class TelegramNotificationEnqueueService:
             )
             if carrier is None or carrier.telegram_user_id is None:
                 continue
+            offer_text = build_offer_text(
+                job,
+                items,
+                pickup,
+                dropoff,
+                locale=carrier.preferred_locale,
+            )
 
             notification = TelegramNotificationOutbox(
                 job_id=job.id,

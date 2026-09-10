@@ -1,19 +1,23 @@
 from aiogram.types import InlineKeyboardButton
 from aiogram.types import InlineKeyboardMarkup
 
+from app.bot.offer_locale import offer_text as t
 from app.domain.job_decline_reason import DECLINE_REASONS
 
 
-def build_offer_keyboard(offer_id: int) -> InlineKeyboardMarkup:
+def build_offer_keyboard(
+    offer_id: int,
+    locale: str | None = None,
+) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="✅ Принять",
+                    text=t(locale, "accept"),
                     callback_data=f"offer:accept:{offer_id}",
                 ),
                 InlineKeyboardButton(
-                    text="❌ Отклонить",
+                    text=t(locale, "decline"),
                     callback_data=f"offer:decline:{offer_id}",
                 ),
             ]

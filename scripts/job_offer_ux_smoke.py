@@ -49,4 +49,18 @@ buttons = keyboard.inline_keyboard[0]
 assert buttons[0].text == "✅ Принять"
 assert buttons[1].text == "❌ Отклонить"
 
+pt_text = build_offer_text(job, [item], pickup, dropoff, locale="pt")
+assert "<b>Novo pedido #7</b>" in pt_text
+assert "<b>Origem</b>\nRua Augusta 1, Lisboa" in pt_text
+assert "Aceite ou recuse o pedido." in pt_text
+pt_buttons = build_offer_keyboard(123, locale="pt").inline_keyboard[0]
+assert [button.text for button in pt_buttons] == ["✅ Aceitar", "❌ Recusar"]
+
+en_text = build_offer_text(job, [item], pickup, dropoff, locale="en")
+assert "<b>New request #7</b>" in en_text
+assert "<b>From</b>\nRua Augusta 1, Lisboa" in en_text
+assert "Accept or decline the request." in en_text
+en_buttons = build_offer_keyboard(123, locale="en").inline_keyboard[0]
+assert [button.text for button in en_buttons] == ["✅ Accept", "❌ Decline"]
+
 print("JOB_OFFER_UX_SMOKE_OK")
