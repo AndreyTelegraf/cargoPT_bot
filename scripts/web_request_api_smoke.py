@@ -42,6 +42,10 @@ def main() -> None:
     os.environ["ENVIRONMENT"] = "web-request-api-smoke"
     os.environ["LOG_LEVEL"] = "INFO"
     os.environ["EMAIL_ENABLED"] = "true"
+    os.environ["EMAIL_FROM_ADDRESS"] = "smoke@example.test"
+    os.environ["EMAIL_SMTP_HOST"] = "smtp.example.test"
+    os.environ["EMAIL_SMTP_USERNAME"] = "smoke"
+    os.environ["EMAIL_SMTP_PASSWORD"] = "smoke-password"
 
     reset_db()
 
