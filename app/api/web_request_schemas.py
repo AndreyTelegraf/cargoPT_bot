@@ -1,5 +1,8 @@
 import re
 from datetime import datetime
+from datetime import date
+from datetime import time
+from datetime import UTC
 from typing import Literal
 
 from pydantic import BaseModel
@@ -8,6 +11,7 @@ from pydantic import field_validator
 from pydantic import model_validator
 
 from app.domain.requested_date import RequestedDateInPastError
+from app.domain.requested_date import PORTUGAL_TIMEZONE
 from app.domain.requested_date import validate_requested_date_not_in_past
 from app.services.web_intake import WebIntakeAddress
 from app.services.web_intake import WebIntakeItem
@@ -15,6 +19,29 @@ from app.services.web_intake import WebIntakeRequest
 
 
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def portugal_local_datetime_to_utc(
+    local_date: date,
+    local_time: time,
+) -> datetime:
+    if local_time.tzinfo is not None:
+        raise ValueError("requested_time_local must not include a timezone")
+
+    naive = datetime.combine(local_date, local_time)
+    candidates = set()
+    for fold in (0, 1):
+        local_value = naive.replace(tzinfo=PORTUGAL_TIMEZONE, fold=fold)
+        utc_value = local_value.astimezone(UTC)
+        round_trip = utc_value.astimezone(PORTUGAL_TIMEZONE).replace(tzinfo=None)
+        if round_trip == naive:
+            candidates.add(utc_value)
+
+    if not candidates:
+        raise ValueError("requested local time does not exist in Portugal")
+    if len(candidates) > 1:
+        raise ValueError("requested local time is ambiguous in Portugal")
+    return candidates.pop()
 
 
 class WebRequestAddressPayload(BaseModel):
@@ -99,6 +126,8 @@ class WebRequestPayload(BaseModel):
     fbclid: str | None = Field(default=None, max_length=1024)
     landing_version: str | None = Field(default=None, max_length=64)
     requested_date: datetime | None = None
+    requested_date_local: date | None = None
+    requested_time_local: time | None = None
     addresses: list[WebRequestAddressPayload] = Field(min_length=2, max_length=2)
     items: list[WebRequestItemPayload] = Field(min_length=1, max_length=50)
     needs_assembly: bool = False
@@ -141,6 +170,22 @@ class WebRequestPayload(BaseModel):
 
     @model_validator(mode="after")
     def validate_web_request(self) -> "WebRequestPayload":
+        has_local_date = self.requested_date_local is not None
+        has_local_time = self.requested_time_local is not None
+        if has_local_date != has_local_time:
+            raise ValueError(
+                "requested_date_local and requested_time_local must be provided together"
+            )
+        if self.requested_date is not None and has_local_date:
+            raise ValueError(
+                "use either requested_date or local requested date and time"
+            )
+        if has_local_date and has_local_time:
+            self.requested_date = portugal_local_datetime_to_utc(
+                self.requested_date_local,
+                self.requested_time_local,
+            )
+
         if not (self.customer_email or self.client_phone or self.client_whatsapp):
             raise ValueError("at least one contact is required")
 

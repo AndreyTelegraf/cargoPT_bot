@@ -173,6 +173,50 @@ def main() -> None:
     assert normalized.customer_email == "client@example.test"
     assert normalized.client_phone == "+351900000000"
 
+    local_datetime_payload = dict(payload)
+    local_datetime_payload.pop("requested_date")
+    local_datetime_payload.update(
+        requested_date_local="2026-12-01",
+        requested_time_local="14:30",
+    )
+    local_datetime = WebRequestPayload.model_validate(local_datetime_payload)
+    assert local_datetime.requested_date == datetime(
+        2026,
+        12,
+        1,
+        14,
+        30,
+        tzinfo=UTC,
+    )
+
+    summer_local_datetime_payload = dict(payload)
+    summer_local_datetime_payload.pop("requested_date")
+    summer_local_datetime_payload.update(
+        requested_date_local="2027-07-01",
+        requested_time_local="14:30",
+    )
+    summer_local_datetime = WebRequestPayload.model_validate(
+        summer_local_datetime_payload
+    )
+    assert summer_local_datetime.requested_date == datetime(
+        2027,
+        7,
+        1,
+        13,
+        30,
+        tzinfo=UTC,
+    )
+
+    incomplete_local_datetime = dict(payload)
+    incomplete_local_datetime.pop("requested_date")
+    incomplete_local_datetime["requested_date_local"] = "2026-12-01"
+    try:
+        WebRequestPayload.model_validate(incomplete_local_datetime)
+    except ValidationError:
+        pass
+    else:
+        raise AssertionError("local requested date without time was accepted")
+
     with TestClient(app) as client:
         health = client.get("/health")
         if health.status_code != 200:
