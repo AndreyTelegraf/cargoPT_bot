@@ -36,6 +36,7 @@ TESTS=(
   scripts/job_lifecycle_notifications_smoke.py
   scripts/email_template_locale_smoke.py
   scripts/email_status_events_smoke.py
+  scripts/email_dispatch_retry_smoke.py
   scripts/web_request_duplicate_guard_smoke.py
   scripts/web_intake_service_smoke.py
   scripts/web_request_api_smoke.py

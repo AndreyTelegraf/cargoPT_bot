@@ -54,6 +54,38 @@ class JobEmailNotificationRepository:
                 raise
             return existing
 
+    async def recover_stale_claims(
+        self,
+        *,
+        now: datetime,
+        stale_before: datetime,
+        max_attempts: int,
+    ) -> int:
+        result = await self.session.execute(
+            select(JobEmailNotification).where(
+                JobEmailNotification.delivery_status
+                == EmailDeliveryStatus.SENDING.value,
+                or_(
+                    JobEmailNotification.last_attempt_at.is_(None),
+                    JobEmailNotification.last_attempt_at <= stale_before,
+                ),
+            )
+        )
+        recovered = 0
+        for notification in result.scalars():
+            if notification.attempt_count >= max_attempts:
+                notification.delivery_status = EmailDeliveryStatus.FAILED.value
+                notification.next_attempt_at = None
+                notification.last_error = "stale sending claim exhausted"
+            else:
+                notification.delivery_status = EmailDeliveryStatus.RETRY.value
+                notification.next_attempt_at = now
+                notification.last_error = "stale sending claim recovered"
+            notification.updated_at = now
+            recovered += 1
+        await self.session.flush()
+        return recovered
+
     async def list_due_ids(
         self,
         *,

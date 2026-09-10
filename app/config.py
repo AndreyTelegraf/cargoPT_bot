@@ -47,6 +47,7 @@ class Settings(BaseSettings):
     email_timeout_seconds: int = Field(default=15, gt=0)
     email_max_attempts: int = Field(default=5, gt=0)
     email_retry_base_seconds: int = Field(default=60, gt=0)
+    email_stale_sending_seconds: int = Field(default=300, gt=0)
 
     meta_operations_enabled: bool = False
     meta_operations_inbound_token: SecretStr = SecretStr("")

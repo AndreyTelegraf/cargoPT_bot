@@ -29,6 +29,7 @@ async def run() -> None:
         reply_to=settings.email_reply_to,
         max_attempts=settings.email_max_attempts,
         retry_base_seconds=settings.email_retry_base_seconds,
+        stale_sending_seconds=settings.email_stale_sending_seconds,
     )
     processed = await dispatcher.dispatch_due()
     print(f"EMAIL_DISPATCH_PROCESSED={processed}")

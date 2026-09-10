@@ -34,6 +34,7 @@ class EmailDispatcher:
         reply_to: str | None,
         max_attempts: int,
         retry_base_seconds: int,
+        stale_sending_seconds: int = 300,
     ) -> None:
         self.session_maker = session_maker
         self.transport = transport
@@ -43,15 +44,28 @@ class EmailDispatcher:
         self.reply_to = reply_to or None
         self.max_attempts = max_attempts
         self.retry_base_seconds = retry_base_seconds
+        self.stale_sending_seconds = stale_sending_seconds
 
     async def dispatch_due(self, *, limit: int = 50) -> int:
         now = datetime.now(UTC)
         async with self.session_maker() as session:
             repository = JobEmailNotificationRepository(session)
+            recovered = await repository.recover_stale_claims(
+                now=now,
+                stale_before=now - timedelta(seconds=self.stale_sending_seconds),
+                max_attempts=self.max_attempts,
+            )
             notification_ids = await repository.list_due_ids(
                 now=now,
                 max_attempts=self.max_attempts,
                 limit=limit,
+            )
+            await session.commit()
+
+        if recovered:
+            logger.warning(
+                "email_notification_stale_claims_recovered",
+                extra={"recovered_count": recovered},
             )
 
         processed = 0
